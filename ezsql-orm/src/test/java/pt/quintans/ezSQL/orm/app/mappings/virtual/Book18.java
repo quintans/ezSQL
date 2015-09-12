@@ -2,7 +2,7 @@ package pt.quintans.ezSQL.orm.app.mappings.virtual;
 
 import pt.quintans.ezSQL.orm.app.domain.IdentityDomain;
 
-public class Book18 extends IdentityDomain {
+public class Book18 extends IdentityDomain<Long> {
     private String lang;
     private String name;
 

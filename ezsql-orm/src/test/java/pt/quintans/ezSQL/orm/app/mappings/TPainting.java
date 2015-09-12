@@ -6,13 +6,19 @@ import static pt.quintans.ezSQL.dml.Definition.*;
 public class TPainting {
     public static final Table T_PAINTING = new Table("PAINTING");
 
-    public static final Column<Long> C_ID = T_PAINTING.BIGINT("ID").key();
-    public static final Column<Integer> C_VERSION = T_PAINTING.INTEGER("VERSION").version();
-    public static final Column<String> C_NAME = T_PAINTING.VARCHAR("NAME");
-    public static final Column<Double> C_PRICE = T_PAINTING.DECIMAL("PRICE");
+    public static final Column<Long> C_ID = T_PAINTING
+    		.BIGINT("ID").key();
+    public static final Column<Integer> C_VERSION = T_PAINTING
+    		.INTEGER("VERSION").version();
+    public static final Column<String> C_NAME = T_PAINTING
+    		.VARCHAR("NAME");
+    public static final Column<Double> C_PRICE = T_PAINTING
+    		.DECIMAL("PRICE");
     // FKs columns
-    public static final Column<Long> C_ARTIST = T_PAINTING.BIGINT("ARTIST_ID");
-    public static final Column<Long> C_IMAGE = T_PAINTING.BIGINT("IMAGE_ID").AS("imageFk");
+    public static final Column<Long> C_ARTIST = T_PAINTING
+    		.BIGINT("ARTIST_ID");
+    public static final Column<Long> C_IMAGE = T_PAINTING
+    		.BIGINT("IMAGE_ID").AS("imageFk");
 
     // MANY Paintings have ONE Artist
     public static final Association A_ARTIST = T_PAINTING
