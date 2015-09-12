@@ -60,14 +60,14 @@ Simple ORM library for JAVA
 
 **ezSQL** is a utility that aims to ease the way a user executes SQL against a database.
 
-It was born out of the frustration of the "magic" of Hibernate.
-Also, writing HQL in plain text led to many mistakes and made refactoring dificult.
-Another issue was the impossible task of serializing my beans.
-
 It provides an easy way of executing **static typed** SQL and to project results to arbitrary Objects.
 To handle SQL, without hiding it, is the main goal of the framework. ORM features are just a bonus.
 
-This project is the same as goSQL, but in java.
+ezSQL was born out of the frustration of the "magic" of Hibernate.
+Also, writing HQL in plain text led to many mistakes and made refactoring dificult.
+Another issue was the impossible task of serializing my entity beans.
+
+goSQL is the same as this project, but in Go.
 
 Main Features:
 * SQL DSL
