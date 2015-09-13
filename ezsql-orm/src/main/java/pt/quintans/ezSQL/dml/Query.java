@@ -901,7 +901,7 @@ public class Query extends DmlBase {
      * The Object type for each column is obtained from the types of the method parameters.<br>
      * The processed rows are not collected, so any returning object is discarded.
      *  
-     * @param processor A processor object that must have one declared method and this method must one or more parameters.
+     * @param processor A processor object that must have one declared method and this method must at least one parameter.
      */
 	public void run(final IProcessor processor) {
         list(createReflectionTransformer(processor));

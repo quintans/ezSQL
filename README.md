@@ -14,60 +14,93 @@ Simple ORM library for JAVA
 	* [Table IMAGE definition](#table-image-definition)
 	* [Table GALLERY definition](#table-gallery-definition)
 * [EXAMPLES](#examples)
+	* [Updatable](#updatable)
 	* [INSERT EXAMPLES](#insert-examples)
-		* [Simple example](#simple-example)
+		* [Simple insert](#simple-insert)
 		* [Insert LOB example](#insert-lob-example)
 		* [Generated Keys](#generated-keys)
 		* [Batch Insert](#batch-insert)
-		* [PreInsert](#)
-		* [PostInsert](#)
-	* [UPDATE EXAMPLES](#)
-		* [Update example](#)
-		* [Update LOB example](#)
-		* [Batch Update](#)
-		* [PreUpdate](#)
-		* [PostUpdate](#)
-		* [Updatable](#)
-	* [DELETE EXAMPLES](#)
-		* [Delete example](#)
-		* [Batch Delete](#)
-		* [PreDelete](#)
-		* [PostDelete](#)
-	* [QUERY EXAMPLES](#)
-		* [Domain classes](#)
-		* [Simple Query](#)
-		* [Result Transformer example](#)
-		* [Bean Results](#)
-		* [Column Subquery](#)
-		* [Where Subquery](#)
-		* [Inner join](#)
-		* [Outer join](#)
-		* [Outer Fetch](#)
-		* [Inner Fetch](#)
-		* [Exists](#)
-		* [Group By](#)
-		* [Order By](#)
-		* [Union](#)
-		* [Case](#)
-		* [Pagination](#)
-	* [Association Discriminator](#)
-	* [Column Discriminator](#)
-	* [CUSTOM FUNCTIONS](#)
-	* [Table Triggers](#)
-	* [STORED PROCEDURES](#)
+		* [PreInsert](#preinsert)
+		* [PostInsert](#postinsert)
+	* [UPDATE EXAMPLES](#update-examples)
+		* [Simple update](#simple-update)
+		* [Update LOB example](#update-lob-example)
+		* [Batch Update](#batch-update)
+		* [PreUpdate](#preupdate)
+		* [PostUpdate](#postupdate)
+	* [DELETE EXAMPLES](#delete-examples)
+		* [Simple delete](#simple-delete)
+		* [Batch Delete](#batch-delete)
+		* [PreDelete](#predelete)
+		* [PostDelete](#postdelete)
+	* [QUERY EXAMPLES](#query-examples)
+		* [Domain classes](#domain-classes)
+		* [Simple Query](#simple-query)
+		* [Result Transformer example](#result-transformer-example)
+		* [Result Processor example](#result-processor-example)
+		* [Bean Results](#bean-results)
+		* [Column Subquery](#column-subquery)
+		* [Where Subquery](#where-subquery)
+		* [Inner join](#inner-join)
+		* [Outer join](#outer-join)
+		* [Outer Fetch](#outer-fetch)
+		* [Inner Fetch](#inner-fetch)
+		* [Exists](#exists)
+		* [Group By](#group-by)
+		* [Order By](#order-by)
+		* [Union](#union)
+		* [Case](#case)
+		* [Pagination](#pagination)
+	* [Association Discriminator](#association-discriminator)
+	* [Column Discriminator](#column-discriminator)
+	* [Custom Functions](#custom-functions)
+	* [Table Triggers](#table-triggers)
+	* [Stored Procedures](#stored-procedures)
 
 ## Introduction
 
 **ezSQL** is a utility that aims to simplify the work of a developer when writing and executing SQL.
+It is __just__ a wrapper around JDBC.
 
 It provides an easy way of executing **static typed** SQL and to project results to arbitrary beans.
 To handle SQL, without hiding it, is the main goal of the framework. ORM features are just a bonus.
 
+Some quick examples just to open the apetite.
+
+Retrive the query results into a list of beans.
+
+```java
+List<Artist> artists = db.query(TArtist.T_ARTIST)
+	.all()
+	.list(Artist.class);
+```
+
+Return the result of a single column.
+
+```java
+List<String> artistNames = db.query(TArtist.T_ARTIST)
+	.column(TArtist.C_NAME)
+	.listRaw(String.class);
+```
+
+Update without the use of beans.
+
+```java
+db.update(TArtist.T_ARTIST)
+    .set(TArtist.C_NAME, "Henri Matisse")
+    .where(TArtist.C_ID.is(3L))
+    .execute();
+```
+
 ezSQL was born out of the frustration of the "magic" of Hibernate.
 Also, writing HQL in plain text led to many mistakes and made refactoring dificult.
-Another issue was the impossible task of serializing my entity beans.
+Another issue was the impossible task of serializing my entity beans
+without bringing along the entire database.
 
 goSQL is the same as this project, but in Go.
+The documentation in goSQL is more complete.
+The one thing note implemented in ezSQL is the CASE statement.
+When I have time I will implement it.
 
 Main Features:
 * SQL DSL
@@ -329,6 +362,8 @@ public enum EGender implements Value<String> {
 `Enum` must implements the interface `Value<T>`. The value persisted in the Database
 will be the value returned by the `value()` method.
 
+### Updatable
+
 If a bean implements `pt.quintans.ezSQL.common.api.Updatable`, the DML
 operations will only use the properties that were change. In the examples the
 used beans extend from `pt.quintans.ezSQL.orm.app.domain.IdentityDomain` that
@@ -336,7 +371,7 @@ has this implementation.
 
 ### INSERT EXAMPLES
 
-#### Simple example
+#### Simple insert
 
 ```java
 db.insert(TArtist.T_ARTIST)
@@ -408,7 +443,7 @@ BinStore bs = new BinStore();
 bs.set(new File("StarryNight.jpg"));
 ```
 
-We can then insert using one of the examples described in [Simple example](#simple-example).
+We can then insert using one of the examples described in [Simple insert](#simple-insert).
 
 ```java
 db.insert(TImage.T_IMAGE)
@@ -454,7 +489,7 @@ insert.values(4L, 1L, EGender.MALE, "matisse", new Date()).batch();
 insert.values(5L, 1L, EGender.FEMALE, "Jane DOE", null).batch();
 insert.endBatch();
 ```
-We used the insert declaration in [Simple example](#simple-example).
+We used the insert declaration in [Simple insert](#simple-insert).
 
 To avoid the avoid the danger of depleting the memory resources, every time the
 number of pending commands reaches a threshold, the commands are sent to the database.
@@ -470,7 +505,7 @@ TODO
 TODO
 
 ### UPDATE EXAMPLES
-#### Update example
+#### Simple update
 
 ```java
 db.update(TArtist.T_ARTIST)
@@ -538,11 +573,8 @@ TODO
 #### PostUpdate
 TODO
 
-#### Updatable
-TODO
-
 ### DELETE EXAMPLES
-#### Delete example
+#### Simple delete
 
 ```java
 Delete delete = db.delete(TArtist.T_ARTIST)
@@ -652,6 +684,15 @@ The method `fetch` and `join` are used to mark the end of a branch
 and the start of a new one.
 Until the end of a branch, the use of `inner` and `outer` adds associations to the ongoing branch.
 
+
+As seen in the introduction, we can also return the result of a single column.
+
+```java
+List<String> artistNames = db.query(TArtist.T_ARTIST)
+	.column(TArtist.C_NAME)
+	.listRaw(String.class);
+```
+
 #### Result Transformer example
 
 The previous example can be executed in a different way if we wanted to avoid reflection.
@@ -678,6 +719,24 @@ List<Artist> values = query.list(new SimpleAbstractRowTransformer<Artist>(db){
 The order for which we get the values from the `ResultSet` depends of the order
 for which columns were added to the query, starting at the position 1.
 
+#### Result Processor example
+
+If we want just to process the result lines as they arrive.
+
+```java
+Query query = db.query(TArtist.T_ARTIST)
+		.column(TArtist.C_ID)
+		.column(TArtist.C_NAME);
+
+// your editor will not like this form
+query.run(new IProcessor(){
+	public void process(Long id, String name)
+		System.out.println("id:" + id + ", name:" + name);
+	}
+});
+```
+
+`IProcessor` does not have any declared method. It is weird, but works for me.
 
 #### Bean Results
 
@@ -1151,7 +1210,7 @@ A delete over this table definition will result in:
 db.delete(TEyeColor.T_EYE_COLOR).where(TEyeColor.C_KEY.like("B%")).execute();
 ```
 
-### CUSTOM FUNCTIONS
+### Custom Functions
 
 This framework doesn’t have all possible functions of all the databases,
 but one can create quite easily our custom functions.
@@ -1211,7 +1270,7 @@ When we declare "triggers" at the table level, as seen in `TArtist` we assure th
 executed independently if executed with beans or not.
 When using beans we can also implement PreInsert/PostInsert/... interfaces.
 
-### STORED PROCEDURES
+### Stored Procedures
 
 In order to call stored procedures we need to define the procedure in the java side.
 For this we create a DAO as follows.
@@ -1281,3 +1340,6 @@ It’s very straight forward.
 
 All parameter are named parameters and it’s possible to define IN/OUT/IN OUT parameters
  and also OUT parameters for result sets (cursors).
+
+### Sequences
+TODO
