@@ -60,7 +60,7 @@ Simple ORM library for JAVA
 ## Introduction
 
 **ezSQL** is a utility that aims to simplify the work of a developer when writing and executing SQL.
-It is __just__ a wrapper around JDBC.
+It is _just_ a wrapper around JDBC.
 
 It provides an easy way of executing **static typed** SQL and to project results to arbitrary beans.
 To handle SQL, without hiding it, is the main goal of the framework. ORM features are just a bonus.
@@ -819,7 +819,7 @@ List<ArtistValueDTO> values = db.query(TArtist.T_ARTIST)
 
 #### Inner join
 
-The function `innerJoin` (or `inner(...).join()`) is the same as a SQL __inner join__
+The function `innerJoin` (or `inner(...).join()`) is the same as a SQL _inner join_
 and the function `on()` is used to indicate the constraints for the last join,
 applied to the last table of the join. If `on()` is used it must be before the `join` (or `fetch`).
 
@@ -896,8 +896,8 @@ using `TArtist.A_PAINTINGS` representing the branch from Artist to Painting
 and `TPainting.A_GALLERIES` representing the branch from Painting to Gallery.
 
 One can use any number of `outerFetch` and they can even overlap.
-The last parameter, __true__, says that the results will come as a tree of objects with no repeating objects.
-If it were __false__, we would still have a tree of objects, but the number of results would be
+The last parameter, _true_, says that the results will come as a tree of objects with no repeating objects.
+If it were _false_, we would still have a tree of objects, but the number of results would be
 the number of rows of `Artist` times the number of rows of `Painting` times the number of rows of `Gallery`.
 If an Artist had 2 paintings we would have 2 instances of Artist, each one with one and just one instance of Painting.
 This is useful if we want to show the result in a tabular manner, having absolute control on the displayed number of rows.
@@ -1147,7 +1147,7 @@ public class Book18 extends IdentityDomain<Long> {
 }
 ```
 
-To avoid having to set the parameter __lang__ every time we use the association,
+To avoid having to set the parameter _lang_ every time we use the association,
 our custom Db class can override query, insert, update or delete
 and set at that moment the parameter.
 
