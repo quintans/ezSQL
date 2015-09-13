@@ -59,11 +59,11 @@ Simple ORM library for JAVA
 
 ## Introduction
 
-**ezSQL** is a utility that aims to simplify the work of a developer when writing and executing SQL.
+**ezSQL** is a tool that aims to simplify the work of a developer when writing and executing SQL.
 It is _just_ a wrapper around JDBC.
 
 It provides an easy way of executing **static typed** SQL and to project results to arbitrary beans.
-To handle SQL, without hiding it, is the main goal of the framework. ORM features are just a bonus.
+To handle SQL, without hiding it, is the main goal of this tool. ORM features are just a bonus.
 
 Some quick examples just to open the apetite.
 
@@ -119,14 +119,14 @@ Main Features:
 * Extensible
 
 ## SimpleJDBC
-ezSQL is build on top of utility class named SimpleJDBC.
+ezSQL is build on top of the class named **SimpleJDBC**.
 This class isolates the developer from the details of JDBC call, like statement creation,
 exception handling, parameters handling, etc
 This class does not depend of ezSQL. The developer can use this class if it needs a low level control.
 
 
 ## Environment
-To use the framework we must need to know the database structure.
+To use ezSQL we must need to know the database structure.
 It is not a static configuration, and we could use it in a dynamic schema (altered in runtime by adding tables, columns)
 with the proper supporting code. The common use is to define the database structure as exemplified in the following sections.
 
@@ -850,7 +850,7 @@ Query query = db.query(TPainting.T_PAINTING)
 This would list all paintings whose artist has id equal to 1 and the gallery name ends with “AZUL”.
 Notice that we include `TPainting.A_GALLERIES` is over a many-to-many relationship.
 
-This is the power of this framework, the simplicity that one can represent the joins between tables.
+This is the power of ezSQL, the simplicity that one can represent the joins between tables.
 
 #### Outer join
 
@@ -1217,7 +1217,7 @@ db.delete(TEyeColor.T_EYE_COLOR).where(TEyeColor.C_KEY.like("B%")).execute();
 
 ### Custom Functions
 
-This framework doesn’t have all possible functions of all the databases,
+ezSQL doesn’t have all possible functions of all the databases,
 but one can create quite easily our custom functions.
 
 It’s only three steps:
