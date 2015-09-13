@@ -1,4 +1,4 @@
-package pt.quintans.ezSQL.toolkit;
+package pt.quintans.ezSQL.common;
 
 import junit.framework.Test;
 import junit.framework.TestCase;

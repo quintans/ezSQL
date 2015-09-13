@@ -58,9 +58,9 @@ Simple ORM library for JAVA
 
 ## Introduction
 
-**ezSQL** is a utility that aims to ease the way a user executes SQL against a database.
+**ezSQL** is a utility that aims to simplify the work of a developer when writing and executing SQL.
 
-It provides an easy way of executing **static typed** SQL and to project results to arbitrary Objects.
+It provides an easy way of executing **static typed** SQL and to project results to arbitrary beans.
 To handle SQL, without hiding it, is the main goal of the framework. ORM features are just a bonus.
 
 ezSQL was born out of the frustration of the "magic" of Hibernate.
@@ -347,7 +347,8 @@ db.insert(TArtist.T_ARTIST)
 	.execute();
 ```
 
-For multiples inserts we could use a less verbose approach as shown in the following example. Internally it is the same as the previous example.
+For multiples inserts we could use a less verbose approach as shown in the following example.
+Internally it is the same as the previous example.
 
 ```java
 Insert insert = db.insert(TArtist.T_ARTIST)
@@ -443,7 +444,24 @@ Map<Column, Object> keys = db.insert(TImage.T_IMAGE)
 If for performance reasons you do not want the retrieval of the keys you can use `retriveKeys(false)` before executing.
 
 #### Batch Insert
-TODO
+When we have to make a lot of inserts, a more performant option, is to use batch insert.
+
+Wherever we use `.execute()` we use `.batch()` and terminate with `.endBatch()`
+as demonstrated next.
+
+```java
+insert.values(4L, 1L, EGender.MALE, "matisse", new Date()).batch();
+insert.values(5L, 1L, EGender.FEMALE, "Jane DOE", null).batch();
+insert.endBatch();
+```
+We used the insert declaration in [Simple example](#simple-example).
+
+To avoid the avoid the danger of depleting the memory resources, every time the
+number of pending commands reaches a threshold, the commands are sent to the database.
+You can change this threshold with `insert.batchLimit()`.
+You can also force this command flush by executing `insert.flushBatch()`.
+
+Batch insert have the advantage of executing all SQL commands against the database in one shot.
 
 #### PreInsert
 TODO
@@ -501,7 +519,18 @@ db.update(TImage.T_IMAGE).set(image).execute();
 ```
 
 #### Batch Update
-TODO
+The same as [Batch Insert](#batch-insert) but now for update.
+
+```java
+Update update = db.update(TArtist.T_ARTIST);
+update.set(TArtist.C_NAME, "Jane Doe")
+	.where(TArtist.C_ID.is(1L))
+	.batch();
+update.set(TArtist.C_NAME, "John Doe")
+	.where(TArtist.C_ID.is(2L))
+	.batch();
+update.endBatch();
+```
 
 #### PreUpdate
 TODO
@@ -545,7 +574,14 @@ db.delete(TArtist.T_ARTIST).set(artist).execute();
 ```
 
 #### Batch Delete
-TODO
+The same as [Batch Insert](#batch-insert) but now for delete.
+
+```java
+Delete delete = db.delete(TArtist.T_ARTIST);
+delete.where(TArtist.C_ID.is(1L)).batch();
+delete.where(TArtist.C_ID.is(2L)).batch();
+delete.endBatch();
+```
 
 #### PreDelete
 TODO
