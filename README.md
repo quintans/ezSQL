@@ -104,13 +104,18 @@ When I have time I will implement it.
 
 Main Features:
 * SQL DSL
-* Simple declaration of joins
 * Static typed
-* Database abstraction
+* CRUD actions using beans
+* Simple join declaration
+* Populate struct tree with query results containing joins
+* Subqueries
 * Result transformation
 * Result Pagination
+* Automatic setting of primary keys for inserts
+* Optimistic Locking with automatic version increment
 * Simple Object Relationship Mapping
-* Optimistic locking
+* Pre/Post insert/update/delete bean triggers
+* Database abstraction
 * Extensible
 
 ## SimpleJDBC
