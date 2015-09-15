@@ -483,7 +483,7 @@ If for performance reasons you do not want the retrieval of the keys you can use
 #### Batch Insert
 When we have to make a lot of inserts, a more performant option, is to use batch insert.
 
-Wherever we use `.execute()` we use `.batch()` and terminate with `.endBatch()`
+To do batch inserts we use `.batch()` where we would use `.execute()` and terminate with `.endBatch()`,
 as demonstrated next.
 
 ```java
