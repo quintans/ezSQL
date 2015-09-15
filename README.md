@@ -99,8 +99,6 @@ without bringing along the entire database.
 
 _(Side note: the goSQL project is the same as this project, but in Go.)_
 
-The documentation in goSQL is more complete.
-
 Main Features:
 * SQL DSL
 * Static typed
