@@ -1058,6 +1058,28 @@ public class Query extends DmlBase {
         });
     }
 
+    public Float uniqueFloat() {
+        final int offset = driver().paginationColumnOffset(this);
+
+        return fetchUnique(new SimpleAbstractRowTransformer<Float>() {
+            @Override
+            public Float transform(ResultSet rs, int[] columnTypes) throws SQLException {
+                return rs.getFloat(1 + offset);
+            }
+        });
+    }
+
+    public Double uniqueDouble() {
+        final int offset = driver().paginationColumnOffset(this);
+
+        return fetchUnique(new SimpleAbstractRowTransformer<Double>() {
+            @Override
+            public Double transform(ResultSet rs, int[] columnTypes) throws SQLException {
+                return rs.getDouble(1 + offset);
+            }
+        });
+    }
+
     public String uniqueString() {
         final int offset = driver().paginationColumnOffset(this);
         return fetchUnique(new SimpleAbstractRowTransformer<String>() {

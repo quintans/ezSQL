@@ -538,6 +538,12 @@ public abstract class GenericDriver implements Driver {
             return lower(dmlType, function);
         } else if (EFunction.COALESCE.equals(op)) {
             return coalesce(dmlType, function);
+        } else if (EFunction.CASE.equals(op)) {
+            return caseStatement(dmlType, function);
+        } else if (EFunction.CASE_WHEN.equals(op)) {
+            return caseWhen(dmlType, function);
+        } else if (EFunction.CASE_ELSE.equals(op)) {
+            return caseElse(dmlType, function);
 		} else
 			throw new PersistenceException("Function " + op + " unknown");
 	}
@@ -810,7 +816,22 @@ public abstract class GenericDriver implements Driver {
         Object[] o = function.getMembers();
         return String.format("COALESCE(%s)", rolloverParameter(dmlType, o, ", "));
     }
+
+    public String caseStatement(EDml dmlType, Function function) {
+        Object[] o = function.getMembers();
+        return String.format("CASE %s END", rolloverParameter(dmlType, o, " "));
+    }
     
+    public String caseWhen(EDml dmlType, Function function) {
+        Object[] o = function.getMembers();
+		return String.format("WHEN %s THEN %s", translate(dmlType, (Function) o[0]), translate(dmlType, (Function) o[1]));
+    }
+    
+    public String caseElse(EDml dmlType, Function function) {
+        Object[] o = function.getMembers();
+		return String.format("ELSE %s", translate(dmlType, (Function) o[0]));
+    }
+
     public String autoNumber(EDml dmlType, Function function) {
         throw new UnsupportedOperationException();
     }

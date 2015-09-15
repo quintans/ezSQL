@@ -49,7 +49,7 @@ Simple ORM library for JAVA
 		* [Group By](#group-by)
 		* [Order By](#order-by)
 		* [Union](#union)
-		* [Case](#case)
+		* [Case Statement](#case-statement)
 		* [Pagination](#pagination)
 	* [Association Discriminator](#association-discriminator)
 	* [Column Discriminator](#column-discriminator)
@@ -99,8 +99,6 @@ without bringing along the entire database.
 
 goSQL is the same as this project, but in Go.
 The documentation in goSQL is more complete.
-The one thing note implemented in ezSQL is the CASE statement.
-When I have time I will implement it.
 
 Main Features:
 * SQL DSL
@@ -963,8 +961,68 @@ It’s possible to add more orders, and even to order by columns belonging to ot
 #### Union
 TODO
 
-#### Case
-TODO
+#### Case Statement
+
+In the following examples we will demonstrate how to declare
+a Simple CASE statement and a Searched CASE statement.
+
+##### Simple CASE
+
+Sum all paintings where the book named "Blue Nude" costs 10 and the others cost 20.
+
+```java
+Long sale = db.query(TPainting.T_PAINTING)
+	.column(
+		sum(
+			with(TPainting.C_NAME)
+			.when("Blue Nude").then(10)
+			.otherwise(asIs(20)) // asIs(): value is written as is to the query
+			.end()
+		)
+	)
+	.uniqueLong();
+```
+
+##### Searched CASE
+
+Classify the cost of each painting.
+
+```java
+public class Classification {
+	private String name;
+	private String category;
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getCategory() {
+		return category;
+	}
+
+	public void setCategory(String category) {
+		this.category = category;
+	}
+}
+```
+
+```java
+List<Classification> c = db.query(TPainting.T_PAINTING)
+	.column(TPainting.C_NAME) // default maps to field name
+	.column(
+		when(TPainting.C_PRICE.gt(500000D)).then("expensive")
+		.when(TPainting.C_PRICE.range(200000D, 500000D)).then("normal")
+		.otherwise("cheap")
+		.end()
+	)
+	.as("category") // maps to field category
+	.order(TPainting.C_PRICE).desc()
+	.list(Classification.class);
+```
 
 #### Pagination
 

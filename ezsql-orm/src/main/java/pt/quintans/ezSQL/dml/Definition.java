@@ -7,6 +7,7 @@ import java.util.List;
 import pt.quintans.ezSQL.db.ColGroup;
 import pt.quintans.ezSQL.db.Column;
 import pt.quintans.ezSQL.db.Table;
+import pt.quintans.ezSQL.dml.SearchedCase.SearchedWhen;
 import pt.quintans.ezSQL.exceptions.PersistenceException;
 import pt.quintans.ezSQL.toolkit.utils.Misc;
 
@@ -226,4 +227,23 @@ public class Definition {
         return new Function(EFunction.COALESCE, o);
     }
 	
+    /**
+     * Searched CASE
+     * 
+     * @param criteria
+     * @return
+     */
+    public static SearchedWhen when(Condition criteria) {
+    	return new SearchedCase().when(criteria);
+    }
+
+    /**
+     * Simple CASE
+     * 
+     * @param expression
+     * @return
+     */
+    public static SimpleCase with(Object expression) {
+    	return new SimpleCase(expression);
+    }
 }

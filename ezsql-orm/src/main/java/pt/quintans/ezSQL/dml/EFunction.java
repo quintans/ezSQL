@@ -53,4 +53,8 @@ public class EFunction {
     public static final String UPPER = "UPPER";
     public static final String LOWER = "LOWER";
 	public static final String COALESCE = "COALESCE";
+	public static final String CASE = "CASE";
+	public static final String CASE_WHEN = "CASE_WHEN";
+	public static final String CASE_ELSE = "CASE_ELSE";
+
 }

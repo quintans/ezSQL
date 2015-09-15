@@ -1,9 +1,7 @@
 package pt.quintans.ezSQL.orm;
 
 import static org.junit.Assert.assertTrue;
-import static pt.quintans.ezSQL.dml.Definition.exists;
-import static pt.quintans.ezSQL.dml.Definition.param;
-import static pt.quintans.ezSQL.dml.Definition.sum;
+import static pt.quintans.ezSQL.dml.Definition.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -895,4 +893,61 @@ public class TestStandard extends TestBootstrap {
         assertTrue("Wrong pay grade type!", employees.get(1).getPayGrade() == EPayGrade.HIGH);
     }
 
+    @Test
+    public void testSimpleCase() {
+    	Long sale = db.query(TPainting.T_PAINTING)
+    			.column(
+    				sum(
+    					with(TPainting.C_NAME)
+    					.when("Blue Nude").then(10)
+    					.otherwise(asIs(20)) // asIs(): value is written as is to the query
+    					.end()
+    				)
+    			)
+    			.uniqueLong();
+    	
+        assertTrue("Wrong sale value for Paintings!", sale != 70);
+    }
+
+	class Classification {
+		private String name;
+		private String category;
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public String getCategory() {
+			return category;
+		}
+
+		public void setCategory(String category) {
+			this.category = category;
+		}
+	}
+
+    @Test
+    public void testSearchedCase() {
+    	List<Classification> c = db.query(TPainting.T_PAINTING)
+    		.column(TPainting.C_NAME) // default maps to field name
+    		.column(
+    			when(TPainting.C_PRICE.gt(500000D)).then("expensive")
+    			.when(TPainting.C_PRICE.range(200000D, 500000D)).then("normal")
+    			.otherwise("cheap")
+    			.end()
+    		)
+    		.as("category") // maps to field category
+    		.order(TPainting.C_PRICE).desc()
+    		.list(Classification.class);
+    	
+        assertTrue("Wrong category value for Paintings!", "expensive".equals(c.get(0).getCategory()));
+        assertTrue("Wrong category value for Paintings!", "normal".equals(c.get(1).getCategory()));
+        assertTrue("Wrong category value for Paintings!", "cheap".equals(c.get(2).getCategory()));
+        assertTrue("Wrong category value for Paintings!", "cheap".equals(c.get(3).getCategory()));
+    	
+    }
 }
