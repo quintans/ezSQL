@@ -97,7 +97,8 @@ Also, writing HQL in plain text led to many mistakes and made refactoring dificu
 Another issue was the impossible task of serializing my entity beans
 without bringing along the entire database.
 
-goSQL is the same as this project, but in Go.
+_(Side note: the goSQL project is the same as this project, but in Go.)_
+
 The documentation in goSQL is more complete.
 
 Main Features:
