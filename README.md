@@ -92,13 +92,6 @@ db.update(TArtist.T_ARTIST)
     .execute();
 ```
 
-ezSQL was born out of the frustration of the "magic" of Hibernate.
-Also, writing HQL in plain text led to many mistakes and made refactoring dificult.
-Another issue was the impossible task of serializing my entity beans
-without bringing along the entire database.
-
-_(Side note: the goSQL project is the same as this project, but in Go.)_
-
 Main Features:
 * SQL DSL
 * Static typed
@@ -114,6 +107,15 @@ Main Features:
 * Pre/Post insert/update/delete bean triggers
 * Database abstraction
 * Extensible
+
+Motivation
+==
+ezSQL was born out of the frustration of the "magic" of Hibernate.
+Also, writing HQL in plain text led to many mistakes and made refactoring dificult.
+Another issue was the impossible task of serializing my entity beans
+without bringing along the entire database.
+
+_(Side note: the goSQL project is the same as this project, but in Go.)_
 
 ## SimpleJDBC
 ezSQL is build on top of the class named **SimpleJDBC**.
