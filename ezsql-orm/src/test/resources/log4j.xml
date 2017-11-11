@@ -11,7 +11,7 @@
 		</layout>
 	</appender>
 	
-	<logger name="pt.quintans">
+	<logger name="com.github.quintans">
 		<level value="debug" />
 	</logger>
 	

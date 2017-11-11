@@ -149,8 +149,8 @@ Definition of a table `ARTIST` and its columns, identifying key fields, version 
 ```java
 import java.util.Date;
 
-import pt.quintans.ezSQL.db.*;
-import pt.quintans.ezSQL.orm.app.domain.EGender;
+import com.github.quintans.ezSQL.db.*;
+import com.github.quintans.ezSQL.orm.app.domain.EGender;
 
 public class TArtist {
     public static final Table T_ARTIST = new Table("ARTIST");
@@ -206,8 +206,8 @@ Many-to-many declaration is almost the same as seen next.
 Definition of a table `PAINTING` and its columns, identifying key fields, version field, etc
 
 ```java
-import pt.quintans.ezSQL.db.*;
-import static pt.quintans.ezSQL.dml.Definition.*;
+import com.github.quintans.ezSQL.db.*;
+import static com.github.quintans.ezSQL.dml.Definition.*;
 
 public class TPainting {
     public static final Table T_PAINTING = new Table("PAINTING");
@@ -249,10 +249,10 @@ public class TPainting {
 Definition of a table `IMAGE` and its columns, identifying key fields, version field, etc
 
 ```java
-import pt.quintans.ezSQL.db.Association;
-import pt.quintans.ezSQL.db.Column;
-import pt.quintans.ezSQL.db.Table;
-import pt.quintans.ezSQL.common.io.BinStore;
+import com.github.quintans.ezSQL.db.Association;
+import com.github.quintans.ezSQL.db.Column;
+import com.github.quintans.ezSQL.db.Table;
+import com.github.quintans.ezSQL.common.io.BinStore;
 
 public class TImage {
     public static final Table T_IMAGE = new Table("IMAGE");
@@ -275,8 +275,8 @@ public class TImage {
 ### Table GALLERY definition
 
 ```java
-import pt.quintans.ezSQL.db.*;
-import static pt.quintans.ezSQL.dml.Definition.*;
+import com.github.quintans.ezSQL.db.*;
+import static com.github.quintans.ezSQL.dml.Definition.*;
 
 public class TGallery {
     public static final Table T_GALLERY = new Table("GALLERY");
@@ -338,13 +338,13 @@ db.setDriver(new H2Driver());
 All examples also import the following:
 
 ```java
-import static pt.quintans.ezSQL.dml.Definition.*;
+import static com.github.quintans.ezSQL.dml.Definition.*;
 ```
 
 Some examples will use the following enumeration EGender:
 
 ```java
-import pt.quintans.ezSQL.common.api.Value;
+import com.github.quintans.ezSQL.common.api.Value;
 
 public enum EGender implements Value<String> {
 	MALE("M"),
@@ -368,9 +368,9 @@ will be the value returned by the `value()` method.
 
 ### Updatable
 
-If a bean implements `pt.quintans.ezSQL.common.api.Updatable`, the DML
+If a bean implements `com.github.quintans.ezSQL.common.api.Updatable`, the DML
 operations will only use the properties that were change. In the examples the
-used beans extend from `pt.quintans.ezSQL.orm.app.domain.IdentityDomain` that
+used beans extend from `com.github.quintans.ezSQL.orm.app.domain.IdentityDomain` that
 has this implementation.
 
 ### INSERT EXAMPLES

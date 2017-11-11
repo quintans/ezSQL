@@ -1,17 +1,70 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
                              http://maven.apache.org/maven-v4_0_0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+	<modelVersion>4.0.0</modelVersion>
 
-    <groupId>pt.quintans</groupId>
-    <artifactId>ezsql</artifactId>
-    <version>1.0.0</version>
-    <packaging>pom</packaging>
+	<groupId>com.github.quintans</groupId>
+	<artifactId>ezsql</artifactId>
+	<version>1.0.0</version>
+	<packaging>pom</packaging>
 
-    <modules>
-        <module>ezsql-common</module>
-        <module>ezsql-orm</module>
-    </modules>
+	<modules>
+		<module>ezsql-common</module>
+		<module>ezsql-orm</module>
+	</modules>
 
+	<name>ezSQL</name>
+	<description>ezSQL parent project</description>
+	<url>https://github.com/quintans/ezSQL</url>
+
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
+
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<name>Paulo Quintans Pereira</name>
+			<email>paulo.quintans@gmail.com</email>
+		</developer>
+	</developers>
+
+	<scm>
+		<connection>scm:git:git://github.com/quintans/ezSQL.git</connection>
+		<developerConnection>scm:git:ssh://github.com:quintans/ezSQL.git</developerConnection>
+		<url>http://github.com/quintans/ezSQL/tree/master</url>
+	</scm>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<version>1.5</version>
+				<executions>
+					<execution>
+						<id>sign-artifacts</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 </project>
