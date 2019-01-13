@@ -1,8 +1,5 @@
 package com.github.quintans.jdbc.transformers;
 
-import com.github.quintans.ezSQL.AbstractDb;
-import com.github.quintans.ezSQL.common.api.Updatable;
-
 import java.util.Collection;
 import java.util.LinkedList;
 
@@ -25,9 +22,6 @@ public abstract class SimpleAbstractRowTransformer<T> implements IRowTransformer
 
 	@Override
 	public void onTransformation(Collection<T> result, T object) {
-	    if(object instanceof Updatable) {
-	        ((Updatable) object).clear();
-	    }
 		result.add(object);
 	}
 
