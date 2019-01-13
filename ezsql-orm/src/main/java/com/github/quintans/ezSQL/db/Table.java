@@ -12,10 +12,10 @@ import java.util.Set;
 import com.github.quintans.ezSQL.common.type.MyDate;
 import com.github.quintans.ezSQL.common.type.MyTime;
 import com.github.quintans.ezSQL.dml.Condition;
-import com.github.quintans.ezSQL.exceptions.PersistenceException;
 import com.github.quintans.ezSQL.toolkit.io.BinStore;
 import com.github.quintans.ezSQL.toolkit.io.TextStore;
 import com.github.quintans.ezSQL.toolkit.utils.Misc;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 public class Table {
     private Map<String, Column<?>> columnsMap = new LinkedHashMap<String, Column<?>>();

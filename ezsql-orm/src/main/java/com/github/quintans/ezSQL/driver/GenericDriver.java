@@ -14,6 +14,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
+import com.github.quintans.jdbc.exceptions.PersistenceException;
+import com.github.quintans.jdbc.transformers.ResultSetWrapper;
+
 import org.apache.commons.io.IOUtils;
 
 import com.github.quintans.ezSQL.common.api.Value;
@@ -32,9 +35,8 @@ import com.github.quintans.ezSQL.dml.Function;
 import com.github.quintans.ezSQL.dml.Insert;
 import com.github.quintans.ezSQL.dml.Query;
 import com.github.quintans.ezSQL.dml.Update;
-import com.github.quintans.ezSQL.exceptions.PersistenceException;
+import com.github.quintans.ezSQL.jdbc.AbstractPreparedStatementCallback;
 import com.github.quintans.ezSQL.sp.SqlProcedure;
-import com.github.quintans.ezSQL.sql.AbstractPreparedStatementCallback;
 import com.github.quintans.ezSQL.toolkit.io.AutoCloseInputStream;
 import com.github.quintans.ezSQL.toolkit.io.BinStore;
 import com.github.quintans.ezSQL.toolkit.io.TextStore;
@@ -71,85 +73,99 @@ public abstract class GenericDriver implements Driver {
 	}
 
 	@Override
-	public Object toIdentity(ResultSet rs, int columnIndex) throws SQLException {
+	public Object toIdentity(ResultSetWrapper rsw, int columnIndex) throws SQLException {
+		ResultSet rs = rsw.getResultSet();
 		Object o = rs.getObject(columnIndex);
 		return (rs.wasNull() ? null : o);
 	}
 
 	@Override
-	public Boolean toBoolean(ResultSet rs, int columnIndex) throws SQLException {
+	public Boolean toBoolean(ResultSetWrapper rsw, int columnIndex) throws SQLException {
+		ResultSet rs = rsw.getResultSet();
 		Boolean o = rs.getBoolean(columnIndex);
 		return (rs.wasNull() ? null : o);
 	}
 
 	@Override
-	public String toString(ResultSet rs, int columnIndex) throws SQLException {
+	public String toString(ResultSetWrapper rsw, int columnIndex) throws SQLException {
+		ResultSet rs = rsw.getResultSet();
 		String o = rs.getString(columnIndex);
 		return (rs.wasNull() ? null : o);
 	}
 
 	@Override
-	public Byte toTiny(ResultSet rs, int columnIndex) throws SQLException {
+	public Byte toTiny(ResultSetWrapper rsw, int columnIndex) throws SQLException {
+		ResultSet rs = rsw.getResultSet();
 	    Byte o = rs.getByte(columnIndex);
 		return (rs.wasNull() ? null : o);
 	}
 
 	@Override
-	public Short toShort(ResultSet rs, int columnIndex) throws SQLException {
+	public Short toShort(ResultSetWrapper rsw, int columnIndex) throws SQLException {
+		ResultSet rs = rsw.getResultSet();
 	    Short o = rs.getShort(columnIndex);
 		return (rs.wasNull() ? null : o);
 	}
 
 	@Override
-	public Integer toInteger(ResultSet rs, int columnIndex) throws SQLException {
+	public Integer toInteger(ResultSetWrapper rsw, int columnIndex) throws SQLException {
+		ResultSet rs = rsw.getResultSet();
 	    Integer o = rs.getInt(columnIndex);
 		return (rs.wasNull() ? null : o);
 	}
 
     @Override
-    public Long toLong(ResultSet rs, int columnIndex) throws SQLException {
+    public Long toLong(ResultSetWrapper rsw, int columnIndex) throws SQLException {
+		ResultSet rs = rsw.getResultSet();
         Long o = rs.getLong(columnIndex);
         return (rs.wasNull() ? null : o);
     }
 
     @Override
-	public Double toDecimal(ResultSet rs, int columnIndex) throws SQLException {
+	public Double toDecimal(ResultSetWrapper rsw, int columnIndex) throws SQLException {
+		ResultSet rs = rsw.getResultSet();
 		Double o = rs.getDouble(columnIndex);
 		return (rs.wasNull() ? null : o);
 	}
 
 	@Override
-	public BigDecimal toBigDecimal(ResultSet rs, int columnIndex) throws SQLException {
+	public BigDecimal toBigDecimal(ResultSetWrapper rsw, int columnIndex) throws SQLException {
+		ResultSet rs = rsw.getResultSet();
 		BigDecimal o = rs.getBigDecimal(columnIndex);
 		return (rs.wasNull() ? null : o);
 	}
 
 	@Override
-	public MyTime toTime(ResultSet rs, int columnIndex) throws SQLException {
+	public MyTime toTime(ResultSetWrapper rsw, int columnIndex) throws SQLException {
+		ResultSet rs = rsw.getResultSet();
 		Date o = rs.getTime(columnIndex);
 		return (rs.wasNull() ? null : new MyTime(o.getTime()));
 	}
 
     @Override
-    public MyDate toDate(ResultSet rs, int columnIndex) throws SQLException {
+    public MyDate toDate(ResultSetWrapper rsw, int columnIndex) throws SQLException {
+		ResultSet rs = rsw.getResultSet();
         Date o = rs.getDate(columnIndex);
         return (rs.wasNull() ? null : new MyDate(o.getTime()));
     }
     
     @Override
-    public MyDateTime toDateTime(ResultSet rs, int columnIndex) throws SQLException {
+    public MyDateTime toDateTime(ResultSetWrapper rsw, int columnIndex) throws SQLException {
+		ResultSet rs = rsw.getResultSet();
         Date o = rs.getTimestamp(columnIndex);
         return (rs.wasNull() ? null : new MyDateTime(o.getTime()));
     }
     
     @Override
-    public java.util.Date toTimestamp(ResultSet rs, int columnIndex) throws SQLException {
+    public java.util.Date toTimestamp(ResultSetWrapper rsw, int columnIndex) throws SQLException {
+		ResultSet rs = rsw.getResultSet();
         Date o = rs.getTimestamp(columnIndex, getCalendar());
         return (rs.wasNull() ? null : o);
     }
 
     @Override
-	public InputStream toText(ResultSet rs, int columnIndex) throws SQLException {
+	public InputStream toText(ResultSetWrapper rsw, int columnIndex) throws SQLException {
+		ResultSet rs = rsw.getResultSet();
 		InputStream in = rs.getAsciiStream(columnIndex);
 		if (in == null || rs.wasNull()) {
 		    return null;
@@ -158,7 +174,8 @@ public abstract class GenericDriver implements Driver {
 	}
 
 	@Override
-	public InputStream toBin(ResultSet rs, int columnIndex) throws SQLException {
+	public InputStream toBin(ResultSetWrapper rsw, int columnIndex) throws SQLException {
+		ResultSet rs = rsw.getResultSet();
 		InputStream in = rs.getBinaryStream(columnIndex);
         if (in == null || rs.wasNull()) {
             return null;
@@ -850,53 +867,55 @@ public abstract class GenericDriver implements Driver {
 
 	public abstract String paginate(Query query, String sql);
 
-	protected Object toDefault(ResultSet rs, int position, int sqlType) throws SQLException {
+	protected Object toDefault(ResultSetWrapper rsw, int position) throws SQLException {
+		ResultSet rs = rsw.getResultSet();
 		Object o = rs.getObject(position);
 		return rs.wasNull() ? null : o;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T fromDb(ResultSet rs, int position, int sqlType, Class<T> klass) throws SQLException {
+	public <T> T fromDb(ResultSetWrapper rsw, int position, Class<T> klass) throws SQLException {
 		if (klass == null) {
-			return (T) toDefault(rs, position, sqlType);
+			return (T) toDefault(rsw, position);
 		}
 		else {
 
 			Object val = null;
 			if (klass.isAssignableFrom(Boolean.class) || klass.isAssignableFrom(boolean.class))
-				val = toBoolean(rs, position);
+				val = toBoolean(rsw, position);
 			else if (klass.isAssignableFrom(BigDecimal.class))
-				val = toBigDecimal(rs, position);
+				val = toBigDecimal(rsw, position);
 			else if (klass.isAssignableFrom(Byte.class) || klass.isAssignableFrom(byte.class))
-				val = toTiny(rs, position);
+				val = toTiny(rsw, position);
 			else if (klass.isAssignableFrom(Short.class) || klass.isAssignableFrom(short.class))
-				val = toShort(rs, position);
+				val = toShort(rsw, position);
 			else if (klass.isAssignableFrom(Integer.class) || klass.isAssignableFrom(int.class))
-				val = toInteger(rs, position);
+				val = toInteger(rsw, position);
 			else if (klass.isAssignableFrom(Long.class) || klass.isAssignableFrom(long.class))
-				val = toLong(rs, position);
+				val = toLong(rsw, position);
 			else if (klass.isAssignableFrom(Double.class) || klass.isAssignableFrom(double.class))
-				val = toDecimal(rs, position);
+				val = toDecimal(rsw, position);
             else if (klass.isAssignableFrom(Date.class))
-                val = toTimestamp(rs, position);
+                val = toTimestamp(rsw, position);
             else if (klass.isAssignableFrom(MyTime.class))
-                val = toTime(rs, position);
+                val = toTime(rsw, position);
             else if (klass.isAssignableFrom(MyDate.class))
-                val = toDate(rs, position);
+                val = toDate(rsw, position);
             else if (klass.isAssignableFrom(MyDateTime.class))
-                val = toDateTime(rs, position);
+                val = toDateTime(rsw, position);
 			else if (TextStore.class.isAssignableFrom(klass)) {
 			    val = new TextStore();
-			    Misc.copy(toText(rs, position), (BinStore) val);
+			    Misc.copy(toText(rsw, position), (BinStore) val);
 			}
 			else if (BinStore.class.isAssignableFrom(klass)) {
                 val = new BinStore();
-                Misc.copy(toBin(rs, position), (BinStore) val);
+                Misc.copy(toBin(rsw, position), (BinStore) val);
 			} 
 			else if (klass.isEnum()) {
+				int sqlType = rsw.getSqlType(position);
 				if (Types.VARCHAR == sqlType) {
-					String value = toString(rs, position);
+					String value = toString(rsw, position);
 					if (value != null) {
 						if (Value.class.isAssignableFrom(klass)) {
 							for (final Object element : klass.getEnumConstants()) {
@@ -918,7 +937,7 @@ public abstract class GenericDriver implements Driver {
 						}
 					}
 				} else {
-					Integer value = toInteger(rs, position);
+					Integer value = toInteger(rsw, position);
 					if (value != null) {
 						int v = value.intValue();
 						if (Value.class.isAssignableFrom(klass)) {
@@ -945,7 +964,7 @@ public abstract class GenericDriver implements Driver {
 			else if (klass.isAssignableFrom(byte[].class)) {
 	            // Types.BLOB == sqlType || Types.LONGVARBINARY == sqlType
 			    // since will be setting all bytes, ByteCahce is not necessary
-			    InputStream in = toBin(rs, position);
+			    InputStream in = toBin(rsw, position);
 			    if(in != null) {
     				try {
                         val = IOUtils.toByteArray(in);
@@ -957,9 +976,10 @@ public abstract class GenericDriver implements Driver {
 			    }
             } 
             else if (klass.isAssignableFrom(String.class)) {
+				int sqlType = rsw.getSqlType(position);
                 if (Types.CLOB == sqlType || Types.LONGNVARCHAR == sqlType) {
                     // since will be setting all bytes, TextCache is not necessary
-                    InputStream in = toText(rs, position);
+                    InputStream in = toText(rsw, position);
                     if(in != null) {
                         try {
                             val = IOUtils.toString(in, TextStore.DEFAULT_CHARSET);
@@ -970,7 +990,7 @@ public abstract class GenericDriver implements Driver {
                         }
                     }
                 } else
-                    val = toString(rs, position);
+                    val = toString(rsw, position);
 			}
 
 			return (T) val;

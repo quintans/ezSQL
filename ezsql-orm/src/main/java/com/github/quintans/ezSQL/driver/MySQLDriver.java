@@ -11,8 +11,9 @@ import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.dml.AutoKeyStrategy;
 import com.github.quintans.ezSQL.dml.Delete;
 import com.github.quintans.ezSQL.dml.Query;
-import com.github.quintans.ezSQL.exceptions.PersistenceException;
-import com.github.quintans.ezSQL.sql.PreparedStatementCallback;
+import com.github.quintans.jdbc.PreparedStatementCallback;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
+import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
 public class MySQLDriver extends GenericDriver {
     private final String DATE_FORMAT = "yyyy-MM-dd";
@@ -62,7 +63,8 @@ public class MySQLDriver extends GenericDriver {
     }
     
     @Override
-    public java.util.Date toTimestamp(ResultSet rs, int columnIndex) throws SQLException {
+    public java.util.Date toTimestamp(ResultSetWrapper rsw, int columnIndex) throws SQLException {
+    	ResultSet rs = rsw.getResultSet();
         // There is a bug in the mariadb driver. if the column value is null there is a null pointer exception if using a calendar
         Date o = rs.getTimestamp(columnIndex, getCalendar());
         //Date o = rs.getTimestamp(columnIndex);

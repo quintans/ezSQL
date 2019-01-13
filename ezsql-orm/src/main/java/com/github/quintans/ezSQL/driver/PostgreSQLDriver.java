@@ -10,8 +10,8 @@ import com.github.quintans.ezSQL.dml.AutoKeyStrategy;
 import com.github.quintans.ezSQL.dml.Function;
 import com.github.quintans.ezSQL.dml.Query;
 import com.github.quintans.ezSQL.dml.Update;
-import com.github.quintans.ezSQL.exceptions.PersistenceException;
-import com.github.quintans.ezSQL.sql.AbstractNullPreparedStatementCallback;
+import com.github.quintans.ezSQL.jdbc.AbstractNullPreparedStatementCallback;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 public class PostgreSQLDriver extends GenericDriver {
     private String TIME_ZONE = "UTC";

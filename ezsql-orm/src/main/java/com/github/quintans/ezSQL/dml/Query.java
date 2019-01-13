@@ -4,7 +4,6 @@ import static com.github.quintans.ezSQL.toolkit.utils.Misc.length;
 
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,15 +20,17 @@ import com.github.quintans.ezSQL.AbstractDb;
 import com.github.quintans.ezSQL.db.Association;
 import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.db.Table;
-import com.github.quintans.ezSQL.exceptions.PersistenceException;
-import com.github.quintans.ezSQL.sql.RawSql;
-import com.github.quintans.ezSQL.transformers.AbstractRowTransformer;
+import com.github.quintans.ezSQL.transformers.AbstractDbRowTransformer;
 import com.github.quintans.ezSQL.transformers.BeanTransformer;
 import com.github.quintans.ezSQL.transformers.DomainBeanTransformer;
 import com.github.quintans.ezSQL.transformers.IProcessor;
-import com.github.quintans.ezSQL.transformers.IRowTransformer;
 import com.github.quintans.ezSQL.transformers.IRowTransformerFactory;
-import com.github.quintans.ezSQL.transformers.SimpleAbstractRowTransformer;
+import com.github.quintans.ezSQL.transformers.SimpleAbstractDbRowTransformer;
+import com.github.quintans.jdbc.RawSql;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
+import com.github.quintans.jdbc.transformers.IRowTransformer;
+import com.github.quintans.jdbc.transformers.ResultSetWrapper;
+import com.github.quintans.jdbc.transformers.SimpleAbstractRowTransformer;
 
 public class Query extends DmlBase {
     private static final Logger LOG = Logger.getLogger(Query.class);
@@ -918,7 +919,7 @@ public class Query extends DmlBase {
 		select(createReflectionTransformer(processor));
 	}
 
-    private AbstractRowTransformer<Void> createReflectionTransformer(final Object processor){
+    private AbstractDbRowTransformer<Void> createReflectionTransformer(final Object processor){
 		Method[] methods = processor.getClass().getDeclaredMethods();
 		if(methods.length != 1) {
 			throw new PersistenceException("The supplied object must have one declared method. Found " + methods.length + " methods!" );
@@ -934,10 +935,10 @@ public class Query extends DmlBase {
 		
         final int offset = driver().paginationColumnOffset(this);
 
-        return new AbstractRowTransformer<Void>(getDb(), true) {
+        return new AbstractDbRowTransformer<Void>(getDb()) {
             @Override
-            public Void transform(ResultSet rs, int[] columnTypes) throws SQLException {
-            	Object[] objs = Query.this.transform(rs, columnTypes, offset, clazzes);
+            public Void transform(ResultSetWrapper rsw) throws SQLException {
+            	Object[] objs = Query.this.transform(rsw, offset, clazzes);
                 // reflection call
                 try {
 					method.invoke(processor, objs);
@@ -969,22 +970,23 @@ public class Query extends DmlBase {
         return fetchUnique(createRawTransformer(clazzes));
     }
     
-    private SimpleAbstractRowTransformer<Object[]> createRawTransformer(final Class<?>... clazzes){
+    private SimpleAbstractDbRowTransformer<Object[]> createRawTransformer(final Class<?>... clazzes){
         if(length(clazzes) == 0){
             throw new PersistenceException("Classes must be defined!");
         }
         
         final int offset = driver().paginationColumnOffset(this);
         
-        return new SimpleAbstractRowTransformer<Object[]>(getDb(), true) {
+        return new SimpleAbstractDbRowTransformer<Object[]>(getDb()) {
             @Override
-            public Object[] transform(ResultSet rs, int[] columnTypes) throws SQLException {
-            	return Query.this.transform(rs, columnTypes, offset, clazzes);
+            public Object[] transform(ResultSetWrapper rsw) throws SQLException {
+            	return Query.this.transform(rsw, offset, clazzes);
             }
         };
     }
     
-    private Object[] transform(ResultSet rs, int[] columnTypes, int offset, Class<?>... clazzes) throws SQLException {
+    private Object[] transform(ResultSetWrapper rsw, int offset, Class<?>... clazzes) throws SQLException {
+    	int[] columnTypes = rsw.getColumnTypes();
         int cnt = 0;
         if(clazzes.length > 0)
             cnt = Math.min(columnTypes.length, clazzes.length);
@@ -992,7 +994,7 @@ public class Query extends DmlBase {
             cnt = columnTypes.length;
         Object objs[] = new Object[cnt];
         for(int i = 0; i < cnt; i++){
-            objs[i] = driver().fromDb(rs, i + 1 + offset, columnTypes[i], cnt > 0 ? clazzes[i] : null);
+            objs[i] = driver().fromDb(rsw, i + 1 + offset, cnt > 0 ? clazzes[i] : null);
         }
         return objs;
     }
@@ -1009,10 +1011,10 @@ public class Query extends DmlBase {
     public <T> List<T> listRaw(final Class<T> clazz) {
         final int offset = driver().paginationColumnOffset(this);
 
-        return list(new SimpleAbstractRowTransformer<T>(getDb(), true) {
+        return list(new SimpleAbstractDbRowTransformer<T>(getDb()) {
             @Override
-            public T transform(ResultSet rs, int[] columnTypes) throws SQLException {
-                return driver().fromDb(rs, 1 + offset, columnTypes[0], clazz);
+            public T transform(ResultSetWrapper rsw) throws SQLException {
+                return driver().fromDb(rsw, 1 + offset, clazz);
             }
         });
     }
@@ -1020,10 +1022,10 @@ public class Query extends DmlBase {
     public <T> T uniqueRaw(final Class<T> clazz) {
         final int offset = driver().paginationColumnOffset(this);
 
-        return fetchUnique(new SimpleAbstractRowTransformer<T>(getDb(), true) {
+        return fetchUnique(new SimpleAbstractDbRowTransformer<T>(getDb()) {
             @Override
-            public T transform(ResultSet rs, int[] columnTypes) throws SQLException {
-                return driver().fromDb(rs, 1 + offset, columnTypes[0], clazz);
+            public T transform(ResultSetWrapper rsw) throws SQLException {
+                return driver().fromDb(rsw, 1 + offset, clazz);
             }
         });
     }
@@ -1031,10 +1033,10 @@ public class Query extends DmlBase {
     public Boolean uniqueBoolean() {
         final int offset = driver().paginationColumnOffset(this);
 
-        return fetchUnique(new SimpleAbstractRowTransformer<Boolean>(getDb()) {
+        return fetchUnique(new SimpleAbstractDbRowTransformer<Boolean>(getDb()) {
             @Override
-            public Boolean transform(ResultSet rs, int[] columnTypes) throws SQLException {
-                return driver().toBoolean(rs, 1 + offset);
+            public Boolean transform(ResultSetWrapper rsw) throws SQLException {
+                return driver().toBoolean(rsw, 1 + offset);
             }
         });
     }
@@ -1044,8 +1046,8 @@ public class Query extends DmlBase {
 
         return fetchUnique(new SimpleAbstractRowTransformer<Integer>() {
             @Override
-            public Integer transform(ResultSet rs, int[] columnTypes) throws SQLException {
-                return rs.getInt(1 + offset);
+            public Integer transform(ResultSetWrapper rsw) throws SQLException {
+                return rsw.getResultSet().getInt(1 + offset);
             }
         });
     }
@@ -1055,8 +1057,8 @@ public class Query extends DmlBase {
 
         return fetchUnique(new SimpleAbstractRowTransformer<Long>() {
             @Override
-            public Long transform(ResultSet rs, int[] columnTypes) throws SQLException {
-                return rs.getLong(1 + offset);
+            public Long transform(ResultSetWrapper rsw) throws SQLException {
+                return rsw.getResultSet().getLong(1 + offset);
             }
         });
     }
@@ -1066,8 +1068,8 @@ public class Query extends DmlBase {
 
         return fetchUnique(new SimpleAbstractRowTransformer<Float>() {
             @Override
-            public Float transform(ResultSet rs, int[] columnTypes) throws SQLException {
-                return rs.getFloat(1 + offset);
+            public Float transform(ResultSetWrapper rsw) throws SQLException {
+                return rsw.getResultSet().getFloat(1 + offset);
             }
         });
     }
@@ -1077,8 +1079,8 @@ public class Query extends DmlBase {
 
         return fetchUnique(new SimpleAbstractRowTransformer<Double>() {
             @Override
-            public Double transform(ResultSet rs, int[] columnTypes) throws SQLException {
-                return rs.getDouble(1 + offset);
+            public Double transform(ResultSetWrapper rsw) throws SQLException {
+                return rsw.getResultSet().getDouble(1 + offset);
             }
         });
     }
@@ -1087,8 +1089,8 @@ public class Query extends DmlBase {
         final int offset = driver().paginationColumnOffset(this);
         return fetchUnique(new SimpleAbstractRowTransformer<String>() {
             @Override
-            public String transform(ResultSet rs, int[] columnTypes) throws SQLException {
-                return rs.getString(1 + offset);
+            public String transform(ResultSetWrapper rsw) throws SQLException {
+                return rsw.getResultSet().getString(1 + offset);
             }
         });
     }
@@ -1097,8 +1099,8 @@ public class Query extends DmlBase {
         final int offset = driver().paginationColumnOffset(this);
         return fetchUnique(new SimpleAbstractRowTransformer<BigDecimal>() {
             @Override
-            public BigDecimal transform(ResultSet rs, int[] columnTypes) throws SQLException {
-                return rs.getBigDecimal(1 + offset);
+            public BigDecimal transform(ResultSetWrapper rsw) throws SQLException {
+                return rsw.getResultSet().getBigDecimal(1 + offset);
             }
         });
     }

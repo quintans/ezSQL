@@ -8,8 +8,8 @@ import com.github.quintans.ezSQL.db.ColGroup;
 import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.dml.SearchedCase.SearchedWhen;
-import com.github.quintans.ezSQL.exceptions.PersistenceException;
 import com.github.quintans.ezSQL.toolkit.utils.Misc;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 public class Definition {
     public static ColGroup ASSOCIATE(Column<?>... from) {

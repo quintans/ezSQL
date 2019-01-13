@@ -3,7 +3,7 @@ package com.github.quintans.ezSQL.db;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.github.quintans.ezSQL.exceptions.PersistenceException;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 public class Association {
 	protected Table tableMany2Many;

@@ -4,7 +4,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
 
-import com.github.quintans.ezSQL.sql.PreparedStatementCallback;
+import com.github.quintans.jdbc.PreparedStatementCallback;
 
 public enum NullSql implements PreparedStatementCallback {
     UNKNOWN(Types.NULL),

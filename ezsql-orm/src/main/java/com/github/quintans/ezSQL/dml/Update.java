@@ -19,9 +19,9 @@ import com.github.quintans.ezSQL.db.Discriminator;
 import com.github.quintans.ezSQL.db.PreUpdateTrigger;
 import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.exceptions.OptimisticLockException;
-import com.github.quintans.ezSQL.exceptions.PersistenceException;
-import com.github.quintans.ezSQL.sql.RawSql;
 import com.github.quintans.ezSQL.transformers.BeanProperty;
+import com.github.quintans.jdbc.RawSql;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 public class Update extends Dml<Update> {
     private static final Logger LOG = Logger.getLogger(Update.class);

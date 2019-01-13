@@ -1,7 +1,7 @@
 package com.github.quintans.ezSQL.orm;
 
-import static com.github.quintans.ezSQL.sp.SqlParameter.IN;
-import static com.github.quintans.ezSQL.sp.SqlParameter.OUT;
+import static com.github.quintans.jdbc.sp.SqlParameter.IN;
+import static com.github.quintans.jdbc.sp.SqlParameter.OUT;
 
 import java.sql.Types;
 import java.util.Date;

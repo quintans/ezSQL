@@ -9,8 +9,8 @@ import java.util.Collection;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
-import com.github.quintans.ezSQL.exceptions.PersistenceException;
 import com.github.quintans.ezSQL.toolkit.io.BinStore;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 public class Misc {
     private static Logger LOGGER = Logger.getLogger(Misc.class);

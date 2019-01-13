@@ -13,7 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.github.quintans.ezSQL.db.Column;
-import com.github.quintans.ezSQL.exceptions.PersistenceException;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 public class BeanProperty {
     private int position = 0;
@@ -21,7 +21,6 @@ public class BeanProperty {
     private Method writeMethod;
     private Method readMethod;
     private Class<?> klass;
-    private int sqlType = 0;
     private Class<?> genericClass = null;
     private Column<?> keyColumn = null;
     
@@ -31,14 +30,6 @@ public class BeanProperty {
 
     public void setPosition(int position) {
         this.position = position;
-    }
-
-    public int getSqlType() {
-        return this.sqlType;
-    }
-
-    public void setSqlType(int sqlType) {
-        this.sqlType = sqlType;
     }
 
     public String getName() {
@@ -106,8 +97,6 @@ public class BeanProperty {
         builder.append(this.name);
         builder.append(", klass=");
         builder.append(this.klass);
-        builder.append(", sqlType=");
-        builder.append(this.sqlType);
         builder.append(", genericClass=");
         builder.append(this.genericClass);
         builder.append(", keyColumn=");

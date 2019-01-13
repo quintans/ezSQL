@@ -2,7 +2,7 @@ package com.github.quintans.ezSQL;
 
 import java.sql.Connection;
 
-import com.github.quintans.ezSQL.sql.AbstractJdbcSession;
+import com.github.quintans.ezSQL.jdbc.AbstractJdbcSession;
 
 public class DbJdbcSession extends AbstractJdbcSession {
     private AbstractDb db;

@@ -5,7 +5,7 @@ import java.util.LinkedHashMap;
 import org.apache.log4j.Logger;
 
 import com.github.quintans.ezSQL.AbstractDb;
-import com.github.quintans.ezSQL.sql.SimpleJdbc;
+import com.github.quintans.jdbc.SimpleJdbc;
 
 public class Sequence {
 	private static Logger LOGGER = Logger.getLogger(Sequence.class);

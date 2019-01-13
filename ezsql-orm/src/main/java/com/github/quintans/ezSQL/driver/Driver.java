@@ -20,6 +20,7 @@ import com.github.quintans.ezSQL.dml.Insert;
 import com.github.quintans.ezSQL.dml.Query;
 import com.github.quintans.ezSQL.dml.Update;
 import com.github.quintans.ezSQL.sp.SqlProcedure;
+import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
 public interface Driver {
     String translate(EDml dmlType, Function function);
@@ -58,32 +59,32 @@ public interface Driver {
 
     // == DB type to JAVA type
 
-    Object toIdentity(ResultSet rs, int columnIndex) throws SQLException;
+    Object toIdentity(ResultSetWrapper rsw, int columnIndex) throws SQLException;
 
-    Boolean toBoolean(ResultSet rs, int columnIndex) throws SQLException;
+    Boolean toBoolean(ResultSetWrapper rsw, int columnIndex) throws SQLException;
 
-    String toString(ResultSet rs, int columnIndex) throws SQLException;
+    String toString(ResultSetWrapper rsw, int columnIndex) throws SQLException;
 
-    Byte toTiny(ResultSet rs, int columnIndex) throws SQLException;
+    Byte toTiny(ResultSetWrapper rsw, int columnIndex) throws SQLException;
     
-    Short toShort(ResultSet rs, int columnIndex) throws SQLException;
+    Short toShort(ResultSetWrapper rsw, int columnIndex) throws SQLException;
     
-    Integer toInteger(ResultSet rs, int columnIndex) throws SQLException;
+    Integer toInteger(ResultSetWrapper rsw, int columnIndex) throws SQLException;
 
-    Long toLong(ResultSet rs, int columnIndex) throws SQLException;
+    Long toLong(ResultSetWrapper rsw, int columnIndex) throws SQLException;
 
-    Double toDecimal(ResultSet rs, int columnIndex) throws SQLException;
+    Double toDecimal(ResultSetWrapper rsw, int columnIndex) throws SQLException;
 
-    MyTime toTime(ResultSet rs, int columnIndex) throws SQLException;
-    MyDate toDate(ResultSet rs, int columnIndex) throws SQLException;
-    MyDateTime toDateTime(ResultSet rs, int columnIndex) throws SQLException;
-    java.util.Date toTimestamp(ResultSet rs, int columnIndex) throws SQLException;
+    MyTime toTime(ResultSetWrapper rsw, int columnIndex) throws SQLException;
+    MyDate toDate(ResultSetWrapper rsw, int columnIndex) throws SQLException;
+    MyDateTime toDateTime(ResultSetWrapper rsw, int columnIndex) throws SQLException;
+    java.util.Date toTimestamp(ResultSetWrapper rsw, int columnIndex) throws SQLException;
 
-    InputStream toText(ResultSet rs, int columnIndex) throws SQLException;
+    InputStream toText(ResultSetWrapper rsw, int columnIndex) throws SQLException;
 
-    InputStream toBin(ResultSet rs, int columnIndex) throws SQLException;
+    InputStream toBin(ResultSetWrapper rsw, int columnIndex) throws SQLException;
 
-    BigDecimal toBigDecimal(ResultSet rs, int columnIndex) throws SQLException;
+    BigDecimal toBigDecimal(ResultSetWrapper rsw, int columnIndex) throws SQLException;
 
     // == JAVA type to DB type
 
@@ -147,6 +148,6 @@ public interface Driver {
 	 */
     Object fromNull(NullSql o);
     
-    <T> T fromDb(ResultSet rs, int columnIndex, int sqlType, Class<T> type) throws SQLException;
+    <T> T fromDb(ResultSetWrapper rsw, int columnIndex, Class<T> type) throws SQLException;
 
 }

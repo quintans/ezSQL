@@ -18,9 +18,9 @@ import com.github.quintans.ezSQL.db.NullSql;
 import com.github.quintans.ezSQL.db.PreInsertTrigger;
 import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.driver.Driver;
-import com.github.quintans.ezSQL.exceptions.PersistenceException;
-import com.github.quintans.ezSQL.sql.RawSql;
 import com.github.quintans.ezSQL.transformers.BeanProperty;
+import com.github.quintans.jdbc.RawSql;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 public class Insert extends DmlCore<Insert> {
     private static final Logger LOG = Logger.getLogger(Insert.class);

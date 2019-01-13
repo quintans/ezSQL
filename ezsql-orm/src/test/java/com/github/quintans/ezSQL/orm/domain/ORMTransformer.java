@@ -1,7 +1,6 @@
 package com.github.quintans.ezSQL.orm.domain;
 
 import java.math.BigDecimal;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,15 +21,16 @@ import com.github.quintans.ezSQL.toolkit.io.BinStore;
 import com.github.quintans.ezSQL.toolkit.io.TextStore;
 import com.github.quintans.ezSQL.toolkit.utils.Misc;
 import com.github.quintans.ezSQL.transformers.IQueryRowTransformer;
-import com.github.quintans.ezSQL.transformers.IRowTransformer;
 import com.github.quintans.ezSQL.transformers.Navigation;
 import com.github.quintans.ezSQL.transformers.NavigationNode;
+import com.github.quintans.jdbc.transformers.IRowTransformer;
+import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
 public abstract class ORMTransformer<T> implements IQueryRowTransformer<T> {
 	private Query query;
 	private boolean reuse = false;
 
-	private ResultSet resultSet;
+	private ResultSetWrapper resultSet;
 	private Collection<T> result;
 
 	private Navigation navigation;
@@ -86,12 +86,7 @@ public abstract class ORMTransformer<T> implements IQueryRowTransformer<T> {
 		return this.query;
 	}
 
-	@Override
-	public boolean isFetchSqlTypes() {
-		return false;
-	}
-
-	public ResultSet getResultSet() {
+	public ResultSetWrapper getResultSet() {
 		return this.resultSet;
 	}
 
@@ -116,7 +111,7 @@ public abstract class ORMTransformer<T> implements IQueryRowTransformer<T> {
 	}
 
 	@Override
-	public Collection<T> beforeAll(ResultSet resultSet) {
+	public Collection<T> beforeAll(ResultSetWrapper resultSet) {
 		this.resultSet = resultSet;
 		this.navigation.rewind();
 		this.navigation.prepare(this.query, this.reuse);
@@ -144,7 +139,7 @@ public abstract class ORMTransformer<T> implements IQueryRowTransformer<T> {
 	}
 
 	@Override
-	public abstract T transform(ResultSet rs, int[] columnTypes) throws SQLException;
+	public abstract T transform(ResultSetWrapper rsw) throws SQLException;
 
 	/**
 	 * return the list o current branches and moves forward to the next list
@@ -186,7 +181,7 @@ public abstract class ORMTransformer<T> implements IQueryRowTransformer<T> {
 			this.cachedTransformers.put(path, rt);
 		}
 
-		return rt.transform(getResultSet(), null);
+		return rt.transform(getResultSet());
 	}
 
 	/**

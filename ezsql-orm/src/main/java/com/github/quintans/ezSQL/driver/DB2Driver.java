@@ -4,7 +4,7 @@ import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.dml.AutoKeyStrategy;
 import com.github.quintans.ezSQL.dml.Function;
 import com.github.quintans.ezSQL.dml.Query;
-import com.github.quintans.ezSQL.exceptions.PersistenceException;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 
 /*

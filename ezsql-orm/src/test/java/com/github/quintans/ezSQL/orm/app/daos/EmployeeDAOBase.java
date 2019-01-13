@@ -1,6 +1,5 @@
 package com.github.quintans.ezSQL.orm.app.daos;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import com.github.quintans.ezSQL.db.Association;
@@ -11,7 +10,8 @@ import com.github.quintans.ezSQL.orm.domain.IORMRowTransformerFactory;
 import com.github.quintans.ezSQL.orm.domain.ORMTransformer;
 import com.github.quintans.ezSQL.orm.domain.SimpleEntityCache;
 import com.github.quintans.ezSQL.transformers.IQueryRowTransformer;
-import com.github.quintans.ezSQL.transformers.IRowTransformer;
+import com.github.quintans.jdbc.transformers.IRowTransformer;
+import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
 public class EmployeeDAOBase implements IArtistDAO, IORMRowTransformerFactory<Employee> {
 
@@ -37,7 +37,7 @@ public class EmployeeDAOBase implements IArtistDAO, IORMRowTransformerFactory<Em
 		}
 
 		@Override
-		public Employee transform(ResultSet rs, int[] columnTypes) throws SQLException {
+		public Employee transform(ResultSetWrapper rsw) throws SQLException {
 			// in a outer join, an entity can have null for all of its fields, even for the id
 			Long id = getLong(TEmployee.C_ID);
 			if (id == null)

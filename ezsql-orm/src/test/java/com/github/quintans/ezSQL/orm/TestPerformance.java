@@ -1,9 +1,14 @@
 package com.github.quintans.ezSQL.orm;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.Random;
+
+import com.github.quintans.ezSQL.transformers.SimpleAbstractDbRowTransformer;
+import com.github.quintans.jdbc.RawSql;
+import com.github.quintans.jdbc.SimpleJdbc;
+import com.github.quintans.jdbc.transformers.ResultSetWrapper;
+import com.github.quintans.jdbc.transformers.SimpleAbstractRowTransformer;
 
 import org.junit.Test;
 
@@ -13,9 +18,6 @@ import com.github.quintans.ezSQL.dml.Query;
 import com.github.quintans.ezSQL.orm.app.daos.EmployeeDAOBase;
 import com.github.quintans.ezSQL.orm.app.domain.Employee;
 import com.github.quintans.ezSQL.orm.app.mappings.TEmployee;
-import com.github.quintans.ezSQL.sql.RawSql;
-import com.github.quintans.ezSQL.sql.SimpleJdbc;
-import com.github.quintans.ezSQL.transformers.SimpleAbstractRowTransformer;
 
 /**
  * Unit test for simple App.
@@ -203,27 +205,27 @@ public class TestPerformance extends TestBootstrap {
 
         // warm up
         query = db.query(TEmployee.T_EMPLOYEE).all();
-        query.list(new SimpleAbstractRowTransformer<Employee>(db) {
+        query.list(new SimpleAbstractRowTransformer<Employee>() {
             @Override
-            public Employee transform(ResultSet rs, int[] columnTypes) throws SQLException {
+            public Employee transform(ResultSetWrapper rs) throws SQLException {
                 return new Employee();
             }
         });
         // READ - transformer
         query = db.query(TEmployee.T_EMPLOYEE).all();
         sw.reset().start();
-        query.list(new SimpleAbstractRowTransformer<Employee>(db) {
+        query.list(new SimpleAbstractDbRowTransformer<Employee>(db) {
             @Override
-            public Employee transform(ResultSet rs, int[] columnTypes) throws SQLException {
+            public Employee transform(ResultSetWrapper rsw) throws SQLException {
                 Employee dto = new Employee();
-                dto.setId(toLong(rs, 1));
-                dto.setName(toString(rs, 2));
-                dto.setSex(toBoolean(rs, 3));
-                dto.setCreation(toDate(rs, 4));
+                dto.setId(toLong(rsw, 1));
+                dto.setName(toString(rsw, 2));
+                dto.setSex(toBoolean(rsw, 3));
+                dto.setCreation(toDate(rsw, 4));
                 return dto;
             }
         });
-        sw.stop().showTotal("query.list(new SimpleAbstractRowTransformer<Employee>(db))");
+        sw.stop().showTotal("query.list(new SimpleAbstractDbRowTransformer<Employee>(db))");
 
         // warm up
         query = db.query(TEmployee.T_EMPLOYEE).all();

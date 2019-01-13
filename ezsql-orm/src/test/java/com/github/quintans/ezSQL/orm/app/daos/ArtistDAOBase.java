@@ -14,7 +14,8 @@ import com.github.quintans.ezSQL.orm.domain.IORMRowTransformerFactory;
 import com.github.quintans.ezSQL.orm.domain.ORMTransformer;
 import com.github.quintans.ezSQL.orm.domain.SimpleEntityCache;
 import com.github.quintans.ezSQL.transformers.IQueryRowTransformer;
-import com.github.quintans.ezSQL.transformers.IRowTransformer;
+import com.github.quintans.jdbc.transformers.IRowTransformer;
+import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
 public class ArtistDAOBase implements IArtistDAO, IORMRowTransformerFactory<Artist> {
 
@@ -40,7 +41,7 @@ public class ArtistDAOBase implements IArtistDAO, IORMRowTransformerFactory<Arti
 		}
 
 		@Override
-		public Artist transform(ResultSet rs, int[] columnTypes) throws SQLException {
+		public Artist transform(ResultSetWrapper rs) throws SQLException {
 			// in a outer join, an entity can have null for all of its fields, even for the id
 			Long id = getLong(TArtist.C_ID);
 			if (id == null)

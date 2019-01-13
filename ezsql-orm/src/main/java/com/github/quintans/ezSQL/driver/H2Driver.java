@@ -6,7 +6,7 @@ import com.github.quintans.ezSQL.dml.ColumnHolder;
 import com.github.quintans.ezSQL.dml.EFunction;
 import com.github.quintans.ezSQL.dml.Function;
 import com.github.quintans.ezSQL.dml.Query;
-import com.github.quintans.ezSQL.exceptions.PersistenceException;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 public class H2Driver extends GenericDriver {
 

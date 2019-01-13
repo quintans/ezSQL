@@ -46,7 +46,8 @@ import com.github.quintans.ezSQL.orm.app.mappings.TPainting;
 import com.github.quintans.ezSQL.orm.app.mappings.TTemporal;
 import com.github.quintans.ezSQL.orm.extended.FunctionExt;
 import com.github.quintans.ezSQL.toolkit.io.BinStore;
-import com.github.quintans.ezSQL.transformers.SimpleAbstractRowTransformer;
+import com.github.quintans.ezSQL.transformers.SimpleAbstractDbRowTransformer;
+import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
 /**
  * Unit test for simple App.
@@ -150,13 +151,13 @@ public class TestStandard extends TestBootstrap {
                     .column(TArtist.C_NAME)
                     .column(TArtist.C_GENDER);
 
-            List<Artist> values = query.list(new SimpleAbstractRowTransformer<Artist>(db, true) {
+            List<Artist> values = query.list(new SimpleAbstractDbRowTransformer<Artist>(db) {
                 @Override
-                public Artist transform(ResultSet rs, int[] columnTypes) throws SQLException {
+                public Artist transform(ResultSetWrapper rsw) throws SQLException {
                     Artist dto = new Artist();
-                    dto.setId(toLong(rs, 1));
-                    dto.setName(toString(rs, 2));
-                    dto.setGender(driver().fromDb(rs, 3, columnTypes[2], EGender.class));
+                    dto.setId(toLong(rsw, 1));
+                    dto.setName(toString(rsw, 2));
+                    dto.setGender(driver().fromDb(rsw, 3, EGender.class));
                     return dto;
                 }
             });
@@ -289,12 +290,12 @@ public class TestStandard extends TestBootstrap {
                     .outer(TArtist.A_PAINTINGS).include(sum(TPainting.C_PRICE)).as("value").join()
                     .groupBy(1);
 
-            List<ArtistValueDTO> values = query.list(new SimpleAbstractRowTransformer<ArtistValueDTO>(db) {
+            List<ArtistValueDTO> values = query.list(new SimpleAbstractDbRowTransformer<ArtistValueDTO>(db) {
                 @Override
-                public ArtistValueDTO transform(ResultSet rs, int[] columnTypes) throws SQLException {
+                public ArtistValueDTO transform(ResultSetWrapper rsw) throws SQLException {
                     ArtistValueDTO dto = new ArtistValueDTO();
-                    dto.setName(toString(rs, 1));
-                    dto.setValue(toDecimal(rs, 2));
+                    dto.setName(toString(rsw, 1));
+                    dto.setValue(toDecimal(rsw, 2));
                     return dto;
                 }
             });

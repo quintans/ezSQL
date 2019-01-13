@@ -1,7 +1,6 @@
 package com.github.quintans.ezSQL.transformers;
 
 import java.math.BigDecimal;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Date;
@@ -13,11 +12,12 @@ import com.github.quintans.ezSQL.dml.ColumnHolder;
 import com.github.quintans.ezSQL.dml.Function;
 import com.github.quintans.ezSQL.dml.Query;
 import com.github.quintans.ezSQL.driver.Driver;
-import com.github.quintans.ezSQL.exceptions.PersistenceException;
 import com.github.quintans.ezSQL.toolkit.io.BinStore;
 import com.github.quintans.ezSQL.toolkit.io.TextStore;
 import com.github.quintans.ezSQL.toolkit.utils.Holder;
 import com.github.quintans.ezSQL.toolkit.utils.Misc;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
+import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
 public class BeanTransformer<T> implements IQueryRowTransformer<T> {
 	private Query query;
@@ -49,7 +49,7 @@ public class BeanTransformer<T> implements IQueryRowTransformer<T> {
 	}
 
 	@Override
-	public Collection<T> beforeAll(ResultSet resultSet) {
+	public Collection<T> beforeAll(ResultSetWrapper resultSet) {
 		return new LinkedList<T>();
 	}
 
@@ -64,7 +64,7 @@ public class BeanTransformer<T> implements IQueryRowTransformer<T> {
 	 *            The bean class
 	 * @return            
 	 */
-	protected Map<String, BeanProperty> populateMapping(ResultSet resultSet, String tableAlias, Class<?> type) {
+	protected Map<String, BeanProperty> populateMapping(ResultSetWrapper rsw, String tableAlias, Class<?> type) {
 		String prefix = (tableAlias == null ? "" : tableAlias + ".");
 
 		Map<String, BeanProperty> mappings = BeanProperty.populateMapping(prefix, type);
@@ -73,8 +73,7 @@ public class BeanTransformer<T> implements IQueryRowTransformer<T> {
 		 * Matches the columns with the bean properties
 		 */
 
-		int[] types = query.getSimpleJdbc().getJdbcSession()
-		        .fetchColumnTypesForSelect(this.query.getSql().getOriginalSql(), resultSet);
+		int[] types = rsw.getColumnTypes();
 		if (types != null) {
 			int count = 0;
 			for (Function function : this.query.getColumns()) {
@@ -103,7 +102,6 @@ public class BeanTransformer<T> implements IQueryRowTransformer<T> {
 
 				if (bp != null) {
 					bp.setPosition(count);
-					bp.setSqlType(types[count - 1]);
 				}
 			}
 		}
@@ -125,15 +123,15 @@ public class BeanTransformer<T> implements IQueryRowTransformer<T> {
 	}
 
 	@Override
-	public T transform(ResultSet rs, int[] columnTypes) throws SQLException {
+	public T transform(ResultSetWrapper rsw) throws SQLException {
 		if (this.properties == null) {
-			this.properties = populateMapping(rs, null, this.clazz);
+			this.properties = populateMapping(rsw, null, this.clazz);
 		}
 
-		return toBean(rs, this.clazz, this.properties, null);
+		return toBean(rsw, this.clazz, this.properties, null);
 	}
 
-	protected <E> E toBean(ResultSet rs, Class<E> type, Map<String, BeanProperty> properties, Holder<Boolean> wasEmpty) throws SQLException {
+	protected <E> E toBean(ResultSetWrapper rsw, Class<E> type, Map<String, BeanProperty> properties, Holder<Boolean> wasEmpty) throws SQLException {
 		E obj = null;
 		try {
 			obj = type.newInstance();
@@ -142,7 +140,7 @@ public class BeanTransformer<T> implements IQueryRowTransformer<T> {
 				if (bp.getPosition() > 0) {
 					int position = bp.getPosition() + this.paginationColumnOffset;
 					Class<?> klass = bp.getKlass();
-					Object val = driver().fromDb(rs, position, bp.getSqlType(), klass);
+					Object val = driver().fromDb(rsw, position, klass);
 
 					try {
 						if (val != null) {
@@ -180,69 +178,63 @@ public class BeanTransformer<T> implements IQueryRowTransformer<T> {
 	 * @return the value, in this case a Long
 	 * @throws SQLException
 	 */
-	protected Byte getTiny(ResultSet rs, int column) throws SQLException {
-		return driver().toTiny(rs, column);
+	protected Byte getTiny(ResultSetWrapper rsw, int column) throws SQLException {
+		return driver().toTiny(rsw, column);
 	}
 
-	protected Short getShort(ResultSet rs, int column) throws SQLException {
-		return driver().toShort(rs, column);
+	protected Short getShort(ResultSetWrapper rsw, int column) throws SQLException {
+		return driver().toShort(rsw, column);
 	}
 
-	protected Integer getInteger(ResultSet rs, int column) throws SQLException {
-		return driver().toInteger(rs, column);
+	protected Integer getInteger(ResultSetWrapper rsw, int column) throws SQLException {
+		return driver().toInteger(rsw, column);
 	}
 
-    protected Long getLong(ResultSet rs, int column) throws SQLException {
-        return driver().toLong(rs, column);
+    protected Long getLong(ResultSetWrapper rsw, int column) throws SQLException {
+        return driver().toLong(rsw, column);
     }
 
-	protected String getString(ResultSet rs, int column) throws SQLException {
-		return driver().toString(rs, column);
+	protected String getString(ResultSetWrapper rsw, int column) throws SQLException {
+		return driver().toString(rsw, column);
 	}
 
-	protected Boolean getBoolean(ResultSet rs, int column) throws SQLException {
-		return driver().toBoolean(rs, column);
+	protected Boolean getBoolean(ResultSetWrapper rsw, int column) throws SQLException {
+		return driver().toBoolean(rsw, column);
 	}
 
-	protected Date getTime(ResultSet rs, int column) throws SQLException {
-		return driver().toTime(rs, column);
+	protected Date getTime(ResultSetWrapper rsw, int column) throws SQLException {
+		return driver().toTime(rsw, column);
 	}
 
-    protected Date getDate(ResultSet rs, int column) throws SQLException {
-        return driver().toDate(rs, column);
+    protected Date getDate(ResultSetWrapper rsw, int column) throws SQLException {
+        return driver().toDate(rsw, column);
     }
 
-    protected Date getDateTime(ResultSet rs, int column) throws SQLException {
-        return driver().toDateTime(rs, column);
+    protected Date getDateTime(ResultSetWrapper rsw, int column) throws SQLException {
+        return driver().toDateTime(rsw, column);
     }
 
-    protected Date getTimestamp(ResultSet rs, int column) throws SQLException {
-        return driver().toTimestamp(rs, column);
+    protected Date getTimestamp(ResultSetWrapper rsw, int column) throws SQLException {
+        return driver().toTimestamp(rsw, column);
     }
 
-	protected Double getDecimal(ResultSet rs, int column) throws SQLException {
-		return driver().toDecimal(rs, column);
+	protected Double getDecimal(ResultSetWrapper rsw, int column) throws SQLException {
+		return driver().toDecimal(rsw, column);
 	}
 
-	protected BigDecimal getBigDecimal(ResultSet rs, int column) throws SQLException {
-		return driver().toBigDecimal(rs, column);
+	protected BigDecimal getBigDecimal(ResultSetWrapper rsw, int column) throws SQLException {
+		return driver().toBigDecimal(rsw, column);
 	}
 
-	protected TextStore getText(ResultSet rs, int column) throws SQLException {
+	protected TextStore getText(ResultSetWrapper rsw, int column) throws SQLException {
 	    TextStore val = new TextStore();
-        Misc.copy(driver().toText(rs, column), val);
+        Misc.copy(driver().toText(rsw, column), val);
         return val;
 	}
 
-	protected BinStore getBin(ResultSet rs, int column) throws SQLException {
+	protected BinStore getBin(ResultSetWrapper rsw, int column) throws SQLException {
 		BinStore val = new BinStore();
-        Misc.copy(driver().toBin(rs, column), val);
+        Misc.copy(driver().toBin(rsw, column), val);
         return val;
 	}
-
-	@Override
-	public boolean isFetchSqlTypes() {
-		return false;
-	}
-
 }

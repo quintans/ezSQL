@@ -4,8 +4,8 @@ import static com.github.quintans.ezSQL.toolkit.utils.Misc.match;
 
 import com.github.quintans.ezSQL.Base;
 import com.github.quintans.ezSQL.db.Column;
-import com.github.quintans.ezSQL.exceptions.PersistenceException;
 import com.github.quintans.ezSQL.toolkit.utils.HashCodeUtil;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 public class Function extends Base<Object> {
 	protected String operator;

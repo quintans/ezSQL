@@ -1,8 +1,8 @@
 package com.github.quintans.ezSQL.orm.domain;
 
 import com.github.quintans.ezSQL.db.Association;
-import com.github.quintans.ezSQL.transformers.IRowTransformer;
 import com.github.quintans.ezSQL.transformers.IRowTransformerFactory;
+import com.github.quintans.jdbc.transformers.IRowTransformer;
 
 public interface IORMRowTransformerFactory<T> extends IRowTransformerFactory<T> {
 

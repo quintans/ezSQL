@@ -26,8 +26,9 @@ import com.github.quintans.ezSQL.dml.Join;
 import com.github.quintans.ezSQL.dml.PathElement;
 import com.github.quintans.ezSQL.dml.Query;
 import com.github.quintans.ezSQL.dml.Update;
-import com.github.quintans.ezSQL.exceptions.PersistenceException;
-import com.github.quintans.ezSQL.sql.PreparedStatementCallback;
+import com.github.quintans.jdbc.PreparedStatementCallback;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
+import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
 public class OracleDriver extends GenericDriver {
 	/**
@@ -136,13 +137,15 @@ public class OracleDriver extends GenericDriver {
 	}
 
 	@Override
-	public Boolean toBoolean(ResultSet rs, int columnIndex) throws SQLException {
+	public Boolean toBoolean(ResultSetWrapper rsw, int columnIndex) throws SQLException {
+    	ResultSet rs = rsw.getResultSet();
 		Object o = rs.getObject(columnIndex);
 		return (rs.wasNull() ? null : "1".equals(o));
 	}
 
 	@Override
-	public Date toTimestamp(ResultSet rs, int columnIndex) throws SQLException {
+	public Date toTimestamp(ResultSetWrapper rsw, int columnIndex) throws SQLException {
+    	ResultSet rs = rsw.getResultSet();
 		Timestamp o = rs.getTimestamp(columnIndex, getCalendar());
 		return (rs.wasNull() ? null : new Date(o.getTime()));
 	}
@@ -169,7 +172,10 @@ public class OracleDriver extends GenericDriver {
 	}
 
 	@Override
-	protected Object toDefault(ResultSet rs, int columnIndex, int sqlType) throws SQLException {
+	protected Object toDefault(ResultSetWrapper rsw, int columnIndex) throws SQLException {
+    	ResultSet rs = rsw.getResultSet();
+    	int sqlType = rsw.getSqlType(columnIndex);
+
 		Object o = null;
 
 		switch (sqlType) {

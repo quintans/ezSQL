@@ -2,8 +2,8 @@ package com.github.quintans.ezSQL.db;
 
 import java.util.ArrayList;
 
-import com.github.quintans.ezSQL.exceptions.PersistenceException;
 import com.github.quintans.ezSQL.toolkit.utils.Misc;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 public class ColGroup extends ArrayList<Column<?>> {
     private static final long serialVersionUID = 1L;

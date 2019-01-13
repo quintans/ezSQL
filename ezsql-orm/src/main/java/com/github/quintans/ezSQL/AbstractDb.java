@@ -33,12 +33,12 @@ import com.github.quintans.ezSQL.dml.Insert;
 import com.github.quintans.ezSQL.dml.Query;
 import com.github.quintans.ezSQL.dml.Update;
 import com.github.quintans.ezSQL.driver.Driver;
-import com.github.quintans.ezSQL.exceptions.PersistenceException;
-import com.github.quintans.ezSQL.sql.JdbcSession;
-import com.github.quintans.ezSQL.sql.SimpleJdbc;
 import com.github.quintans.ezSQL.toolkit.io.BinStore;
 import com.github.quintans.ezSQL.toolkit.io.TextStore;
 import com.github.quintans.ezSQL.transformers.BeanProperty;
+import com.github.quintans.jdbc.JdbcSession;
+import com.github.quintans.jdbc.SimpleJdbc;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 public abstract class AbstractDb {
 	private static Logger LOGGER = Logger.getLogger(AbstractDb.class);

@@ -9,8 +9,8 @@ import com.github.quintans.ezSQL.AbstractDb;
 import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.db.NullSql;
 import com.github.quintans.ezSQL.db.Table;
-import com.github.quintans.ezSQL.exceptions.PersistenceException;
 import com.github.quintans.ezSQL.transformers.BeanProperty;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 public abstract class DmlCore<T> extends DmlBase {
     protected final static String OPTIMISTIC_LOCK_MSG = "No update was possible for this version of the data. Data may have changed.";

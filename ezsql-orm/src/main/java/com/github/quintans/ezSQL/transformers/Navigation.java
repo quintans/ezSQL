@@ -11,8 +11,8 @@ import com.github.quintans.ezSQL.dml.Function;
 import com.github.quintans.ezSQL.dml.Join;
 import com.github.quintans.ezSQL.dml.PathElement;
 import com.github.quintans.ezSQL.dml.Query;
-import com.github.quintans.ezSQL.exceptions.PersistenceException;
 import com.github.quintans.ezSQL.toolkit.utils.Holder;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 /**
  * Esta classe serve para manter o estado, enquando se navega pelas associaçõeses e se constroi a arvore de entidades durante, após uma query select.

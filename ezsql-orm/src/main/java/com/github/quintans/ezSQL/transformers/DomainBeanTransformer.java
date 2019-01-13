@@ -1,6 +1,5 @@
 package com.github.quintans.ezSQL.transformers;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,8 +11,9 @@ import java.util.Map;
 import com.github.quintans.ezSQL.common.api.Updatable;
 import com.github.quintans.ezSQL.db.Association;
 import com.github.quintans.ezSQL.dml.Query;
-import com.github.quintans.ezSQL.exceptions.PersistenceException;
 import com.github.quintans.ezSQL.toolkit.utils.Holder;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
+import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
 public class DomainBeanTransformer<T> extends BeanTransformer<T> {
 	private boolean reuse = false;
@@ -29,12 +29,11 @@ public class DomainBeanTransformer<T> extends BeanTransformer<T> {
 	}
 
 	@Override
-	public Collection<T> beforeAll(ResultSet resultSet) {
+	public Collection<T> beforeAll(ResultSetWrapper resultSet) {
 		this.navigation = new Navigation();
 		this.navigation.prepare(getQuery(), this.reuse);
 
-		Collection<T> result = this.reuse ? new LinkedHashSet<T>() : new ArrayList<T>();
-		return result;
+		return this.reuse ? new LinkedHashSet<T>() : new ArrayList<T>();
 	}
 
 	@Override
@@ -51,8 +50,8 @@ public class DomainBeanTransformer<T> extends BeanTransformer<T> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public T transform(ResultSet rs, int[] columnTypes) throws SQLException {
-		return (T) transformBean(rs, getClazz(), getQuery().getTableAlias());
+	public T transform(ResultSetWrapper rsw) throws SQLException {
+		return (T) transformBean(rsw, getClazz(), getQuery().getTableAlias());
 	}
 
 	/**
@@ -60,20 +59,20 @@ public class DomainBeanTransformer<T> extends BeanTransformer<T> {
 	 * to provide a way to reach properties that are far (more than one association.) from the main table.
 	 * If after a certain point a branch is empty, that part of the branch is dropped. 
 	 * 
-	 * @param rs
+	 * @param rsw
 	 * @param type
 	 * @param alias
 	 * @return
 	 * @throws SQLException
 	 */
 	@SuppressWarnings("unchecked")
-	private Object transformBean(ResultSet rs, Class<?> type, String alias) throws SQLException {
-		Map<String, BeanProperty> lastProps = getCachedProperties(rs, alias, type);
+	private Object transformBean(ResultSetWrapper rsw, Class<?> type, String alias) throws SQLException {
+		Map<String, BeanProperty> lastProps = getCachedProperties(rsw, alias, type);
 		Object bean = null;
 		Holder<Boolean> emptyBean = new Holder<Boolean>(Boolean.TRUE);
 		if (this.reuse) {
 			// for performance, loads only key, because it's sufficient for searching the cache
-			bean = loadBeanKeys(rs, type, lastProps, true);
+			bean = loadBeanKeys(rsw, type, lastProps, true);
 			if (bean != null) {
 				// searches the cache
 				Object b = this.beans.get(bean);
@@ -81,14 +80,14 @@ public class DomainBeanTransformer<T> extends BeanTransformer<T> {
 				if (b != null) {
 					bean = b;
 				} else {
-					bean = loadBeanKeys(rs, bean, lastProps, false);
+					bean = loadBeanKeys(rsw, bean, lastProps, false);
 					if (bean != null)
 						this.beans.put(bean, bean);
 				}
 			}
 			emptyBean.set(Boolean.FALSE);
 		} else {
-			bean = toBean(rs, type, lastProps, emptyBean);
+			bean = toBean(rsw, type, lastProps, emptyBean);
 		}
 
 		if (bean == null) {
@@ -105,9 +104,10 @@ public class DomainBeanTransformer<T> extends BeanTransformer<T> {
 				if (bp != null) {
 					if (bp.isMany()) { // Collection
 						subType = bp.getGenericClass();
-					} else
+					} else {
 						subType = bp.getKlass();
-					Object o = transformBean(rs, subType, fk.isMany2Many() ? fk.getToM2M().getAliasTo() : fk.getAliasTo());
+					}
+					Object o = transformBean(rsw, subType, fk.isMany2Many() ? fk.getToM2M().getAliasTo() : fk.getAliasTo());
 					try {
                         // in case the bean implements Updatable, it will mark the property as dirty
 						if (o != null) {
@@ -154,16 +154,16 @@ public class DomainBeanTransformer<T> extends BeanTransformer<T> {
 		return true;
 	}
 
-	protected <E> E loadBeanKeys(ResultSet rs, Class<E> type, Map<String, BeanProperty> properties, boolean onlyKeys) throws SQLException {
+	protected <E> E loadBeanKeys(ResultSetWrapper rsw, Class<E> type, Map<String, BeanProperty> properties, boolean onlyKeys) throws SQLException {
 		try {
 			E obj = type.newInstance();
-			return loadBeanKeys(rs, obj, properties, onlyKeys);
+			return loadBeanKeys(rsw, obj, properties, onlyKeys);
 		} catch (Exception e) {
             throw new PersistenceException("Unable to create bean " + type.getCanonicalName(), e);
 		}
 	}
 
-	protected <E> E loadBeanKeys(ResultSet rs, E obj, Map<String, BeanProperty> properties, boolean onlyKeys) throws SQLException {
+	protected <E> E loadBeanKeys(ResultSetWrapper rsw, E obj, Map<String, BeanProperty> properties, boolean onlyKeys) throws SQLException {
 		boolean keyless = onlyKeys;
 		for (Map.Entry<String, BeanProperty> entry : properties.entrySet()) {
 			BeanProperty bp = entry.getValue();
@@ -171,7 +171,7 @@ public class DomainBeanTransformer<T> extends BeanTransformer<T> {
 				keyless = false;
 				int position = bp.getPosition() + getPaginationColumnOffset();
 				Class<?> klass = bp.getKlass();
-				Object val = driver().fromDb(rs, position, bp.getSqlType(), klass);
+				Object val = driver().fromDb(rsw, position, klass);
 
 					if (val != null) {
 		                try {
@@ -189,12 +189,12 @@ public class DomainBeanTransformer<T> extends BeanTransformer<T> {
 		return keyless ? null : obj;
 	}
 
-	private Map<String, BeanProperty> getCachedProperties(ResultSet rs, String alias, Class<?> type) {
+	private Map<String, BeanProperty> getCachedProperties(ResultSetWrapper rsw, String alias, Class<?> type) {
 		// String key = alias + "." + type.getName();
 		String key = alias;
 		Map<String, BeanProperty> properties = this.cachedBeanMappings.get(key);
 		if (properties == null) {
-			properties = populateMapping(rs, alias, type);
+			properties = populateMapping(rsw, alias, type);
 			this.cachedBeanMappings.put(key, properties);
 		}
 

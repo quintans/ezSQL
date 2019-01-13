@@ -20,8 +20,8 @@ import com.github.quintans.ezSQL.db.Discriminator;
 import com.github.quintans.ezSQL.db.Relation;
 import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.driver.Driver;
-import com.github.quintans.ezSQL.sql.RawSql;
-import com.github.quintans.ezSQL.sql.SimpleJdbc;
+import com.github.quintans.jdbc.RawSql;
+import com.github.quintans.jdbc.SimpleJdbc;
 
 public abstract class DmlBase {
 

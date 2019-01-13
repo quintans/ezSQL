@@ -6,7 +6,6 @@ import static com.github.quintans.ezSQL.orm.app.mappings.TPainting.C_NAME;
 import static com.github.quintans.ezSQL.orm.app.mappings.TPainting.C_PRICE;
 import static com.github.quintans.ezSQL.orm.app.mappings.TPainting.C_VERSION;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -17,7 +16,8 @@ import com.github.quintans.ezSQL.orm.app.domain.Painting;
 import com.github.quintans.ezSQL.orm.domain.IORMRowTransformerFactory;
 import com.github.quintans.ezSQL.orm.domain.ORMTransformer;
 import com.github.quintans.ezSQL.orm.domain.SimpleEntityCache;
-import com.github.quintans.ezSQL.transformers.IRowTransformer;
+import com.github.quintans.jdbc.transformers.IRowTransformer;
+import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
 public class PaintingDAOBase implements IPaintingDAO, IORMRowTransformerFactory<Painting> {
 
@@ -43,7 +43,7 @@ public class PaintingDAOBase implements IPaintingDAO, IORMRowTransformerFactory<
 		}
 
 		@Override
-		public Painting transform(ResultSet rs, int[] columnTypes) throws SQLException {
+		public Painting transform(ResultSetWrapper rsw) throws SQLException {
 			// in a outer join, an entity can have null for all of its fields, even for the id
 			Long id =  getLong(C_ID);
 			if (id == null)

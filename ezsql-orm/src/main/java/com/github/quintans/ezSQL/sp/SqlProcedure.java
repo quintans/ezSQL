@@ -9,7 +9,8 @@ import org.apache.log4j.Level;
 
 import com.github.quintans.ezSQL.AbstractDb;
 import com.github.quintans.ezSQL.dml.Dml;
-import com.github.quintans.ezSQL.sql.SimpleJdbc;
+import com.github.quintans.jdbc.SimpleJdbc;
+import com.github.quintans.jdbc.sp.SqlParameter;
 
 /**
  * Definition of a Database Stored Procedure
