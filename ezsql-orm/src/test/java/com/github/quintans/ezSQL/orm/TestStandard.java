@@ -404,7 +404,7 @@ public class TestStandard extends TestBootstrap {
                 for (Painting painting : paintings) {
                     assertTrue("branch artist.paintings.id was found", painting.getId() == null);
                     assertTrue("branch artist.paintings.name was not found", painting.getName() != null);
-                    assertTrue("branch artist.paintings.galleries was found", painting.getGalleries() == null);
+                    assertTrue("branch artist.paintings.galleries was found", painting.getGalleries().size() == 1);
                 }
             }
         } catch (Exception e) {
@@ -636,9 +636,11 @@ public class TestStandard extends TestBootstrap {
                 .unique(Temporal.class);
         dump(temporal);
         
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.sssss");
         System.out.println("Time ===> " + sdf.format(myTime) + " <=> " + sdf.format(temporal.getClock()));
-        assertTrue("Clock is incorrect!", sdf.format(myTime).equals(sdf.format(temporal.getClock())));
+        String expected= sdf.format(myTime);
+        String actual = sdf.format(temporal.getClock());
+        assertTrue("Clock is incorrect! Expected " + expected + ", got " + actual, myTime.equals(temporal.getClock()));
         
         sdf = new SimpleDateFormat("yyyy-MM-dd");
         assertTrue("Today is incorrect!", sdf.format(myDate).equals(sdf.format(temporal.getToday())));
@@ -907,10 +909,10 @@ public class TestStandard extends TestBootstrap {
     			)
     			.uniqueLong();
     	
-        assertTrue("Wrong sale value for Paintings!", sale != 70);
+        assertTrue("Wrong sale value for Paintings! Expected 70, got " + sale, sale.equals(70L));
     }
 
-	class Classification {
+	public static class Classification {
 		private String name;
 		private String category;
 
@@ -935,9 +937,9 @@ public class TestStandard extends TestBootstrap {
     public void testSearchedCase() {
     	List<Classification> c = db.query(TPainting.T_PAINTING)
     		.column(TPainting.C_NAME) // default maps to field name
-    		.column(
-    			when(TPainting.C_PRICE.gt(500000D)).then("expensive")
-    			.when(TPainting.C_PRICE.range(200000D, 500000D)).then("normal")
+            .column(
+    			when(TPainting.C_PRICE.gt(150D)).then("expensive")
+    			.when(TPainting.C_PRICE.range(50D, 150D)).then("normal")
     			.otherwise("cheap")
     			.end()
     		)
@@ -947,7 +949,7 @@ public class TestStandard extends TestBootstrap {
     	
         assertTrue("Wrong category value for Paintings!", "expensive".equals(c.get(0).getCategory()));
         assertTrue("Wrong category value for Paintings!", "normal".equals(c.get(1).getCategory()));
-        assertTrue("Wrong category value for Paintings!", "cheap".equals(c.get(2).getCategory()));
+        assertTrue("Wrong category value for Paintings!", "normal".equals(c.get(2).getCategory()));
         assertTrue("Wrong category value for Paintings!", "cheap".equals(c.get(3).getCategory()));
     	
     }

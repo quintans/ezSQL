@@ -2,6 +2,7 @@ package com.github.quintans.ezSQL.common.type;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * Local Time. No time zone and no date part.
@@ -16,13 +17,24 @@ public class MyTime extends Date {
         this(System.currentTimeMillis());
     }
 
-    public MyTime(long date) {
-        super(date);
+    public MyTime(long time) {
+        super(time);
+        truncate();
+    }
+
+    private void truncate() {
+        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        cal.setTime(this);
+        cal.set(Calendar.YEAR, 1970);
+        cal.set(Calendar.MONTH, 1);
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        cal.set(Calendar.MILLISECOND, 0);
+        setTime(cal.getTimeInMillis());
     }
 
     @Override
     public String toString() {
-        Calendar cal = Calendar.getInstance();
+        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
         cal.setTime(this);
 
         StringBuilder sb = new StringBuilder(12);
@@ -30,9 +42,7 @@ public class MyTime extends Date {
                 .append(":")
                 .append(pad(cal.get(Calendar.MINUTE), 2))
                 .append(":")
-                .append(pad(cal.get(Calendar.SECOND), 2))
-                .append(".")
-                .append(pad(cal.get(Calendar.MILLISECOND), 3));
+                .append(pad(cal.get(Calendar.SECOND), 2));
 
         return sb.toString();
     }
@@ -45,6 +55,19 @@ public class MyTime extends Date {
         }
 
         return sb.toString();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (!(obj instanceof MyTime)) {
+            return false;
+        }
+
+        MyTime other = (MyTime) obj;
+        return getTime() == other.getTime();
     }
 
 }

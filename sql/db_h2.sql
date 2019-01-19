@@ -48,19 +48,6 @@ ALTER TABLE GALLERY_PAINTING ADD CONSTRAINT GALERY_PAINTING_FK2 FOREIGN KEY (PAI
 ALTER TABLE PAINTING ADD CONSTRAINT PAINTING_FK1 FOREIGN KEY(ARTIST_ID) REFERENCES ARTIST(ID);
 ALTER TABLE PAINTING ADD CONSTRAINT PAINTING_FK2 FOREIGN KEY(IMAGE_ID) REFERENCES IMAGE(ID);
 
-INSERT INTO ARTIST(id, version, name, gender) values(1, 1, 'Pablo Picasso', 'M');
-INSERT INTO ARTIST(id, version, name, GENDER) values(2, 1, 'Vincent van Gogh', 'M');
-
-INSERT INTO IMAGE(id, version) values(1, 1);
-INSERT INTO IMAGE(id, version) values(2, 1);
-INSERT INTO IMAGE(id, version) values(3, 1);
-INSERT INTO IMAGE(id, version) values(4, 1);
-
-INSERT INTO painting(id, version, name, price, artist_id, image_id) values(1, 1, 'Blue Nude', 123456, 1, 1);
-INSERT INTO painting(id, version, name, price, artist_id, image_id) values(2, 1, 'Girl Before a Mirror', 123456, 1, 2);
-INSERT INTO painting(id, version, name, price, artist_id, image_id) values(3, 1, 'The Starry Night', 456789, 2, 3);
-INSERT INTO painting(id, version, name, price, artist_id, image_id) values(4, 1, 'Wheat Field with Cypresses', 946342, 2, 4);
-
 ----------
 -- i18n --
 ----------

@@ -29,7 +29,7 @@ public class ResultSetWrapper {
         if (columnTypes == null) {
             populateSqlTypes();
         }
-        return columnTypes[columnIndex];
+        return columnTypes[columnIndex - 1];
     }
 
     private void populateSqlTypes() {
