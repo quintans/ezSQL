@@ -31,7 +31,9 @@ public class NavigationNode {
 	}
 
 	/**
-	 * Por forma a garantir que os vários joins são encaixados correctamente, e avaliados correctamente, é construída um árvore, somente para validação.
+	 * To ensure that the several joins are fit correctly and evaluated correctly,
+	 * a tree is built, solely for validation.
+	 *
 	 * @param fks
 	 * @param table
 	 */
@@ -48,7 +50,7 @@ public class NavigationNode {
 		}
 	
 		if(found == null){
-			// new branche
+			// new branch
 			found = new NavigationNode();
 			found.setForeignKey(fks[0]);
 			branches.add(found);
@@ -61,7 +63,8 @@ public class NavigationNode {
 	}
 		
 	/**
-	 * constroi uma lista de todos os nós da àrvore por ordem de entrada
+	 * builds a list of all the nodes of the tree por order of entry
+	 *
 	 * @param flat
 	 */
 	public void flatTree(List<NavigationNode> flat){

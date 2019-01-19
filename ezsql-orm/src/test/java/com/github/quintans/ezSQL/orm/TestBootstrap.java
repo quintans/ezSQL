@@ -1,8 +1,13 @@
 package com.github.quintans.ezSQL.orm;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
+import java.lang.reflect.Constructor;
 import java.util.Collection;
+import java.util.Properties;
 
+import com.github.quintans.ezSQL.orm.extended.H2DriverExt;
 import org.dbunit.IDatabaseTester;
 import org.dbunit.JdbcDatabaseTester;
 import org.dbunit.dataset.IDataSet;
@@ -12,7 +17,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import com.github.quintans.ezSQL.driver.Driver;
-import com.github.quintans.ezSQL.orm.extended.PostgreSQLDriverExt;
 
 /**
  * Unit test for simple App.
@@ -24,17 +28,35 @@ public class TestBootstrap {
 	@BeforeClass
 	public static void testSetup() throws Exception {
 		try {
+			final String env = System.getProperty("env");
+			Properties systemProps = new Properties();
+			systemProps.load(new FileReader(new File("src/test/resources/"+ env +".properties")));
+			String dbDriver = systemProps.getProperty("db.driver");
+			String dbUrl = systemProps.getProperty("db.url");
+			String dbUser = systemProps.getProperty("db.user");
+			String dbPassword = systemProps.getProperty("db.password");
+			String ormDriver = systemProps.getProperty("db.orm.driver");
+
+			databaseTester = new JdbcDatabaseTester(dbDriver, dbUrl, dbUser, dbPassword);
+
 			//databaseTester = new JdbcDatabaseTester("org.h2.Driver", "jdbc:h2:tcp://localhost:9092/test", "sa", "");
             //databaseTester = new JdbcDatabaseTester("org.mariadb.jdbc.Driver", "jdbc:mariadb://localhost:3306/ezsql", "quintans", "quintans");
 		    //databaseTester = new JdbcDatabaseTester("com.mysql.jdbc.Driver", "jdbc:mysql://localhost:3306/ezsql", "quintans", "quintans");
-            databaseTester = new JdbcDatabaseTester("org.postgresql.Driver", "jdbc:postgresql://localhost:5432/ezsql", "quintans", "quintans");
+            // databaseTester = new JdbcDatabaseTester("org.postgresql.Driver", "jdbc:postgresql://localhost:5432/ezsql", "quintans", "quintans");
 
 			db = new Db(databaseTester.getConnection().getConnection());
+
+			Class<?> clazz = Class.forName(ormDriver);
+			Constructor<?> ctor = clazz.getConstructor();
+			Driver driver = (Driver) ctor.newInstance();
+
 			//Driver driver = new MySQLDriverExt();
-			//Driver driver = new H2DriverExt();
+			// Driver driver = new H2DriverExt();
 			//Driver driver = new Oracle8iDriver();
-            Driver driver = new PostgreSQLDriverExt();
+            //Driver driver = new PostgreSQLDriverExt();
+
 			db.setDriver(driver);
+
 			// try {
 			// Delete delete = new Delete(db, TGallery.GalleryPainting.T_GALLERY_PAINTING);
 			// delete.execute();
