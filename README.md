@@ -126,8 +126,10 @@ This class does not depend of ezSQL. The developer can use this class if it need
 ## Testing
 To execute the tests we need to install a database server and create the test tables.
 The tested databases are: H2, MySQL and PostgreSQL.
+
 In the resource folder of the ezsql-orm project you can find properties files for how to connect to these databases.
-Use this properties as a guid of how to install these databases.
+Use this properties as a guide on how to install these databases.
+
 In the /sql folder at the parent project, you can find scripts for creating the tables for each database.
 
 ## Environment
