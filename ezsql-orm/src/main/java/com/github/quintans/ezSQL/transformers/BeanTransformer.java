@@ -56,7 +56,7 @@ public class BeanTransformer<T> implements IQueryRowTransformer<T> {
 	/**
 	 * Populates the mapping with bean properties, using "tableAlias.propertyName" as key
 	 * 
-	 * @param resultSet
+	 * @param rsw
 	 *            The resultSet
 	 * @param tableAlias
 	 *            The table alias. If <code>null</code> the mapping key is only "propertyName"
@@ -172,7 +172,7 @@ public class BeanTransformer<T> implements IQueryRowTransformer<T> {
 	/**
 	 * gets the value for the passed column
 	 * 
-	 * @param rs resultset
+	 * @param rsw resultset
 	 * @param column
 	 *            the column for witch we want the value
 	 * @return the value, in this case a Long

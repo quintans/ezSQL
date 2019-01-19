@@ -15,19 +15,19 @@ import com.github.quintans.ezSQL.toolkit.utils.Holder;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 /**
- * Esta classe serve para manter o estado, enquando se navega pelas associaçõeses e se constroi a arvore de entidades durante, após uma query select.
- * Assim é possivel indicar aos RowTransformers quais os caminhos a percorrer
- * conforme se for navegando pelas associacoes, a lista de navegações possiveis vai variando.
- * 
+ * This class handles the state, while we traverse through the associations,
+ * building an entity tree from a query select.
+ * This way we can tell the RowTransformers which paths to traverse.
+ * As we go through the associations paths the list of possible paths changes.
+ *
  * Quintans - 10.01.2011
- * O processo é feito em 2as fases.
- * 1) construção da arvore (foreign keys comuns são convertidos numa só)
- * para identificar-mos quais as derivações (branches) existentes para um nó
- * 2) construção de uma array que contem somente os nós que contornam a arvore,
- * para ser mais facil o cálculo dos offsets das colunas de cada entidade a processar
- * 
+ * The work is done in two steps:
+ * 1) building the tree (common foreign keys are converted into one)
+ * to identify the existing branches for a node
+ * 2) build an array with the leaf nodes (nodes at the edge of the tree),
+ * too make it easy the computation of the offsets for each entity.
+ *
  * @author Quintans 04/06/2010
- * 
  */
 public class Navigation {
 

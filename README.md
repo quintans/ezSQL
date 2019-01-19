@@ -123,6 +123,8 @@ This class isolates the developer from the details of JDBC call, like statement 
 exception handling, parameters handling, etc
 This class does not depend of ezSQL. The developer can use this class if it needs a low level control.
 
+## Testing
+To execute the tests
 
 ## Environment
 To use ezSQL we must need to know the database structure.
