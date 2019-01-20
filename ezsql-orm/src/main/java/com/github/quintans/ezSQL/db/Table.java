@@ -1,21 +1,14 @@
 package com.github.quintans.ezSQL.db;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.github.quintans.ezSQL.common.type.MyDate;
 import com.github.quintans.ezSQL.common.type.MyTime;
 import com.github.quintans.ezSQL.dml.Condition;
 import com.github.quintans.ezSQL.toolkit.io.BinStore;
 import com.github.quintans.ezSQL.toolkit.io.TextStore;
-import com.github.quintans.ezSQL.toolkit.utils.Misc;
+import com.github.quintans.ezSQL.toolkit.utils.Strings;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
+
+import java.util.*;
 
 public class Table {
     private Map<String, Column<?>> columnsMap = new LinkedHashMap<String, Column<?>>();
@@ -54,7 +47,7 @@ public class Table {
         if (table == null || "".equals(table))
             throw new NullPointerException("Null for table is not allowed.");
         this.name = table;
-        this.alias = Misc.toCamelCase(table);
+        this.alias = Strings.toCamelCase(table);
     }
     
     public Table copy(){

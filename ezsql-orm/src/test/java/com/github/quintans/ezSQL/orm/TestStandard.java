@@ -1,22 +1,5 @@
 package com.github.quintans.ezSQL.orm;
 
-import static com.github.quintans.ezSQL.dml.Definition.*;
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.io.IOException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import org.junit.Test;
-
 import com.github.quintans.ezSQL.common.type.MyDate;
 import com.github.quintans.ezSQL.common.type.MyDateTime;
 import com.github.quintans.ezSQL.common.type.MyTime;
@@ -28,26 +11,25 @@ import com.github.quintans.ezSQL.dml.Update;
 import com.github.quintans.ezSQL.exceptions.OptimisticLockException;
 import com.github.quintans.ezSQL.orm.app.daos.ArtistDAOBase;
 import com.github.quintans.ezSQL.orm.app.daos.PaintingDAOBase;
-import com.github.quintans.ezSQL.orm.app.domain.Artist;
-import com.github.quintans.ezSQL.orm.app.domain.EGender;
-import com.github.quintans.ezSQL.orm.app.domain.EPayGrade;
-import com.github.quintans.ezSQL.orm.app.domain.Employee;
-import com.github.quintans.ezSQL.orm.app.domain.Gallery;
-import com.github.quintans.ezSQL.orm.app.domain.Image;
-import com.github.quintans.ezSQL.orm.app.domain.Painting;
-import com.github.quintans.ezSQL.orm.app.domain.Temporal;
+import com.github.quintans.ezSQL.orm.app.domain.*;
 import com.github.quintans.ezSQL.orm.app.dtos.ArtistValueDTO;
 import com.github.quintans.ezSQL.orm.app.dtos.ImageDTO;
-import com.github.quintans.ezSQL.orm.app.mappings.TArtist;
-import com.github.quintans.ezSQL.orm.app.mappings.TEmployee;
-import com.github.quintans.ezSQL.orm.app.mappings.TGallery;
-import com.github.quintans.ezSQL.orm.app.mappings.TImage;
-import com.github.quintans.ezSQL.orm.app.mappings.TPainting;
-import com.github.quintans.ezSQL.orm.app.mappings.TTemporal;
+import com.github.quintans.ezSQL.orm.app.mappings.*;
 import com.github.quintans.ezSQL.orm.extended.FunctionExt;
 import com.github.quintans.ezSQL.toolkit.io.BinStore;
 import com.github.quintans.ezSQL.transformers.SimpleAbstractDbRowTransformer;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
+import org.junit.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Map.Entry;
+
+import static com.github.quintans.ezSQL.dml.Definition.*;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Unit test for simple App.
@@ -389,7 +371,7 @@ public class TestStandard extends TestBootstrap {
     }
 
     @Test
-    public void testWithtPartialChildsORMTransformer() throws Exception {
+    public void testWithPartialChildrenORMTransformer() throws Exception {
         try {
             Query query = db.query(TArtist.T_ARTIST).all()
                     .inner(TArtist.A_PAINTINGS).include(TPainting.C_NAME)
@@ -414,7 +396,7 @@ public class TestStandard extends TestBootstrap {
     }
 
     @Test
-    public void testWithtChildsOnPaintingName() {
+    public void testWithChildrenOnPaintingName() {
         Query query = db.queryAll(TArtist.T_ARTIST)
                 .outer(TArtist.A_PAINTINGS)
                 .on(TPainting.C_NAME.like("Blue%"))
@@ -431,7 +413,7 @@ public class TestStandard extends TestBootstrap {
     }
 
     @Test
-    public void testWithtNoChildsOnPaintingName() {
+    public void testWithNoChildrenOnPaintingName() {
     	Artist artist = db.queryAll(TArtist.T_ARTIST)
     			.all()
                 .outer(TArtist.A_PAINTINGS)
@@ -591,7 +573,7 @@ public class TestStandard extends TestBootstrap {
     @Test
     public void testJoinAndFetch(){
         /*
-         * This example shows the diference between join() and fetch().
+         * This example shows the difference between join() and fetch().
          * join() enforces only the constraint where fetch also brings all data 
          * from the tables in its path
          */
@@ -606,6 +588,17 @@ public class TestStandard extends TestBootstrap {
         for(Painting paint : paintings) {
             assertTrue("Artis should be null.", paint.getArtist() == null);
         }
+    }
+
+    @Test
+    public void testSimpleFetch(){
+        List<Artist> artists = db.query(TArtist.T_ARTIST).all()
+                .inner(TArtist.A_PAINTINGS).fetch()
+                .list(Artist.class);
+
+        dumpCollection(artists);
+
+        assertTrue("Wrong size for artists.", artists.size() == 2);
     }
 
     @Test

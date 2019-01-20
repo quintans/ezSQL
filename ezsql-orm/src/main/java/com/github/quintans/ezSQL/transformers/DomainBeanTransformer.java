@@ -1,19 +1,14 @@
 package com.github.quintans.ezSQL.transformers;
 
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-
 import com.github.quintans.ezSQL.common.api.Updatable;
 import com.github.quintans.ezSQL.db.Association;
 import com.github.quintans.ezSQL.dml.Query;
 import com.github.quintans.ezSQL.toolkit.utils.Holder;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
+
+import java.sql.SQLException;
+import java.util.*;
 
 public class DomainBeanTransformer<T> extends BeanTransformer<T> {
 	private boolean reuse = false;
@@ -114,7 +109,7 @@ public class DomainBeanTransformer<T> extends BeanTransformer<T> {
 							if (bp.isMany()) { // Collection
 								Collection<Object> collection = (Collection<Object>) bp.getReadMethod().invoke(bean);
 								if (collection == null) {
-								    collection = new LinkedHashSet<Object>();
+								    collection = new LinkedHashSet<>();
    	                                bp.invokeWriteMethod(bean, collection);
 								}
 

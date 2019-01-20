@@ -1,34 +1,20 @@
 package com.github.quintans.ezSQL.driver;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.sql.Types;
+import com.github.quintans.ezSQL.AbstractDb;
+import com.github.quintans.ezSQL.db.Column;
+import com.github.quintans.ezSQL.db.NullSql;
+import com.github.quintans.ezSQL.db.Sequence;
+import com.github.quintans.ezSQL.dml.*;
+import com.github.quintans.jdbc.PreparedStatementCallback;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
+import com.github.quintans.jdbc.transformers.ResultSetWrapper;
+
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import com.github.quintans.ezSQL.AbstractDb;
-import com.github.quintans.ezSQL.db.Column;
-import com.github.quintans.ezSQL.db.NullSql;
-import com.github.quintans.ezSQL.db.Sequence;
-import com.github.quintans.ezSQL.dml.AutoKeyStrategy;
-import com.github.quintans.ezSQL.dml.ColumnHolder;
-import com.github.quintans.ezSQL.dml.Condition;
-import com.github.quintans.ezSQL.dml.Definition;
-import com.github.quintans.ezSQL.dml.Delete;
-import com.github.quintans.ezSQL.dml.EFunction;
-import com.github.quintans.ezSQL.dml.Function;
-import com.github.quintans.ezSQL.dml.Join;
-import com.github.quintans.ezSQL.dml.PathElement;
-import com.github.quintans.ezSQL.dml.Query;
-import com.github.quintans.ezSQL.dml.Update;
-import com.github.quintans.jdbc.PreparedStatementCallback;
-import com.github.quintans.jdbc.exceptions.PersistenceException;
-import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
 public class OracleDriver extends GenericDriver {
 	/**
@@ -61,7 +47,7 @@ public class OracleDriver extends GenericDriver {
 
 	@Override
 	public int paginationColumnOffset(Query query) {
-		if (useSQLPagination() && query.getSkip() >= 1) // se o primeiro resultado esta definido o ultimo tb esta
+		if (useSQLPagination() && query.getSkip() >= 1)
 			return 1;
 		else
 			return 0;

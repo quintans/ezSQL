@@ -47,8 +47,7 @@ public class TestBootstrap {
 			db = new Db(databaseTester.getConnection().getConnection());
 
 			Class<?> clazz = Class.forName(ormDriver);
-			Constructor<?> ctor = clazz.getConstructor();
-			Driver driver = (Driver) ctor.newInstance();
+			Driver driver = (Driver) clazz.newInstance();
 
 			//Driver driver = new MySQLDriverExt();
 			// Driver driver = new H2DriverExt();

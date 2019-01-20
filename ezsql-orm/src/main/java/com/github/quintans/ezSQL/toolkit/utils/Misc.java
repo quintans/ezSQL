@@ -1,44 +1,21 @@
 package com.github.quintans.ezSQL.toolkit.utils;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.util.Collection;
-
+import com.github.quintans.ezSQL.toolkit.io.BinStore;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
-import com.github.quintans.ezSQL.toolkit.io.BinStore;
-import com.github.quintans.jdbc.exceptions.PersistenceException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.Collection;
 
 public class Misc {
     private static Logger LOGGER = Logger.getLogger(Misc.class);
-
-	public static String toCamelCase(String name) {
-		if (name != null) {
-			StringBuilder result = new StringBuilder(name.substring(0, 1).toLowerCase());
-			int x = name.length();
-			boolean toUpper = false;
-			for (int i = 2; i <= x; i++) {
-				String letter = name.substring(i - 1, i);
-				if (letter.equals("_")) {
-					toUpper = true;
-				} else {
-					if (toUpper) {
-						letter = letter.toUpperCase();
-						toUpper = false;
-					} else {
-						letter = letter.toLowerCase();
-					}
-					result.append(letter);
-				}
-			}
-			return result.toString();
-		}
-
-		return null;
-	}
 
 	public static boolean match(Object o1, Object o2) {
 		if (o1 == o2) // even if both are null
@@ -85,8 +62,26 @@ public class Misc {
             IOUtils.closeQuietly(in);
         }
     }
-    
-    public static String capitalizeFirst(String s){
-        return s.substring(0, 1).toUpperCase() + s.substring(1);
+
+
+    /**
+     * there is an interesting project here https://github.com/jhalterman/typetools for generic type discovery
+     *
+     * @param genericType
+     * @return
+     * @throws ClassNotFoundException
+     */
+    public static Class<?> genericClass(Type genericType) throws ClassNotFoundException {
+        if (genericType instanceof ParameterizedType) {
+            ParameterizedType aType = (ParameterizedType) genericType;
+            if (aType.getActualTypeArguments()[0] instanceof GenericArrayType) {
+                Class<?> c = (Class<?>) ((GenericArrayType) aType.getActualTypeArguments()[0]).getGenericComponentType();
+                return Class.forName("[L" + c.getName() + ";"); // hack
+            } else
+                return (Class<?>) aType.getActualTypeArguments()[0];
+        }
+
+        return null;
     }
+
 }

@@ -1,19 +1,17 @@
 package com.github.quintans.ezSQL.transformers;
 
+import com.github.quintans.ezSQL.db.Column;
+import com.github.quintans.ezSQL.toolkit.utils.Misc;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
+
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
-import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import com.github.quintans.ezSQL.db.Column;
-import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 public class BeanProperty {
     private int position = 0;
@@ -157,27 +155,7 @@ public class BeanProperty {
     }
 
     private static Class<?> genericClass(Method method) throws ClassNotFoundException {
-        return genericClass(method.getGenericParameterTypes()[0]);
-    }
-
-    /**
-     * there is an interesting project here https://github.com/jhalterman/typetools for generic type discovery
-     * 
-     * @param genericType
-     * @return
-     * @throws ClassNotFoundException
-     */
-    public static Class<?> genericClass(Type genericType) throws ClassNotFoundException {
-        if (genericType instanceof ParameterizedType) {
-            ParameterizedType aType = (ParameterizedType) genericType;
-            if (aType.getActualTypeArguments()[0] instanceof GenericArrayType) {
-                Class<?> c = (Class<?>) ((GenericArrayType) aType.getActualTypeArguments()[0]).getGenericComponentType();
-                return Class.forName("[L" + c.getName() + ";"); // hack
-            } else
-                return (Class<?>) aType.getActualTypeArguments()[0];
-        } 
-        
-        return null;
+        return Misc.genericClass(method.getGenericParameterTypes()[0]);
     }
  
 }

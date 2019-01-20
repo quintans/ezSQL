@@ -1,18 +1,14 @@
 package com.github.quintans.ezSQL.transformers;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.github.quintans.ezSQL.db.Association;
 import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.db.Table;
-import com.github.quintans.ezSQL.dml.ColumnHolder;
-import com.github.quintans.ezSQL.dml.Function;
-import com.github.quintans.ezSQL.dml.Join;
-import com.github.quintans.ezSQL.dml.PathElement;
-import com.github.quintans.ezSQL.dml.Query;
+import com.github.quintans.ezSQL.dml.*;
 import com.github.quintans.ezSQL.toolkit.utils.Holder;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class handles the state, while we traverse through the associations,
@@ -68,7 +64,7 @@ public class Navigation {
 		// reset
 		this.depth = 0;
 		this.firstNode = new NavigationNode();
-		Holder<Table> holder = new Holder<Table>(table); // contem a ultima tabela
+		Holder<Table> holder = new Holder<Table>(table); // holds the last table
 		for (Association[] fks : includes)
 			this.firstNode.buildTree(fks, holder);
 

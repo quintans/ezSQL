@@ -5,7 +5,7 @@ import com.github.quintans.ezSQL.dml.ColumnHolder;
 import com.github.quintans.ezSQL.dml.Condition;
 import com.github.quintans.ezSQL.dml.Definition;
 import com.github.quintans.ezSQL.dml.Function;
-import com.github.quintans.ezSQL.toolkit.utils.Misc;
+import com.github.quintans.ezSQL.toolkit.utils.Strings;
 
 /**
  * Definição das colunas a usar numa tabela.
@@ -50,7 +50,7 @@ public class Column<T> extends Base<T> {
 	 */
 	public Column(String column, NullSql type) {
 		this.name = column;
-		this.alias = Misc.toCamelCase(column);
+		this.alias = Strings.toCamelCase(column);
 		this.type = type;
 	}
 	

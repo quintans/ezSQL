@@ -132,6 +132,8 @@ Use this properties as a guide on how to install these databases.
 
 In the /sql folder at the parent project, you can find scripts for creating the tables for each database.
 
+To test against H2 you need to use `-Denv=h2` as a VM option
+
 ## Environment
 To use ezSQL we must need to know the database structure.
 It is not a static configuration, and we could use it in a dynamic schema (altered in runtime by adding tables, columns)
