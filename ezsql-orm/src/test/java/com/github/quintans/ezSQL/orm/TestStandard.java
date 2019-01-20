@@ -17,6 +17,7 @@ import com.github.quintans.ezSQL.orm.app.dtos.ImageDTO;
 import com.github.quintans.ezSQL.orm.app.mappings.*;
 import com.github.quintans.ezSQL.orm.extended.FunctionExt;
 import com.github.quintans.ezSQL.toolkit.io.BinStore;
+import com.github.quintans.ezSQL.transformers.MapBeanTransformer;
 import com.github.quintans.ezSQL.transformers.SimpleAbstractDbRowTransformer;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 import org.junit.Test;
@@ -36,7 +37,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class TestStandard extends TestBootstrap {
     private static final long YEAR = 365L * 24L * 3600000L;
-    
+
     @Test
     public void testLoadAssociation() {
         Artist artist = db.query(TArtist.T_ARTIST).all()
@@ -57,13 +58,13 @@ public class TestStandard extends TestBootstrap {
 
         genders = query.listRaw(EGender.class);
         dumpCollection(genders);
-        
+
         assertTrue("Wrong size for gender list.", genders.size() == 3);
-        assertTrue("Gender are incorrect null.", 
+        assertTrue("Gender are incorrect null.",
                 genders.get(0) == EGender.MALE &&
-                genders.get(1) == EGender.MALE &&
-                genders.get(2) == EGender.FEMALE
-                );
+                        genders.get(1) == EGender.MALE &&
+                        genders.get(2) == EGender.FEMALE
+        );
     }
 
     @Test
@@ -95,7 +96,7 @@ public class TestStandard extends TestBootstrap {
         Query query = db.queryAll(TArtist.T_ARTIST).innerFetch(TArtist.A_PAINTINGS);
         List<Artist> artists = query.list(ArtistDAOBase.factory);
         dumpCollection(artists);
-        
+
         assertTrue("Wrong size for artist list.", artists.size() == 2);
     }
 
@@ -104,20 +105,20 @@ public class TestStandard extends TestBootstrap {
         Query query = db.queryAll(TPainting.T_PAINTING).innerFetch(TPainting.A_ARTIST);
         List<Painting> entities = query.list(PaintingDAOBase.factory);
         dumpCollection(entities);
-        
+
         assertTrue("Wrong size for artist list.", entities.size() == 4);
     }
 
     @Test
     public void testListRaw() {
-        
+
         Stopwatch sw = Stopwatch.createAndStart();
 
         Query query = db.query(TArtist.T_ARTIST)
                 .column(TArtist.C_ID)
                 .column(TArtist.C_NAME);
         List<Object[]> list = query.listRaw(Long.class, String.class);
-        
+
         sw.showTotal(null);
 
         dumpRaw(list);
@@ -249,7 +250,7 @@ public class TestStandard extends TestBootstrap {
                     .groupBy(1);
             List<ArtistValueDTO> values = query.list(ArtistValueDTO.class, false);
             dumpCollection(values);
-            
+
             assertTrue("Wrong size for artist list.", values.size() == 3);
             ArtistValueDTO dto = values.get(0);
             assertTrue("Invalid GroupBy.", dto.getName() != null && dto.getValue() != null);
@@ -311,20 +312,20 @@ public class TestStandard extends TestBootstrap {
 
             assertTrue("Wrong size for artist list.", values.size() == 3);
             ArtistValueDTO dto = values.get(0);
-            assertTrue("Invalid GroupBy.", 
-                    dto.getId() != null && 
-                    dto.getName() != null && 
-                    dto.getValue() != null);
+            assertTrue("Invalid GroupBy.",
+                    dto.getId() != null &&
+                            dto.getName() != null &&
+                            dto.getValue() != null);
             dto = values.get(1);
-            assertTrue("Invalid GroupBy.", 
-                    dto.getId() != null && 
-                    dto.getName() != null && 
-                    dto.getValue() != null);
+            assertTrue("Invalid GroupBy.",
+                    dto.getId() != null &&
+                            dto.getName() != null &&
+                            dto.getValue() != null);
             dto = values.get(2);
-            assertTrue("Invalid GroupBy.", 
-                    dto.getId() != null && 
-                    dto.getName() != null && 
-                    dto.getValue() == null);
+            assertTrue("Invalid GroupBy.",
+                    dto.getId() != null &&
+                            dto.getName() != null &&
+                            dto.getValue() == null);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -414,8 +415,8 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testWithNoChildrenOnPaintingName() {
-    	Artist artist = db.queryAll(TArtist.T_ARTIST)
-    			.all()
+        Artist artist = db.queryAll(TArtist.T_ARTIST)
+                .all()
                 .outer(TArtist.A_PAINTINGS)
                 .on(TPainting.C_NAME.is("XPTO"))
                 .fetch()
@@ -479,10 +480,10 @@ public class TestStandard extends TestBootstrap {
                     .outerFetch(TArtist.A_PAINTINGS, TPainting.A_GALLERIES);
             List<Artist> artists = query.list(Artist.class);
             dumpCollection(artists);
-            
+
             assertTrue("Wrong size for artist List", artists.size() == 3);
             assertTrue("artist[0].paintings is null.", artists.get(0).getPaintings() != null);
-            for(Painting paint : artists.get(0).getPaintings()) {
+            for (Painting paint : artists.get(0).getPaintings()) {
                 assertTrue("Gallery is null", paint.getGalleries() != null);
             }
             assertTrue("artist[1].paintings is null.", artists.get(1).getPaintings() != null);
@@ -492,7 +493,7 @@ public class TestStandard extends TestBootstrap {
             paint = it.next();
             assertTrue("Gallery is not null", paint.getGalleries() == null);
             assertTrue("artist[2].paintings is not null.", artists.get(2).getPaintings() == null);
-            
+
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
@@ -509,9 +510,9 @@ public class TestStandard extends TestBootstrap {
                     .join();
             List<Painting> values = query.list(Painting.class);
             dumpCollection(values);
-            
+
             assertTrue("Wrong size for painting list", values.size() == 2);
-            for(Painting paint : values) {
+            for (Painting paint : values) {
                 assertTrue("Artist is not null", paint.getArtist() == null);
             }
 
@@ -533,7 +534,7 @@ public class TestStandard extends TestBootstrap {
                     .join(); // this will add the includes at the TOP of the tree
             List<ArtistValueDTO> values = query.list(ArtistValueDTO.class, false);
             dumpCollection(values);
-            
+
             assertTrue("Wrong size for outer join.", values.size() == 5);
 
         } catch (Exception e) {
@@ -541,7 +542,7 @@ public class TestStandard extends TestBootstrap {
             throw e;
         }
     }
-    
+
     @Test
     public void testIncludeJoinAndFetch() throws Exception {
         // Ex: list all Artists and the price of each painting, even if the
@@ -557,9 +558,9 @@ public class TestStandard extends TestBootstrap {
                     .fetch() // but this will dump the values in corresponding object tree branch
                     .list(ArtistValueDTO.class, false);
             dumpCollection(values);
-            
+
             assertTrue("Wrong size for outer join.", values.size() == 4);
-            for(ArtistValueDTO val : values) {
+            for (ArtistValueDTO val : values) {
                 assertTrue("Invalid Value", val.getName() != null && val.getValue() != null);
                 assertTrue("Invalid Value.paintings", val.getPaintings() != null);
             }
@@ -569,36 +570,43 @@ public class TestStandard extends TestBootstrap {
             throw e;
         }
     }
-    
+
     @Test
-    public void testJoinAndFetch(){
+    public void testJoinAndFetch() {
         /*
          * This example shows the difference between join() and fetch().
-         * join() enforces only the constraint where fetch also brings all data 
+         * join() enforces only the constraint where fetch also brings all data
          * from the tables in its path
          */
         List<Painting> paintings = db.query(TPainting.T_PAINTING).all()
-            .inner(TPainting.A_ARTIST).on(TArtist.C_NAME.like("Pablo%")).join()
-            .inner(TPainting.A_GALLERIES).fetch()
-            .list(Painting.class);
-        
+                .inner(TPainting.A_ARTIST).on(TArtist.C_NAME.like("Pablo%")).join()
+                .inner(TPainting.A_GALLERIES).fetch()
+                .list(Painting.class);
+
         dumpCollection(paintings);
-        
+
         assertTrue("Wrong size for paintings.", paintings.size() == 2);
-        for(Painting paint : paintings) {
+        for (Painting paint : paintings) {
             assertTrue("Artis should be null.", paint.getArtist() == null);
         }
     }
 
     @Test
-    public void testSimpleFetch(){
+    public void testSimpleFetch() {
         List<Artist> artists = db.query(TArtist.T_ARTIST).all()
-                .inner(TArtist.A_PAINTINGS).fetch()
-                .list(Artist.class);
+                .order(TArtist.C_NAME)
+                .outer(TArtist.A_PAINTINGS).fetch()
+                .list(new MapBeanTransformer<>(Artist.class));
 
         dumpCollection(artists);
 
-        assertTrue("Wrong size for artists.", artists.size() == 2);
+        assertTrue("Wrong size for artists. Expected 3, got " + artists.size(), artists.size() == 3);
+        int size = artists.get(0).getPaintings().size();
+        assertTrue("Wrong size for Paintings, for artist[0]. Expected 1, got " + size, size == 1);
+        size = artists.get(1).getPaintings().size();
+        assertTrue("Wrong size for Paintings, for artist[1]. Expected 2, got " + size, size == 2);
+        size = artists.get(2).getPaintings().size();
+        assertTrue("Wrong size for Paintings, for artist[2]. Expected 3, got " + size, size == 2);
     }
 
     @Test
@@ -608,7 +616,7 @@ public class TestStandard extends TestBootstrap {
                 .column(FunctionExt.ifNull(TArtist.C_BIRTHDAY, new Date())).as("birthday")
                 .where(TArtist.C_ID.is(1L))
                 .unique(Artist.class);
-        
+
         assertTrue("Birthday is null when using custom function ifNull.", artist.getBirthday() != null);
     }
 
@@ -623,29 +631,29 @@ public class TestStandard extends TestBootstrap {
         MyDateTime myDateTime = new MyDateTime();
         Date date = new Date();
         insert.values(1L, myTime, myDate, myDateTime, date).execute();
-        
+
         Temporal temporal = db.query(TTemporal.T_TEMPORAL).all()
                 .where(TTemporal.C_ID.is(1L))
                 .unique(Temporal.class);
         dump(temporal);
-        
+
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.sssss");
         System.out.println("Time ===> " + sdf.format(myTime) + " <=> " + sdf.format(temporal.getClock()));
-        String expected= sdf.format(myTime);
+        String expected = sdf.format(myTime);
         String actual = sdf.format(temporal.getClock());
         assertTrue("Clock is incorrect! Expected " + expected + ", got " + actual, myTime.equals(temporal.getClock()));
-        
+
         sdf = new SimpleDateFormat("yyyy-MM-dd");
         assertTrue("Today is incorrect!", sdf.format(myDate).equals(sdf.format(temporal.getToday())));
-        
+
         sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         assertTrue("Now is incorrect!", sdf.format(myDateTime).equals(sdf.format(temporal.getNow())));
-        
+
         //sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
         System.out.println("Timestamp ===> " + sdf.format(date) + " <=> " + sdf.format(temporal.getInstant()));
         assertTrue("Instant is incorrect!", sdf.format(date).equals(sdf.format(temporal.getInstant())));
     }
-    
+
     @Test
     public void testCRUD() {
         // INSERT
@@ -692,7 +700,7 @@ public class TestStandard extends TestBootstrap {
         sw.start();
         insert.values(5L, 1L, EGender.FEMALE, "Jane DOE", null).execute();
         sw.stop().showTotal("INSERT execute").reset();
-        
+
         sw.start();
         insert.values(6L, 1, EGender.FEMALE, "Jane DOE Sister", new MyDateTime()).execute();
         sw.stop().showTotal("INSERT execute").reset();
@@ -720,16 +728,16 @@ public class TestStandard extends TestBootstrap {
     public void testUpdateCache() {
         Artist artist = db.query(TArtist.T_ARTIST).all()
                 .where(TArtist.C_ID.is(1L)).unique(Artist.class);
-        
+
         artist.setName("Jane Mnomonic");
         db.update(TArtist.T_ARTIST).submit(artist);
         assertTrue("Incorrect version!", artist.getVersion().equals(2));
-        
+
         artist.setGender(EGender.FEMALE);
         db.update(TArtist.T_ARTIST).submit(artist);
         assertTrue("Incorrect version!", artist.getVersion().equals(3));
     }
-    
+
     @Test
     public void testQuickCRUD() throws Exception {
         try {
@@ -785,7 +793,7 @@ public class TestStandard extends TestBootstrap {
         Object key = keys.get(TArtist.C_ID);
         artist.setId(((Number) key).longValue());
         artist.setName("Jane Doe");
-        db.update(TArtist.T_ARTIST).set(artist).execute();        
+        db.update(TArtist.T_ARTIST).set(artist).execute();
     }
 
     @Test
@@ -870,20 +878,20 @@ public class TestStandard extends TestBootstrap {
         byte[] content = image.getContent();
         assertTrue("Image data is null!", content != null && content.length > 0);
     }
-    
+
     @Test
     public void testNumericEnum() throws IOException {
         Insert insert = db.insert(TEmployee.T_EMPLOYEE)
                 .sets(TEmployee.C_ID, TEmployee.C_NAME, TEmployee.C_SEX, TEmployee.C_PAY_GRADE, TEmployee.C_CREATION);
         insert.values(1, "Oscar", true, EPayGrade.LOW, new Date()).execute();
         insert.values(2, "Maria", false, EPayGrade.HIGH, new Date()).execute();
-        
+
         List<Employee> employees = db.query(TEmployee.T_EMPLOYEE).all()
                 .order(TEmployee.C_ID)
                 .list(Employee.class);
-        
+
         dumpCollection(employees);
-        
+
         assertTrue("Wrong list size for employees!", employees.size() == 2);
         assertTrue("Wrong pay grade type!", employees.get(0).getPayGrade() == EPayGrade.LOW);
         assertTrue("Wrong pay grade type!", employees.get(1).getPayGrade() == EPayGrade.HIGH);
@@ -891,59 +899,59 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testSimpleCase() {
-    	Long sale = db.query(TPainting.T_PAINTING)
-    			.column(
-    				sum(
-    					with(TPainting.C_NAME)
-    					.when("Blue Nude").then(10)
-    					.otherwise(asIs(20)) // asIs(): value is written as is to the query
-    					.end()
-    				)
-    			)
-    			.uniqueLong();
-    	
+        Long sale = db.query(TPainting.T_PAINTING)
+                .column(
+                        sum(
+                                with(TPainting.C_NAME)
+                                        .when("Blue Nude").then(10)
+                                        .otherwise(asIs(20)) // asIs(): value is written as is to the query
+                                        .end()
+                        )
+                )
+                .uniqueLong();
+
         assertTrue("Wrong sale value for Paintings! Expected 70, got " + sale, sale.equals(70L));
     }
 
-	public static class Classification {
-		private String name;
-		private String category;
+    public static class Classification {
+        private String name;
+        private String category;
 
-		public String getName() {
-			return name;
-		}
+        public String getName() {
+            return name;
+        }
 
-		public void setName(String name) {
-			this.name = name;
-		}
+        public void setName(String name) {
+            this.name = name;
+        }
 
-		public String getCategory() {
-			return category;
-		}
+        public String getCategory() {
+            return category;
+        }
 
-		public void setCategory(String category) {
-			this.category = category;
-		}
-	}
+        public void setCategory(String category) {
+            this.category = category;
+        }
+    }
 
     @Test
     public void testSearchedCase() {
-    	List<Classification> c = db.query(TPainting.T_PAINTING)
-    		.column(TPainting.C_NAME) // default maps to field name
-            .column(
-    			when(TPainting.C_PRICE.gt(150D)).then("expensive")
-    			.when(TPainting.C_PRICE.range(50D, 150D)).then("normal")
-    			.otherwise("cheap")
-    			.end()
-    		)
-    		.as("category") // maps to field category
-    		.order(TPainting.C_PRICE).desc()
-    		.list(Classification.class);
-    	
+        List<Classification> c = db.query(TPainting.T_PAINTING)
+                .column(TPainting.C_NAME) // default maps to field name
+                .column(
+                        when(TPainting.C_PRICE.gt(150D)).then("expensive")
+                                .when(TPainting.C_PRICE.range(50D, 150D)).then("normal")
+                                .otherwise("cheap")
+                                .end()
+                )
+                .as("category") // maps to field category
+                .order(TPainting.C_PRICE).desc()
+                .list(Classification.class);
+
         assertTrue("Wrong category value for Paintings!", "expensive".equals(c.get(0).getCategory()));
         assertTrue("Wrong category value for Paintings!", "normal".equals(c.get(1).getCategory()));
         assertTrue("Wrong category value for Paintings!", "normal".equals(c.get(2).getCategory()));
         assertTrue("Wrong category value for Paintings!", "cheap".equals(c.get(3).getCategory()));
-    	
+
     }
 }

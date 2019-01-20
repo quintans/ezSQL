@@ -10,7 +10,11 @@ public class TableNode {
     /**
      * table alias
      */
-    private String alias;
+    private String tableAlias;
+    /**
+     * association alias
+     */
+    private String associationAlias;
     private TableNode parent;
     /**
      * domain object. This will never be a collection.
@@ -23,12 +27,17 @@ public class TableNode {
      */
     private Map<String, Object> childInstances = new HashMap<>();
 
-    public TableNode(String alias){
-        this.alias = alias;
+    public TableNode(String tableAlias, String associationAlias){
+        this.tableAlias = tableAlias;
+        this.associationAlias = associationAlias;
     }
 
-    public String getAlias() {
-        return alias;
+    public String getAssociationAlias() {
+        return associationAlias;
+    }
+
+    public String getTableAlias() {
+        return tableAlias;
     }
 
     public void setParent(TableNode parent) {
@@ -65,9 +74,10 @@ public class TableNode {
     public Object getInstanceIfAbsent(Instantiate instantiate) {
         if(instance == null) {
             if(parent == null) {
-                instantiate.apply(null, alias);
+                instance = instantiate.apply(null, associationAlias);
+            } else {
+                instance = parent.getFieldInstanceIfAbsent(associationAlias, instantiate);
             }
-            instance = parent.getFieldInstanceIfAbsent(alias, instantiate);
         }
         return instance;
     }
@@ -88,11 +98,19 @@ public class TableNode {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TableNode tableNode = (TableNode) o;
-        return alias.equals(tableNode.alias);
+        return associationAlias.equals(tableNode.associationAlias);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(alias);
+        return Objects.hash(associationAlias);
+    }
+
+    @Override
+    public String toString() {
+        return "TableNode{" +
+                "tableAlias='" + tableAlias + '\'' +
+                ", associationAlias='" + associationAlias + '\'' +
+                '}';
     }
 }

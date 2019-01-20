@@ -5,6 +5,10 @@ import com.github.quintans.jdbc.exceptions.PersistenceException;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
@@ -17,30 +21,30 @@ import java.util.Collection;
 public class Misc {
     private static Logger LOGGER = Logger.getLogger(Misc.class);
 
-	public static boolean match(Object o1, Object o2) {
-		if (o1 == o2) // even if both are null
-			return true;
-		else if (o1 != null)
-			return o1.equals(o2);
-		else
-			return o2.equals(o1);
-	}
-	
-	public static int length(Collection<?> coll) {
-	    return coll == null ? 0 : coll.size();
-	}
-	
+    public static boolean match(Object o1, Object o2) {
+        if (o1 == o2) // even if both are null
+            return true;
+        else if (o1 != null)
+            return o1.equals(o2);
+        else
+            return o2.equals(o1);
+    }
+
+    public static int length(Collection<?> coll) {
+        return coll == null ? 0 : coll.size();
+    }
+
     public static int length(Object[] data) {
         return data == null ? 0 : data.length;
     }
-    
-    public static void callAnnotatedMethod(Class<? extends Annotation> annotation , Object o, Object... arguments){
-        if(o == null)
+
+    public static void callAnnotatedMethod(Class<? extends Annotation> annotation, Object o, Object... arguments) {
+        if (o == null)
             return;
-        
+
         Method[] methods = o.getClass().getMethods();
-        for(Method method : methods) {
-            if(method.isAnnotationPresent(annotation)){
+        for (Method method : methods) {
+            if (method.isAnnotationPresent(annotation)) {
                 try {
                     method.invoke(o, arguments);
                 } catch (Exception e) {
@@ -49,11 +53,11 @@ public class Misc {
             }
         }
     }
-    
+
     public static void copy(InputStream in, BinStore bc) {
-        if(in == null)
+        if (in == null)
             return;
-        
+
         try {
             bc.set(in);
         } catch (IOException e) {
@@ -82,6 +86,25 @@ public class Misc {
         }
 
         return null;
+    }
+
+    public static PropertyDescriptor getBeanProperty(Class<?> klass, String name) throws IntrospectionException {
+        BeanInfo info = Introspector.getBeanInfo(klass);
+        PropertyDescriptor[] props = info.getPropertyDescriptors();
+        for (PropertyDescriptor p : props) {
+            if (p.getName().equals(name)) {
+                makeAccessible(p.getReadMethod());
+                makeAccessible(p.getWriteMethod());
+                return p;
+            }
+        }
+        return null;
+    }
+
+    private static void makeAccessible(Method m) {
+        if(!m.isAccessible()) {
+            m.setAccessible(true);
+        }
     }
 
 }

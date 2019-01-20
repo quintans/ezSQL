@@ -14,18 +14,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.github.quintans.ezSQL.transformers.*;
 import org.apache.log4j.Logger;
 
 import com.github.quintans.ezSQL.AbstractDb;
 import com.github.quintans.ezSQL.db.Association;
 import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.db.Table;
-import com.github.quintans.ezSQL.transformers.AbstractDbRowTransformer;
-import com.github.quintans.ezSQL.transformers.BeanTransformer;
-import com.github.quintans.ezSQL.transformers.DomainBeanTransformer;
-import com.github.quintans.ezSQL.transformers.IProcessor;
-import com.github.quintans.ezSQL.transformers.IRowTransformerFactory;
-import com.github.quintans.ezSQL.transformers.SimpleAbstractDbRowTransformer;
 import com.github.quintans.jdbc.RawSql;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 import com.github.quintans.jdbc.transformers.IRowTransformer;
@@ -1136,6 +1131,7 @@ public class Query extends DmlBase {
         }
     }
 
+
     /**
      * Executes a query and transform the results to the bean type passed as
      * parameter,<br>
@@ -1147,6 +1143,11 @@ public class Query extends DmlBase {
      */
     public <T> List<T> list(Class<T> klass) {
         return list(klass, true);
+    }
+
+    public <T> List<T> list(IQueryRowTransformer<T> transformer) {
+        transformer.setQuery(this);
+        return list((IRowTransformer<T>) transformer);
     }
 
     public <T> List<T> list(IRowTransformerFactory<T> factory, boolean reuse) {

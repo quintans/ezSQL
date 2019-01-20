@@ -86,6 +86,11 @@ public abstract class ORMTransformer<T> implements IQueryRowTransformer<T> {
 		return this.query;
 	}
 
+	@Override
+	public void setQuery(Query query) {
+		this.query = query;
+	}
+
 	public ResultSetWrapper getResultSet() {
 		return this.resultSet;
 	}

@@ -22,4 +22,13 @@ public class ColumnNode {
     public boolean isKey() {
         return key;
     }
+
+    @Override
+    public String toString() {
+        return "ColumnNode{" +
+                "columnIndex=" + columnIndex +
+                ", alias='" + alias + '\'' +
+                ", key=" + key +
+                '}';
+    }
 }

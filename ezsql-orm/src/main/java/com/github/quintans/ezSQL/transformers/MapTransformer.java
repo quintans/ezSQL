@@ -1,41 +1,46 @@
 package com.github.quintans.ezSQL.transformers;
 
+import com.github.quintans.ezSQL.db.Association;
 import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.dml.*;
 import com.github.quintans.ezSQL.driver.Driver;
-import com.github.quintans.ezSQL.toolkit.utils.Misc;
-import com.github.quintans.ezSQL.toolkit.utils.Strings;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
-import com.github.quintans.jdbc.transformers.IRowTransformer;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
-import java.lang.reflect.Method;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
-public class MapTransformer<T> implements IRowTransformer<T> {
+public abstract class MapTransformer<T> implements IQueryRowTransformer<T> {
     private TableNode rootNode;
     private Map<String, TableNode> tableNodes;
     private Map<List<?>, Object> domainCache;
 
     private Query query;
     private Driver driver;
-    private Class<T> clazz;
     private boolean reuse;
     private int offset;
 
-    public MapTransformer(Query query, Class<T> clazz, boolean reuse) {
+    public MapTransformer(Query query, boolean reuse) {
         this.query = query;
-        driver = query.getDb().getDriver();
-        this.clazz = clazz;
         this.reuse = reuse;
-        this.offset = query.getDb().getDriver().paginationColumnOffset(query);
+    }
+
+    @Override
+    public Query getQuery() {
+        return query;
+    }
+
+    @Override
+    public void setQuery(Query query) {
+        this.query = query;
     }
 
     @Override
     public Collection<T> beforeAll(ResultSetWrapper rsw) {
+        driver = query.getDb().getDriver();
+        this.offset = query.getDb().getDriver().paginationColumnOffset(query);
         domainCache = new HashMap<>();
 
         buildTree();
@@ -48,19 +53,23 @@ public class MapTransformer<T> implements IRowTransformer<T> {
         tableNodes = new LinkedHashMap<>();
 
         Table table = query.getTable();
-        rootNode = buildTreeAndCheckKeys(table);
-        tableNodes.put(rootNode.getAlias(), rootNode);
+        rootNode = buildTreeAndCheckKeys(table, query.getTableAlias(), "");
+        tableNodes.put(rootNode.getTableAlias(), rootNode);
 
         if (query.getJoins() != null) {
             for (Join join : query.getJoins()) {
                 if (join.isFetch()) {
                     for (PathElement pe : join.getPathElements()) {
-                        final Table tableTo = pe.getBase().getTableTo();
-                        if (!tableNodes.containsKey(tableTo.getAlias())) {
-                            TableNode tableNode = buildTreeAndCheckKeys(tableTo);
-                            String fromAlias = pe.getBase().getTableFrom().getAlias();
-                            TableNode parent = tableNodes.get(fromAlias);
-                            parent.addTableNode(tableNode);
+                        for (Association association : join.getAssociations()) {
+                            String aliasTo = association.getAliasTo();
+
+                            if (!tableNodes.containsKey(aliasTo)) {
+                                TableNode tableNode = buildTreeAndCheckKeys(association.getTableTo(), aliasTo, association.getAlias());
+                                tableNodes.put(aliasTo, tableNode);
+
+                                TableNode parent = tableNodes.get(association.getAliasFrom());
+                                parent.addTableNode(tableNode);
+                            }
                         }
                     }
                 }
@@ -72,30 +81,34 @@ public class MapTransformer<T> implements IRowTransformer<T> {
      * When reusing beans, the transformation needs all key columns defined.
      * A exception is thrown if there is NO key column.
      */
-    private TableNode buildTreeAndCheckKeys(Table table) {
-        String alias = table.getAlias();
-        TableNode tableNode = new TableNode(alias);
+    private TableNode buildTreeAndCheckKeys(Table table, String tableAlias, String associationAlias) {
+        TableNode tableNode = new TableNode(tableAlias, associationAlias);
 
-        int index = 0;
+        int tableKeys = 0;
+        int queryKeys = 0;
         for (Column<?> col : table.getColumns()) {
-            index++; // column position starts at 1
-            boolean foundKey = false;
+
+            if (col.isKey()) {
+                tableKeys++;
+            }
+            int index = 0;
             for (Function column : query.getColumns()) {
+                index++; // column position starts at 1
                 if (column instanceof ColumnHolder) {
                     ColumnHolder ch = (ColumnHolder) column;
-                    if (col.equals(ch.getColumn())) {
+                    if (ch.getTableAlias().equals(tableAlias) && col.equals(ch.getColumn())) {
                         if (reuse && col.isKey()) {
-                            foundKey = true;
-                            break;
+                            queryKeys++;
                         }
                         tableNode.addColumnNode(new ColumnNode(offset + index, column.getAlias(), col.isKey()));
                     }
                 }
             }
-            if (reuse && !foundKey) {
-                throw new PersistenceException("At least one Key column was not found for " + table.toString()
-                        + ". When transforming to a object tree and reusing previous beans, ALL key columns must be declared in the select.");
-            }
+        }
+
+        if (reuse && tableKeys != queryKeys) {
+            throw new PersistenceException("At least one Key column was not found for " + table.toString()
+                    + ". When transforming to a object tree and reusing previous beans, ALL key columns must be declared in the select.");
         }
 
         return tableNode;
@@ -127,6 +140,7 @@ public class MapTransformer<T> implements IRowTransformer<T> {
 
     private List<Object> grabKeyValues(ResultSetWrapper rsw, TableNode tableNode) {
         List<Object> keyValues = new ArrayList<>();
+        keyValues.add(tableNode.getTableAlias());
         for (ColumnNode cn : tableNode.getColumnNodes()) {
             if (cn.isKey()) {
                 try {
@@ -140,12 +154,17 @@ public class MapTransformer<T> implements IRowTransformer<T> {
                 }
             }
         }
+        if (keyValues.size() == 1) {
+            keyValues.clear();
+        }
         return keyValues;
     }
 
     @Override
     public void onTransformation(Collection<T> result, T object) {
-
+        if (object != null && (!this.reuse || !result.contains(object))) {
+            result.add(object);
+        }
     }
 
     @Override
@@ -166,6 +185,10 @@ public class MapTransformer<T> implements IRowTransformer<T> {
         return instance;
     }
 
+    protected <T> T fromDb(ResultSetWrapper rsw, int columnIndex, Class<T> type) throws SQLException {
+        return driver.fromDb(rsw, columnIndex, type);
+    }
+
     // the following methods should be overridden if we want to implement another domain builder
 
     /**
@@ -176,47 +199,10 @@ public class MapTransformer<T> implements IRowTransformer<T> {
      * Override this method to provide your own implementation for a different domain object.
      *
      * @param parentInstance parent instance
-     * @param name name of the parent property that we want to instantiate for
+     * @param name           name of the parent property that we want to instantiate for
      * @return the new instance
      */
-    public Object instantiate(Object parentInstance, String name) {
-        try {
-            // handling root table
-            if (parentInstance == null) {
-                return clazz.newInstance();
-            }
-
-            String suffix = Strings.capitalizeFirst(name);
-            Method setter = parentInstance.getClass().getMethod("set" + suffix);
-            if (setter != null) {
-                Object instance = null;
-                Class<?>[] types = setter.getParameterTypes();
-                Class<?> type = types[0];
-                // if it is a collection we create an instance of the subtype and add it to the collection
-                // we return the subtype and not the collection
-                if (Collection.class.isAssignableFrom(type)) {
-                    // are asking for a member that is a collection
-                    type = Misc.genericClass(setter.getGenericParameterTypes()[0]);
-                    Method getter = parentInstance.getClass().getMethod("get" + suffix);
-                    Collection collection = (Collection) getter.invoke(parentInstance);
-                    if (collection != null) {
-                        collection = new LinkedHashSet<>();
-                        setter.invoke(parentInstance, collection);
-                    }
-                    instance = type.newInstance();
-                    collection.add(type.newInstance());
-                } else {
-                    instance = type.newInstance();
-                }
-
-                return instance;
-            } else {
-                throw new PersistenceException(parentInstance.getClass() + " does not have setter for " + name);
-            }
-        } catch (Exception e) {
-            throw new PersistenceException(e);
-        }
-    }
+    public abstract Object instantiate(Object parentInstance, String name);
 
     /**
      * collecting the data from the database and put in the domain instance.
@@ -227,24 +213,6 @@ public class MapTransformer<T> implements IRowTransformer<T> {
      * @param columnNode
      * @return
      */
-    public Object property(ResultSetWrapper rsw, Object instance, ColumnNode columnNode) {
-        try {
-            Object value = null;
-            String suffix = Strings.capitalizeFirst(columnNode.getAlias());
-            Method setter = instance.getClass().getMethod("set" + suffix);
-            if (setter != null) {
-                if (!setter.isAccessible()) {
-                    setter.setAccessible(true);
-                }
-                Class<?>[] types = setter.getParameterTypes();
-                Class<?> type = types[0];
+    public abstract Object property(ResultSetWrapper rsw, Object instance, ColumnNode columnNode);
 
-                value = driver.fromDb(rsw, columnNode.getColumnIndex(), type);
-                setter.invoke(instance, value);
-            }
-            return value;
-        } catch (Exception e) {
-            throw new PersistenceException(e);
-        }
-    }
 }

@@ -40,6 +40,11 @@ public class BeanTransformer<T> implements IQueryRowTransformer<T> {
 		return this.query;
 	}
 
+	@Override
+	public void setQuery(Query query) {
+		this.query = query;
+	}
+
 	public Class<T> getClazz() {
 		return this.clazz;
 	}
