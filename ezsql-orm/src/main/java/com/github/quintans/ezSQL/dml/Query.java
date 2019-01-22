@@ -1125,7 +1125,7 @@ public class Query extends DmlBase {
      */
     public <T> List<T> list(Class<T> klass, boolean reuse) {
         if(useTree){
-            return list(new DomainBeanTransformer<T>(this, klass, reuse));
+            return list(new MapBeanTransformer<>(this, klass, reuse));
         } else {
             return list(new BeanTransformer<T>(this, klass));
         }
@@ -1234,14 +1234,14 @@ public class Query extends DmlBase {
     public <T> T select(Class<T> klass, boolean reuse) {
         if (useTree) {
             if (reuse) {
-                List<T> list = list(new DomainBeanTransformer<T>(this, klass, true));
+                List<T> list = list(new MapBeanTransformer<T>(this, klass, true));
 
                 if (list.size() == 0)
                     return null;
                 else
                     return list.get(0); // first one
             } else {
-                return select(new DomainBeanTransformer<T>(this, klass, false));
+                return select(new MapBeanTransformer<T>(this, klass, false));
             }
         } else {
             return select(new BeanTransformer<T>(this, klass));

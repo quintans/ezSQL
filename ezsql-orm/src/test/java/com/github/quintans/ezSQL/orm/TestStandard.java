@@ -561,7 +561,8 @@ public class TestStandard extends TestBootstrap {
 
             assertTrue("Wrong size for outer join.", values.size() == 4);
             for (ArtistValueDTO val : values) {
-                assertTrue("Invalid Value", val.getName() != null && val.getValue() != null);
+                assertTrue("Invalid Name", val.getName() != null);
+                assertTrue("Invalid Value", val.getValue() != null);
                 assertTrue("Invalid Value.paintings", val.getPaintings() != null);
             }
 

@@ -27,7 +27,7 @@ public class TableNode {
      */
     private Map<String, Object> childInstances = new HashMap<>();
 
-    public TableNode(String tableAlias, String associationAlias){
+    public TableNode(String tableAlias, String associationAlias) {
         this.tableAlias = tableAlias;
         this.associationAlias = associationAlias;
     }
@@ -53,7 +53,7 @@ public class TableNode {
     }
 
     public void addColumnNode(ColumnNode columnNode) {
-        if(!columnNodes.contains(columnNode)) {
+        if (!columnNodes.contains(columnNode)) {
             this.columnNodes.add(columnNode);
         }
     }
@@ -68,12 +68,12 @@ public class TableNode {
 
     public Object getFieldInstanceIfAbsent(String name, Instantiate instantiate) {
         instance = getInstanceIfAbsent(instantiate);
-        return childInstances.computeIfAbsent(name, key -> instantiate.apply(instance, key) );
+        return childInstances.computeIfAbsent(name, key -> instantiate.apply(instance, key));
     }
 
     public Object getInstanceIfAbsent(Instantiate instantiate) {
-        if(instance == null) {
-            if(parent == null) {
+        if (instance == null) {
+            if (parent == null) {
                 instance = instantiate.apply(null, associationAlias);
             } else {
                 instance = parent.getFieldInstanceIfAbsent(associationAlias, instantiate);
@@ -87,7 +87,7 @@ public class TableNode {
     }
 
     public void addTableNode(TableNode tableNode) {
-        if(!tableNodes.contains(tableNode)) {
+        if (!tableNodes.contains(tableNode)) {
             tableNode.setParent(this);
             tableNodes.add(tableNode);
         }
@@ -108,9 +108,12 @@ public class TableNode {
 
     @Override
     public String toString() {
-        return "TableNode{" +
-                "tableAlias='" + tableAlias + '\'' +
-                ", associationAlias='" + associationAlias + '\'' +
-                '}';
+        StringBuilder sb = new StringBuilder();
+        sb.append(tableAlias + " {\n");
+        for (ColumnNode cn : columnNodes) {
+            sb.append("  ").append(cn).append("\n");
+        }
+        sb.append("} " + associationAlias);
+        return sb.toString();
     }
 }

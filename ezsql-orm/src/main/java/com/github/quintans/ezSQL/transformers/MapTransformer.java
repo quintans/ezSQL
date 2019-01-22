@@ -86,23 +86,30 @@ public abstract class MapTransformer<T> implements IQueryRowTransformer<T> {
 
         int tableKeys = 0;
         int queryKeys = 0;
-        for (Column<?> col : table.getColumns()) {
+        int index = 0;
+        for (Function column : query.getColumns()) {
+            index++; // column position starts at 1
 
-            if (col.isKey()) {
-                tableKeys++;
-            }
-            int index = 0;
-            for (Function column : query.getColumns()) {
-                index++; // column position starts at 1
-                if (column instanceof ColumnHolder) {
-                    ColumnHolder ch = (ColumnHolder) column;
-                    if (ch.getTableAlias().equals(tableAlias) && col.equals(ch.getColumn())) {
-                        if (reuse && col.isKey()) {
-                            queryKeys++;
+            boolean isKey = false;
+            if (column instanceof ColumnHolder) {
+                ColumnHolder ch = (ColumnHolder) column;
+
+                if (reuse && ch.getColumn().isKey() && ch.getTableAlias().equals(tableAlias) ) {
+                    isKey = true;
+                    queryKeys++;
+
+                    for (Column<?> col : table.getColumns()) {
+                        if (col.equals(ch.getColumn())) {
+                            tableKeys++;
+                            break;
                         }
-                        tableNode.addColumnNode(new ColumnNode(offset + index, column.getAlias(), col.isKey()));
                     }
                 }
+
+            }
+
+            if (column.getPseudoTableAlias().equals(tableAlias)) {
+                tableNode.addColumnNode(new ColumnNode(offset + index, column.getAlias(), isKey));
             }
         }
 

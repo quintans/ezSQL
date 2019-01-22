@@ -36,11 +36,11 @@ public class MapBeanTransformer<T> extends MapTransformer<T> {
             if (pd != null) {
                 Object instance = null;
                 Class<?> type = pd.getPropertyType();
+
+                Method setter = pd.getWriteMethod();
                 // if it is a collection we create an instance of the subtype and add it to the collection
                 // we return the subtype and not the collection
                 if (Collection.class.isAssignableFrom(type)) {
-                    // are asking for a member that is a collection
-                    Method setter = pd.getWriteMethod();
                     Collection collection = (Collection) pd.getReadMethod().invoke(parentInstance);
                     if (collection == null) {
                         collection = new LinkedHashSet<>();
@@ -51,6 +51,7 @@ public class MapBeanTransformer<T> extends MapTransformer<T> {
                     collection.add(instance);
                 } else {
                     instance = type.newInstance();
+                    setter.invoke(parentInstance, instance);
                 }
 
                 return instance;

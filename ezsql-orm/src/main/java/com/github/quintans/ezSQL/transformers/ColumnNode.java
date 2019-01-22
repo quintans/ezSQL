@@ -25,10 +25,6 @@ public class ColumnNode {
 
     @Override
     public String toString() {
-        return "ColumnNode{" +
-                "columnIndex=" + columnIndex +
-                ", alias='" + alias + '\'' +
-                ", key=" + key +
-                '}';
+        return columnIndex + ": " + alias;
     }
 }
