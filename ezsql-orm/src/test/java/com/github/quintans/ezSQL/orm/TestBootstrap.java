@@ -56,13 +56,6 @@ public class TestBootstrap {
 
 			db.setDriver(driver);
 
-			// try {
-			// Delete delete = new Delete(db, TGallery.GalleryPainting.T_GALLERY_PAINTING);
-			// delete.execute();
-			// } catch (Exception e) {
-			// e.printStackTrace();
-			// }
-
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw e;

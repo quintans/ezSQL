@@ -7,7 +7,6 @@ import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -34,7 +33,31 @@ public class MapBeanTransformer<T> extends MapTransformer<T> {
 
             PropertyDescriptor pd = Misc.getBeanProperty(parentInstance.getClass(), name);
             if (pd != null) {
-                Object instance = null;
+                Class<?> type = pd.getPropertyType();
+
+                Method setter = pd.getWriteMethod();
+                // if it is a collection we create an instance of the subtype and add it to the collection
+                // we return the subtype and not the collection
+                if (Collection.class.isAssignableFrom(type)) {
+                    type = Misc.genericClass(setter.getGenericParameterTypes()[0]);
+
+                    return type.newInstance();
+                } else {
+                    return type.newInstance();
+                }
+            } else {
+                throw new PersistenceException(parentInstance.getClass() + " does not have setter for " + name);
+            }
+        } catch (IntrospectionException | InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+            throw new PersistenceException(e);
+        }
+    }
+
+    @Override
+    public void setOnParent(Object parentInstance, String name, Object instance) {
+        try {
+            PropertyDescriptor pd = Misc.getBeanProperty(parentInstance.getClass(), name);
+            if (pd != null) {
                 Class<?> type = pd.getPropertyType();
 
                 Method setter = pd.getWriteMethod();
@@ -46,19 +69,13 @@ public class MapBeanTransformer<T> extends MapTransformer<T> {
                         collection = new LinkedHashSet<>();
                         setter.invoke(parentInstance, collection);
                     }
-                    type = Misc.genericClass(setter.getGenericParameterTypes()[0]);
-                    instance = type.newInstance();
                     collection.add(instance);
                 } else {
-                    instance = type.newInstance();
                     setter.invoke(parentInstance, instance);
-                }
 
-                return instance;
-            } else {
-                throw new PersistenceException(parentInstance.getClass() + " does not have setter for " + name);
+                }
             }
-        } catch (IntrospectionException | InstantiationException | IllegalAccessException | ClassNotFoundException | InvocationTargetException e) {
+        } catch (Exception e) {
             throw new PersistenceException(e);
         }
     }
@@ -72,6 +89,7 @@ public class MapBeanTransformer<T> extends MapTransformer<T> {
                 Class<?> type = pd.getPropertyType();
 
                 value = fromDb(rsw, columnNode.getColumnIndex(), type);
+
                 pd.getWriteMethod().invoke(instance, value);
             }
             return value;

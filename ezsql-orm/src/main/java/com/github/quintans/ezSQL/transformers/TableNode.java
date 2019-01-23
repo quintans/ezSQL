@@ -3,6 +3,8 @@ package com.github.quintans.ezSQL.transformers;
 import java.util.*;
 
 public class TableNode {
+
+
     public interface Instantiate {
         Object apply(Object parentInstance, String name);
     }
@@ -42,6 +44,10 @@ public class TableNode {
 
     public void setParent(TableNode parent) {
         this.parent = parent;
+    }
+
+    public TableNode getParent() {
+        return this.parent;
     }
 
     public Object getInstance() {
@@ -109,11 +115,11 @@ public class TableNode {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(tableAlias + " {\n");
+        sb.append(tableAlias + " {");
         for (ColumnNode cn : columnNodes) {
-            sb.append("  ").append(cn).append("\n");
+            sb.append(" ").append(cn).append(";");
         }
-        sb.append("} " + associationAlias);
+        sb.append(" } " + associationAlias);
         return sb.toString();
     }
 }

@@ -334,7 +334,7 @@ public class TestStandard extends TestBootstrap {
     }
 
     @Test
-    public void testWithtChilds() {
+    public void testWithtChildren() {
         Query query = db.queryAll(TArtist.T_ARTIST).innerFetch(TArtist.A_PAINTINGS);
 
         String sql = db.getDriver().getSql(query);
@@ -354,7 +354,7 @@ public class TestStandard extends TestBootstrap {
     }
 
     @Test
-    public void testWithtChildsORMTransformer() throws Exception {
+    public void testWithtChildrenORMTransformer() throws Exception {
         try {
             Query query = db.queryAll(TArtist.T_ARTIST).innerFetch(TArtist.A_PAINTINGS);
             List<Artist> artists = query.list(Artist.class, true);
@@ -559,7 +559,7 @@ public class TestStandard extends TestBootstrap {
                     .list(ArtistValueDTO.class, false);
             dumpCollection(values);
 
-            assertTrue("Wrong size for outer join.", values.size() == 4);
+            assertTrue("Wrong size for outer join. Expected 4, got " + values.size(), values.size() == 4);
             for (ArtistValueDTO val : values) {
                 assertTrue("Invalid Name", val.getName() != null);
                 assertTrue("Invalid Value", val.getValue() != null);
@@ -602,9 +602,9 @@ public class TestStandard extends TestBootstrap {
         dumpCollection(artists);
 
         assertTrue("Wrong size for artists. Expected 3, got " + artists.size(), artists.size() == 3);
-        int size = artists.get(0).getPaintings().size();
-        assertTrue("Wrong size for Paintings, for artist[0]. Expected 1, got " + size, size == 1);
-        size = artists.get(1).getPaintings().size();
+        Set<Painting> paintings = artists.get(0).getPaintings();
+        assertTrue("Wrong size for Paintings, for artist[0]. Expected null, got not null", paintings == null);
+        int size = artists.get(1).getPaintings().size();
         assertTrue("Wrong size for Paintings, for artist[1]. Expected 2, got " + size, size == 2);
         size = artists.get(2).getPaintings().size();
         assertTrue("Wrong size for Paintings, for artist[2]. Expected 3, got " + size, size == 2);
