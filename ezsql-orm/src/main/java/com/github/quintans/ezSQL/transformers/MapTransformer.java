@@ -8,20 +8,18 @@ import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
-public abstract class MapTransformer<T> implements IQueryRowTransformer<T> {
+public abstract class MapTransformer<T> implements Mapper, IQueryRowTransformer<T> {
 
-    private TableNode rootNode;
-    private Map<String, TableNode> tableNodes;
-    private Map<List<?>, Object> domainCache;
+    private MapTable rootNode;
+    private Map<List<Object>, Object> domainCache;
 
     private Query query;
     private Driver driver;
-    private boolean reuse;
     private int offset;
+    private boolean reuse;
 
     public MapTransformer(Query query, boolean reuse) {
         this.query = query;
@@ -42,20 +40,22 @@ public abstract class MapTransformer<T> implements IQueryRowTransformer<T> {
     public Collection<T> beforeAll(ResultSetWrapper rsw) {
         driver = query.getDb().getDriver();
         this.offset = query.getDb().getDriver().paginationColumnOffset(query);
-        domainCache = new HashMap<>();
+        if (!this.query.isFlat() && reuse) {
+            domainCache = new HashMap<>();
+        }
 
-        tableNodes = new LinkedHashMap<>();
-        rootNode = buildTree(tableNodes);
+        rootNode = buildTree();
 
-        return new LinkedHashSet<T>();
+        return this.domainCache != null ? new LinkedHashSet<>() : new ArrayList<T>();
     }
 
-    protected TableNode buildTree(Map<String, TableNode> tableNodes) {
+    protected MapTable buildTree() {
         // creates the tree
+        Map<String, MapTable> tableNodes = new HashMap<>();
 
 
         Table table = query.getTable();
-        TableNode rootNode = buildTreeAndCheckKeys(table, query.getTableAlias(), "");
+        MapTable rootNode = buildTreeAndCheckKeys(table, query.getTableAlias(), "");
         tableNodes.put(rootNode.getTableAlias(), rootNode);
 
         if (query.getJoins() != null) {
@@ -67,12 +67,12 @@ public abstract class MapTransformer<T> implements IQueryRowTransformer<T> {
 
                             if (!tableNodes.containsKey(aliasTo)) {
                                 Table tableTo = fk.isMany2Many() ? fk.getToM2M().getTableTo() : fk.getTableTo();
-                                TableNode tableNode = buildTreeAndCheckKeys(tableTo, aliasTo, fk.getAlias());
-                                tableNodes.put(aliasTo, tableNode);
+                                MapTable mapTable = buildTreeAndCheckKeys(tableTo, aliasTo, fk.getAlias());
+                                tableNodes.put(aliasTo, mapTable);
 
                                 String aliasFrom = fk.isMany2Many() ? fk.getFromM2M().getAliasFrom() : fk.getAliasFrom();
-                                TableNode parent = tableNodes.get(aliasFrom);
-                                parent.addTableNode(tableNode);
+                                MapTable parent = tableNodes.get(aliasFrom);
+                                parent.addTableNode(mapTable);
                             }
                         }
                     }
@@ -87,8 +87,8 @@ public abstract class MapTransformer<T> implements IQueryRowTransformer<T> {
      * When reusing beans, the transformation needs all key columns defined.
      * A exception is thrown if there is NO key column.
      */
-    private TableNode buildTreeAndCheckKeys(Table table, String tableAlias, String associationAlias) {
-        TableNode tableNode = new TableNode(tableAlias, associationAlias);
+    private MapTable buildTreeAndCheckKeys(Table table, String tableAlias, String associationAlias) {
+        MapTable mapTable = new MapTable(tableAlias, associationAlias);
 
         int tableKeys = 0;
         int queryKeys = 0;
@@ -97,25 +97,35 @@ public abstract class MapTransformer<T> implements IQueryRowTransformer<T> {
             index++; // column position starts at 1
 
             boolean isKey = false;
-            if (column instanceof ColumnHolder) {
-                ColumnHolder ch = (ColumnHolder) column;
+            if(reuse) {
+                if (column instanceof ColumnHolder) {
+                    ColumnHolder ch = (ColumnHolder) column;
 
-                if (reuse && ch.getColumn().isKey() && ch.getTableAlias().equals(tableAlias)) {
-                    isKey = true;
-                    queryKeys++;
+                    if (ch.getColumn().isKey() && ch.getTableAlias().equals(tableAlias)) {
+                        isKey = true;
+                        queryKeys++;
 
-                    for (Column<?> col : table.getColumns()) {
-                        if (col.equals(ch.getColumn())) {
-                            tableKeys++;
-                            break;
+                        for (Column<?> col : table.getColumns()) {
+                            if (col.equals(ch.getColumn())) {
+                                tableKeys++;
+                                break;
+                            }
                         }
                     }
-                }
 
+                }
             }
 
-            if (column.getPseudoTableAlias().equals(tableAlias)) {
-                tableNode.addColumnNode(new ColumnNode(offset + index, column.getAlias(), isKey));
+            // overrides the column table alias when the query result is flat
+            String pseudoAlias;
+            if(query.isFlat()) {
+                pseudoAlias = query.getTableAlias();
+            } else {
+                pseudoAlias = column.getPseudoTableAlias();
+            }
+
+            if (tableAlias.equals(pseudoAlias)) {
+                mapTable.addColumnNode(new MapColumn(offset + index, column.getAlias(), isKey));
             }
         }
 
@@ -124,68 +134,24 @@ public abstract class MapTransformer<T> implements IQueryRowTransformer<T> {
                     + ". When transforming to a object tree and reusing previous beans, ALL key columns must be declared in the select.");
         }
 
-        return tableNode;
+        return mapTable;
     }
 
     @Override
     public T transform(ResultSetWrapper rsw) throws SQLException {
-        rootNode.reset();
-        for (TableNode tableNode : tableNodes.values()) {
-            List<Object> keyValues = null;
-            boolean finalize = false;
-            if (reuse) {
-                keyValues = grabKeyValues(rsw, tableNode);
-                if (!keyValues.isEmpty()) {
-                    Object instance = domainCache.get(keyValues);
-                    if (instance != null) {
-                        tableNode.setInstance(instance);
-                        finalize = mapper(rsw, tableNode);
-                    } else {
-                        // I will map if I didn't find an instance
-                        finalize = mapper(rsw, tableNode);
-                        if(finalize) {
-                            domainCache.put(keyValues, tableNode.getInstance());
-                        }
-                    }
-                }
-            } else {
-                finalize = mapper(rsw, tableNode);
-            }
-            if(finalize) {
-                if(tableNode.getParent()!=null) {
-                    Object parentInstance = tableNode.getParent().getInstance();
-                    setOnParent(parentInstance, tableNode.getAssociationAlias(), tableNode.getInstance());
-                }
-            }
+        // reuse
+        if (domainCache == null) {
+            rootNode.reset();
         }
+        rootNode.process(rsw, domainCache, offset, null, this);
+
         return (T) rootNode.getInstance();
     }
 
-    private List<Object> grabKeyValues(ResultSetWrapper rsw, TableNode tableNode) {
-        List<Object> keyValues = new ArrayList<>();
-        keyValues.add(tableNode.getTableAlias());
-        for (ColumnNode cn : tableNode.getColumnNodes()) {
-            if (cn.isKey()) {
-                try {
-                    ResultSet rs = rsw.getResultSet();
-                    Object value = rs.getObject(cn.getColumnIndex() + offset);
-                    if (!rs.wasNull()) {
-                        keyValues.add(value);
-                    }
-                } catch (SQLException e) {
-                    throw new PersistenceException(e);
-                }
-            }
-        }
-        if (keyValues.size() == 1) {
-            keyValues.clear();
-        }
-        return keyValues;
-    }
 
     @Override
     public void onTransformation(Collection<T> result, T object) {
-        if (object != null && (!this.reuse || !result.contains(object))) {
+        if (object != null) {
             result.add(object);
         }
     }
@@ -195,50 +161,9 @@ public abstract class MapTransformer<T> implements IQueryRowTransformer<T> {
         rootNode.reset();
     }
 
-    private boolean mapper(ResultSetWrapper rsw, TableNode tableNode) {
-        // collect all values from the columns
-        Object instance = tableNode.getInstanceIfAbsent(this::instantiate);
-        boolean finalize = false;
-            for (ColumnNode cn : tableNode.getColumnNodes()) {
-                if (property(rsw, instance, cn) != null) {
-                    finalize = true;
-                }
-            }
-        return finalize;
-    }
 
     protected <T> T fromDb(ResultSetWrapper rsw, int columnIndex, Class<T> type) throws SQLException {
         return driver.fromDb(rsw, columnIndex, type);
     }
-
-    // the following methods should be overridden if we want to implement another domain builder
-
-    /**
-     * Method called to get domain instance (POJO) when calling the <code>property()</code> method.
-     * This method is only called when there is a need to create a new instance.
-     * If the parent instance is null, it means we are asking for the root object to be instantiated.
-     * Otherwise we are asking an instance of the type defined by the property defined in 'name' in the parent instance.
-     * Override this method to provide your own implementation for a different domain object.
-     * We defer the setting of the instance, by returning a lambda, because we may wish not to set the value.
-     * e.g: in an outer join, all related fields came as null, therefore it is a empty entity
-     *
-     * @param parentInstance parent instance
-     * @param name           name of the parent property that we want to instantiate for
-     * @return lambda where we apply the the instance value to the parent instance
-     */
-    public abstract Object instantiate(Object parentInstance, String name);
-
-    public abstract void setOnParent(Object parentInstance, String name, Object instance);
-
-    /**
-     * collecting the data from the database and put in the domain instance.
-     * The value from a column is always put in an domain instance.
-     *
-     * @param rsw
-     * @param instance
-     * @param columnNode
-     * @return
-     */
-    public abstract Object property(ResultSetWrapper rsw, Object instance, ColumnNode columnNode);
 
 }

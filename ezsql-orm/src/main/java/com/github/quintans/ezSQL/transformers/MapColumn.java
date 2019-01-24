@@ -1,11 +1,11 @@
 package com.github.quintans.ezSQL.transformers;
 
-public class ColumnNode {
+public class MapColumn {
     private int columnIndex;
     private String alias;
     private boolean key;
 
-    public ColumnNode(int columnIndex, String alias, boolean key) {
+    public MapColumn(int columnIndex, String alias, boolean key) {
         this.columnIndex = columnIndex;
         this.alias = alias;
         this.key = key;

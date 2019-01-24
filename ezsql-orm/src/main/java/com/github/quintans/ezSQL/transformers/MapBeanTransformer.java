@@ -24,7 +24,7 @@ public class MapBeanTransformer<T> extends MapTransformer<T> {
     }
 
     @Override
-    public Object instantiate(Object parentInstance, String name) {
+    public Object createFrom(Object parentInstance, String name) {
         try {
             // handling root table
             if (parentInstance == null) {
@@ -54,7 +54,7 @@ public class MapBeanTransformer<T> extends MapTransformer<T> {
     }
 
     @Override
-    public void setOnParent(Object parentInstance, String name, Object instance) {
+    public void set(Object parentInstance, String name, Object instance) {
         try {
             PropertyDescriptor pd = Misc.getBeanProperty(parentInstance.getClass(), name);
             if (pd != null) {
@@ -81,14 +81,14 @@ public class MapBeanTransformer<T> extends MapTransformer<T> {
     }
 
     @Override
-    public Object property(ResultSetWrapper rsw, Object instance, ColumnNode columnNode) {
+    public Object map(ResultSetWrapper rsw, Object instance, MapColumn mapColumn) {
         try {
             Object value = null;
-            PropertyDescriptor pd = Misc.getBeanProperty(instance.getClass(), columnNode.getAlias());
+            PropertyDescriptor pd = Misc.getBeanProperty(instance.getClass(), mapColumn.getAlias());
             if (pd != null) {
                 Class<?> type = pd.getPropertyType();
 
-                value = fromDb(rsw, columnNode.getColumnIndex(), type);
+                value = fromDb(rsw, mapColumn.getColumnIndex(), type);
 
                 pd.getWriteMethod().invoke(instance, value);
             }

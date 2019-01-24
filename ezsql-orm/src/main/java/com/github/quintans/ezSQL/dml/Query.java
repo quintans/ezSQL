@@ -71,6 +71,10 @@ public class Query extends DmlBase {
         return alias;
     }
 
+    public boolean isFlat() {
+        return !useTree;
+    }
+
     public void alias(String alias) {
         this.alias = alias;
     }
@@ -1127,7 +1131,7 @@ public class Query extends DmlBase {
         if(useTree){
             return list(new MapBeanTransformer<>(this, klass, reuse));
         } else {
-            return list(new BeanTransformer<T>(this, klass));
+            return list(new MapBeanTransformer<T>(this, klass, reuse));
         }
     }
 
@@ -1223,7 +1227,7 @@ public class Query extends DmlBase {
         if(useTree) {
             return select(klass);
         } else {
-            return unique(new BeanTransformer<T>(this, klass));
+            return unique(new MapBeanTransformer<>(this, klass, false));
         }
     }
     
@@ -1244,7 +1248,7 @@ public class Query extends DmlBase {
                 return select(new MapBeanTransformer<T>(this, klass, false));
             }
         } else {
-            return select(new BeanTransformer<T>(this, klass));
+            return select(new MapBeanTransformer<>(this, klass, false));
         }
     }
 
