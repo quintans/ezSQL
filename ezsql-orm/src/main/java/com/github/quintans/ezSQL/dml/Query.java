@@ -1128,11 +1128,7 @@ public class Query extends DmlBase {
      * @return A collection of beans
      */
     public <T> List<T> list(Class<T> klass, boolean reuse) {
-        if(useTree){
-            return list(new MapBeanTransformer<>(this, klass, reuse));
-        } else {
-            return list(new MapBeanTransformer<T>(this, klass, reuse));
-        }
+        return list(new MapTransformer<>(this, reuse, new MapBeanTransformer<>(klass, this.getDb().getDriver())));
     }
 
 
@@ -1152,14 +1148,6 @@ public class Query extends DmlBase {
     public <T> List<T> list(IQueryRowTransformer<T> transformer) {
         transformer.setQuery(this);
         return list((IRowTransformer<T>) transformer);
-    }
-
-    public <T> List<T> list(IRowTransformerFactory<T> factory, boolean reuse) {
-        return list(factory.createTransformer(this, reuse));
-    }
-
-    public <T> List<T> list(IRowTransformerFactory<T> factory) {
-        return list(factory, true);
     }
 
     /**
@@ -1227,7 +1215,7 @@ public class Query extends DmlBase {
         if(useTree) {
             return select(klass);
         } else {
-            return unique(new MapBeanTransformer<>(this, klass, false));
+            return unique(new MapTransformer<>(this, false, new MapBeanTransformer<>(klass, this.getDb().getDriver())));
         }
     }
     
@@ -1238,17 +1226,17 @@ public class Query extends DmlBase {
     public <T> T select(Class<T> klass, boolean reuse) {
         if (useTree) {
             if (reuse) {
-                List<T> list = list(new MapBeanTransformer<T>(this, klass, true));
+                List<T> list = list(new MapTransformer<>(this, true, new MapBeanTransformer<>(klass, this.getDb().getDriver())));
 
                 if (list.size() == 0)
                     return null;
                 else
                     return list.get(0); // first one
             } else {
-                return select(new MapBeanTransformer<T>(this, klass, false));
+                return select(new MapTransformer<>(this, false, new MapBeanTransformer<>(klass, this.getDb().getDriver())));
             }
         } else {
-            return select(new MapBeanTransformer<>(this, klass, false));
+            return select(new MapTransformer<>(this, false, new MapBeanTransformer<>(klass, this.getDb().getDriver())));
         }
     }
 

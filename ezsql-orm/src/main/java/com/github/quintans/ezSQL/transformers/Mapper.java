@@ -16,9 +16,9 @@ public interface Mapper {
      * @param name           name of the parent property that we want to instantiate for
      * @return lambda where we apply the the instance value to the parent instance
      */
-    Object createFrom(Object instance, String name);
+    Object createFrom(Object parentInstance, String name);
 
-    void set(Object instance, String name, Object value);
+    void apply(Object instance, String name, Object value);
 
     /**
      * collecting the data from the database and put in the domain instance.

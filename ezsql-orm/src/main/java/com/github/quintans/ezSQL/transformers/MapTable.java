@@ -19,6 +19,7 @@ public class MapTable {
      * association alias
      */
     private String associationAlias;
+    private String name;
     private List<Object> keys = new ArrayList<>();
     /**
      * domain object. This will never be a collection.
@@ -27,9 +28,14 @@ public class MapTable {
     private List<MapColumn> mapColumns = new ArrayList<>();
     private List<MapTable> mapTables = new ArrayList<>();
 
-    public MapTable(String tableAlias, String associationAlias) {
+    public MapTable(String tableAlias, String name, String associationAlias) {
         this.tableAlias = tableAlias;
         this.associationAlias = associationAlias;
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public String getAssociationAlias() {
@@ -88,7 +94,7 @@ public class MapTable {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(tableAlias + " {");
+        sb.append(tableAlias + "." + name + " {");
         for (MapColumn cn : mapColumns) {
             sb.append(" ").append(cn).append(";");
         }
@@ -136,7 +142,7 @@ public class MapTable {
 
         if (finalize) {
             if (parentInstance != null) {
-                mapper.set(parentInstance, associationAlias, instance);
+                mapper.apply(parentInstance, associationAlias, instance);
             }
         }
 

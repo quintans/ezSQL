@@ -121,6 +121,7 @@ _(Side note: the goSQL project is the same as this project, but in Go.)_
 ezSQL is build on top of the class named **SimpleJDBC**.
 This class isolates the developer from the details of JDBC call, like statement creation,
 exception handling, parameters handling, etc
+
 This class does not depend of ezSQL. The developer can use this class if it needs a low level control.
 
 ## Testing

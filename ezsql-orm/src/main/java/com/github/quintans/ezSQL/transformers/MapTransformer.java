@@ -11,7 +11,7 @@ import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 import java.sql.SQLException;
 import java.util.*;
 
-public abstract class MapTransformer<T> implements Mapper, IQueryRowTransformer<T> {
+public class MapTransformer<T> implements IQueryRowTransformer<T> {
 
     private MapTable rootNode;
     private Map<List<Object>, Object> domainCache;
@@ -20,10 +20,12 @@ public abstract class MapTransformer<T> implements Mapper, IQueryRowTransformer<
     private Driver driver;
     private int offset;
     private boolean reuse;
+    private Mapper mapper;
 
-    public MapTransformer(Query query, boolean reuse) {
+    public MapTransformer(Query query, boolean reuse, Mapper mapper) {
         this.query = query;
         this.reuse = reuse;
+        this.mapper = mapper;
     }
 
     @Override
@@ -88,7 +90,7 @@ public abstract class MapTransformer<T> implements Mapper, IQueryRowTransformer<
      * A exception is thrown if there is NO key column.
      */
     private MapTable buildTreeAndCheckKeys(Table table, String tableAlias, String associationAlias) {
-        MapTable mapTable = new MapTable(tableAlias, associationAlias);
+        MapTable mapTable = new MapTable(tableAlias, table.getName(), associationAlias);
 
         int tableKeys = 0;
         int queryKeys = 0;
@@ -143,7 +145,7 @@ public abstract class MapTransformer<T> implements Mapper, IQueryRowTransformer<
         if (domainCache == null) {
             rootNode.reset();
         }
-        rootNode.process(rsw, domainCache, offset, null, this);
+        rootNode.process(rsw, domainCache, offset, null, this.mapper);
 
         return (T) rootNode.getInstance();
     }

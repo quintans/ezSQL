@@ -4,6 +4,9 @@ import java.sql.SQLException;
 import java.util.Date;
 import java.util.Random;
 
+import com.github.quintans.ezSQL.orm.app.daos.ArtistDAOTransformer;
+import com.github.quintans.ezSQL.orm.app.daos.EmployeeDAOTransformer;
+import com.github.quintans.ezSQL.transformers.MapTransformer;
 import com.github.quintans.ezSQL.transformers.SimpleAbstractDbRowTransformer;
 import com.github.quintans.jdbc.RawSql;
 import com.github.quintans.jdbc.SimpleJdbc;
@@ -15,7 +18,6 @@ import org.junit.Test;
 import com.github.quintans.ezSQL.DbJdbcSession;
 import com.github.quintans.ezSQL.dml.Insert;
 import com.github.quintans.ezSQL.dml.Query;
-import com.github.quintans.ezSQL.orm.app.daos.EmployeeDAOBase;
 import com.github.quintans.ezSQL.orm.app.domain.Employee;
 import com.github.quintans.ezSQL.orm.app.mappings.TEmployee;
 
@@ -196,11 +198,11 @@ public class TestPerformance extends TestBootstrap {
         Query query = null;
         // warm up
         query = db.query(TEmployee.T_EMPLOYEE).all();
-        query.list(EmployeeDAOBase.factory);
+        query.list(new MapTransformer<>(query, false, new EmployeeDAOTransformer(query.getDb().getDriver())));
         // READ - ORM transformer
         query = db.query(TEmployee.T_EMPLOYEE).all();
         sw.reset().start();
-        query.list(EmployeeDAOBase.factory);
+        query.list(new MapTransformer<>(query, false, new EmployeeDAOTransformer(query.getDb().getDriver())));
         sw.stop().showTotal("query.list(EmployeeDAOBase.factory)");
 
         // warm up

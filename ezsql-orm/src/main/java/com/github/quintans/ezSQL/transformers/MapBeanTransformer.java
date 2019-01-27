@@ -1,6 +1,6 @@
 package com.github.quintans.ezSQL.transformers;
 
-import com.github.quintans.ezSQL.dml.Query;
+import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.ezSQL.toolkit.utils.Misc;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
@@ -11,16 +11,13 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
-public class MapBeanTransformer<T> extends MapTransformer<T> {
+public class MapBeanTransformer<T> implements Mapper {
     private Class<T> clazz;
+    private Driver driver;
 
-    public MapBeanTransformer(Class<T> clazz) {
-        this(null, clazz, true);
-    }
-
-    public MapBeanTransformer(Query query, Class<T> clazz, boolean reuse) {
-        super(query, reuse);
+    public MapBeanTransformer(Class<T> clazz, Driver driver) {
         this.clazz = clazz;
+        this.driver = driver;
     }
 
     @Override
@@ -54,9 +51,9 @@ public class MapBeanTransformer<T> extends MapTransformer<T> {
     }
 
     @Override
-    public void set(Object parentInstance, String name, Object instance) {
+    public void apply(Object instance, String name, Object value) {
         try {
-            PropertyDescriptor pd = Misc.getBeanProperty(parentInstance.getClass(), name);
+            PropertyDescriptor pd = Misc.getBeanProperty(instance.getClass(), name);
             if (pd != null) {
                 Class<?> type = pd.getPropertyType();
 
@@ -64,15 +61,14 @@ public class MapBeanTransformer<T> extends MapTransformer<T> {
                 // if it is a collection we create an instance of the subtype and add it to the collection
                 // we return the subtype and not the collection
                 if (Collection.class.isAssignableFrom(type)) {
-                    Collection collection = (Collection) pd.getReadMethod().invoke(parentInstance);
+                    Collection collection = (Collection) pd.getReadMethod().invoke(instance);
                     if (collection == null) {
                         collection = new LinkedHashSet<>();
-                        setter.invoke(parentInstance, collection);
+                        setter.invoke(instance, collection);
                     }
-                    collection.add(instance);
+                    collection.add(value);
                 } else {
-                    setter.invoke(parentInstance, instance);
-
+                    setter.invoke(instance, value);
                 }
             }
         } catch (Exception e) {
@@ -88,7 +84,7 @@ public class MapBeanTransformer<T> extends MapTransformer<T> {
             if (pd != null) {
                 Class<?> type = pd.getPropertyType();
 
-                value = fromDb(rsw, mapColumn.getColumnIndex(), type);
+                value = driver.fromDb(rsw, mapColumn.getColumnIndex(), type);
 
                 pd.getWriteMethod().invoke(instance, value);
             }
