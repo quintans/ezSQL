@@ -1,13 +1,7 @@
 package com.github.quintans.ezSQL.orm;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.lang.reflect.Constructor;
-import java.util.Collection;
-import java.util.Properties;
-
-import com.github.quintans.ezSQL.orm.extended.H2DriverExt;
+import com.github.quintans.ezSQL.driver.Driver;
+import org.apache.log4j.Logger;
 import org.dbunit.IDatabaseTester;
 import org.dbunit.JdbcDatabaseTester;
 import org.dbunit.dataset.IDataSet;
@@ -16,71 +10,77 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
-import com.github.quintans.ezSQL.driver.Driver;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.util.Collection;
+import java.util.Properties;
 
 /**
  * Unit test for simple App.
  */
 public class TestBootstrap {
-	private static IDatabaseTester databaseTester;
-	protected static Db db;
+    private static Logger LOGGER = Logger.getLogger(TestBootstrap.class);
 
-	@BeforeClass
-	public static void testSetup() throws Exception {
-		try {
-			final String env = System.getProperty("env");
-			Properties systemProps = new Properties();
-			systemProps.load(new FileReader(new File("src/test/resources/"+ env +".properties")));
-			String dbDriver = systemProps.getProperty("db.driver");
-			String dbUrl = systemProps.getProperty("db.url");
-			String dbUser = systemProps.getProperty("db.user");
-			String dbPassword = systemProps.getProperty("db.password");
-			String ormDriver = systemProps.getProperty("db.orm.driver");
+    private static IDatabaseTester databaseTester;
+    protected static Db db;
 
-			databaseTester = new JdbcDatabaseTester(dbDriver, dbUrl, dbUser, dbPassword);
+    @BeforeClass
+    public static void testSetup() throws Exception {
+        try {
+            final String env = System.getProperty("env");
+            Properties systemProps = new Properties();
+            systemProps.load(new FileReader(new File("src/test/resources/" + env + ".properties")));
+            String dbDriver = systemProps.getProperty("db.driver");
+            String dbUrl = systemProps.getProperty("db.url");
+            String dbUser = systemProps.getProperty("db.user");
+            String dbPassword = systemProps.getProperty("db.password");
+            String ormDriver = systemProps.getProperty("db.orm.driver");
 
-			//databaseTester = new JdbcDatabaseTester("org.h2.Driver", "jdbc:h2:tcp://localhost:9092/test", "sa", "");
+            databaseTester = new JdbcDatabaseTester(dbDriver, dbUrl, dbUser, dbPassword);
+
+            //databaseTester = new JdbcDatabaseTester("org.h2.Driver", "jdbc:h2:tcp://localhost:9092/test", "sa", "");
             //databaseTester = new JdbcDatabaseTester("org.mariadb.jdbc.Driver", "jdbc:mariadb://localhost:3306/ezsql", "quintans", "quintans");
-		    //databaseTester = new JdbcDatabaseTester("com.mysql.jdbc.Driver", "jdbc:mysql://localhost:3306/ezsql", "quintans", "quintans");
+            //databaseTester = new JdbcDatabaseTester("com.mysql.jdbc.Driver", "jdbc:mysql://localhost:3306/ezsql", "quintans", "quintans");
             // databaseTester = new JdbcDatabaseTester("org.postgresql.Driver", "jdbc:postgresql://localhost:5432/ezsql", "quintans", "quintans");
 
-			db = new Db(databaseTester.getConnection().getConnection());
+            db = new Db(databaseTester.getConnection().getConnection());
 
-			Class<?> clazz = Class.forName(ormDriver);
-			Driver driver = (Driver) clazz.newInstance();
+            Class<?> clazz = Class.forName(ormDriver);
+            Driver driver = (Driver) clazz.newInstance();
 
-			//Driver driver = new MySQLDriverExt();
-			// Driver driver = new H2DriverExt();
-			//Driver driver = new Oracle8iDriver();
+            //Driver driver = new MySQLDriverExt();
+            // Driver driver = new H2DriverExt();
+            //Driver driver = new Oracle8iDriver();
             //Driver driver = new PostgreSQLDriverExt();
 
-			db.setDriver(driver);
+            db.setDriver(driver);
 
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw e;
-		}
-	}
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
 
-	@Before
-	public void setUp() throws Exception {
-		try {
-			// initialize your dataset here
-			IDataSet dataSet = new XmlDataSet(new FileInputStream("data/export.xml"));
+    @Before
+    public void setUp() throws Exception {
+        try {
+            // initialize your dataset here
+            IDataSet dataSet = new XmlDataSet(new FileInputStream("data/export.xml"));
 
-			databaseTester.setDataSet(dataSet);
-			// will call default setUpOperation
-			databaseTester.onSetup();
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw e;
-		}
-	}
+            databaseTester.setDataSet(dataSet);
+            // will call default setUpOperation
+            databaseTester.onSetup();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
 
-	@After
-	public void tearDown() throws Exception {
-		databaseTester.onTearDown();
-	}
+    @After
+    public void tearDown() throws Exception {
+        databaseTester.onTearDown();
+    }
 
 	/*
     @BeforeClass
@@ -127,76 +127,91 @@ public class TestBootstrap {
     public void tearDown() throws Exception {
         db.getConnection().commit();
     }
-    */    
+    */
 
-	public void dumpCollection(Collection<?> collection) {
-		System.out.println("============================================================>");
-		if (collection == null || collection.isEmpty())
-			System.out.println("NO DATA FOUND");
-		else {
-			for (Object o : collection)
-				dump(o);
-		}
-	}
+    public void dumpCollection(Collection<?> collection) {
+        if(!LOGGER.isDebugEnabled()) {
+            return;
+        }
 
-	public void dump(Object o) {
-		System.out.println(o == null ? "NULL" : o.toString());
-	}
+        System.out.println("============================================================>");
+        if (collection == null || collection.isEmpty())
+            System.out.println("NO DATA FOUND");
+        else {
+            for (Object o : collection)
+                dump(o);
+        }
+    }
 
-	public void dumpRaw(Collection<Object[]> collection) {
-		if (collection.isEmpty())
-			System.out.println("NO DATA FOUND");
-		else {
-			int[] sizes = new int[collection.iterator().next().length];
-			for (Object[] objs : collection)
-				calc(objs, sizes);
-			StringBuilder sb = new StringBuilder();
-			for (int sz : sizes) {
-				for (int i = 0; i < sz + 3; i++) {
-					sb.append("=");
-				}
-			}
-			System.out.println(sb.toString());
-			for (Object[] objs : collection)
-				dumpRaw(objs, sizes);
-		}
-	}
+    public void dump(Object o) {
+        if(!LOGGER.isDebugEnabled()) {
+            return;
+        }
 
-	public void calc(Object[] objs, int[] sizes) {
-		if (objs != null) {
-			for (int i = 0; i < objs.length; i++) {
-				sizes[i] = Math.max(objs[i] == null ? 4 : objs[i].toString().length(), sizes[i]);
-			}
-		}
-	}
+        System.out.println(o == null ? "NULL" : o.toString());
+    }
 
-	public void dumpRaw(Object[] objs, int[] sizes) {
-		if (objs == null)
-			System.out.println("NULL");
-		else {
-			for (int i = 0; i < objs.length; i++)
-				System.out.print(" " + rpad(objs[i], sizes[i]) + " |");
-			System.out.println();
-		}
-	}
+    public void dumpRaw(Collection<Object[]> collection) {
+        if(!LOGGER.isDebugEnabled()) {
+            return;
+        }
 
-	public String rpad(Object o, int size) {
-		String str = null;
-		if (o == null)
-			str = "null";
-		else
-			str = o.toString();
+        if (collection.isEmpty())
+            System.out.println("NO DATA FOUND");
+        else {
+            int[] sizes = new int[collection.iterator().next().length];
+            for (Object[] objs : collection)
+                calc(objs, sizes);
+            StringBuilder sb = new StringBuilder();
+            for (int sz : sizes) {
+                for (int i = 0; i < sz + 3; i++) {
+                    sb.append("=");
+                }
+            }
+            System.out.println(sb.toString());
+            for (Object[] objs : collection)
+                dumpRaw(objs, sizes);
+        }
+    }
 
-		if (str.length() < size) {
-			StringBuilder sb = new StringBuilder(str);
-			for (int i = str.length(); i < size; i++) {
-				sb.append(" ");
-			}
-			return sb.toString();
-		}
-		else
-			return str;
-	}
+    public void dumpRaw(Object[] objs, int[] sizes) {
+        if(!LOGGER.isDebugEnabled()) {
+            return;
+        }
 
-	//============================ TESTS =====================================
+        if (objs == null)
+            System.out.println("NULL");
+        else {
+            for (int i = 0; i < objs.length; i++)
+                System.out.print(" " + rpad(objs[i], sizes[i]) + " |");
+            System.out.println();
+        }
+    }
+
+    private void calc(Object[] objs, int[] sizes) {
+        if (objs != null) {
+            for (int i = 0; i < objs.length; i++) {
+                sizes[i] = Math.max(objs[i] == null ? 4 : objs[i].toString().length(), sizes[i]);
+            }
+        }
+    }
+
+    public String rpad(Object o, int size) {
+        String str = null;
+        if (o == null)
+            str = "null";
+        else
+            str = o.toString();
+
+        if (str.length() < size) {
+            StringBuilder sb = new StringBuilder(str);
+            for (int i = str.length(); i < size; i++) {
+                sb.append(" ");
+            }
+            return sb.toString();
+        } else
+            return str;
+    }
+
+    //============================ TESTS =====================================
 }
