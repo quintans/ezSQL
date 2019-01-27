@@ -1,25 +1,23 @@
 package com.github.quintans.ezSQL.orm;
 
-import java.sql.SQLException;
-import java.util.Date;
-import java.util.Random;
-
-import com.github.quintans.ezSQL.orm.app.daos.ArtistDAOTransformer;
+import com.github.quintans.ezSQL.DbJdbcSession;
+import com.github.quintans.ezSQL.dml.Insert;
+import com.github.quintans.ezSQL.dml.Query;
+import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.ezSQL.orm.app.daos.EmployeeDAOTransformer;
+import com.github.quintans.ezSQL.orm.app.domain.Employee;
+import com.github.quintans.ezSQL.orm.app.mappings.TEmployee;
 import com.github.quintans.ezSQL.transformers.MapTransformer;
 import com.github.quintans.ezSQL.transformers.SimpleAbstractDbRowTransformer;
 import com.github.quintans.jdbc.RawSql;
 import com.github.quintans.jdbc.SimpleJdbc;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 import com.github.quintans.jdbc.transformers.SimpleAbstractRowTransformer;
-
 import org.junit.Test;
 
-import com.github.quintans.ezSQL.DbJdbcSession;
-import com.github.quintans.ezSQL.dml.Insert;
-import com.github.quintans.ezSQL.dml.Query;
-import com.github.quintans.ezSQL.orm.app.domain.Employee;
-import com.github.quintans.ezSQL.orm.app.mappings.TEmployee;
+import java.sql.SQLException;
+import java.util.Date;
+import java.util.Random;
 
 /**
  * Unit test for simple App.
@@ -27,11 +25,12 @@ import com.github.quintans.ezSQL.orm.app.mappings.TEmployee;
 public class TestPerformance extends TestBootstrap {
 
     // private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-    private static final String femaleFirstNames[] = { "Maria", "Joana", "Mónica", "Paula", "Rosa", "Carla", "Claudia" };
-    private static final String maleFirstNames[] = { "Mario", "João", "Marco", "Paulo", "Rui", "Carlos", "Raul" };
-    private static final String lastNames[] = { "Marques", "Fernandes", "Machado", "Pereira", "Rodrigues", "Campos", "Lourosa" };
+    private static final String femaleFirstNames[] = {"Maria", "Joana", "Mónica", "Paula", "Rosa", "Carla", "Claudia"};
+    private static final String maleFirstNames[] = {"Mario", "João", "Marco", "Paulo", "Rui", "Carlos", "Raul"};
+    private static final String lastNames[] = {"Marques", "Fernandes", "Machado", "Pereira", "Rodrigues", "Campos", "Lourosa"};
     private static final long YEAR = 365L * 24L * 3600000L;
 
+    private static final int WARM_UP = 100;
     private static final int LOOP = 10000;
     private static final int BATCH = 1000;
 
@@ -42,8 +41,8 @@ public class TestPerformance extends TestBootstrap {
             Stopwatch sw = new Stopwatch();
             Random rnd = new Random();
             boolean sex;
-            
-            
+
+
             db.delete(TEmployee.T_EMPLOYEE).execute();
             // INSERT
             sex = rnd.nextBoolean();
@@ -80,20 +79,20 @@ public class TestPerformance extends TestBootstrap {
 
                 sw.start();
                 jdbc.batch(sql, db.transformParameters(i, name, sex, creation));
-                if(i % BATCH == 0) {
+                if (i % BATCH == 0) {
                     jdbc.flushInsert();
                 }
                 sw.stop();
                 sex = !sex;
             }
-            if(jdbc.getPending()>0) {
+            if (jdbc.getPending() > 0) {
                 sw.start();
                 jdbc.flushInsert();
                 sw.stop();
             }
             sw.showAverage("BATCH");
-            
-            
+
+
             db.delete(TEmployee.T_EMPLOYEE).execute();
             sw.reset();
             insert = db.insert(TEmployee.T_EMPLOYEE).retriveKeys(false)
@@ -107,20 +106,20 @@ public class TestPerformance extends TestBootstrap {
 
                 sw.start();
                 insert.values(i, name, sex, birth).batch();
-                if(i % BATCH == 0) {
+                if (i % BATCH == 0) {
                     insert.flushBatch();
                 }
                 sw.stop();
                 sex = !sex;
             }
-            if(insert.getPending()>0) {
+            if (insert.getPending() > 0) {
                 sw.start();
                 insert.endBatch();
                 sw.stop();
             }
             sw.showAverage("BATCH INCLUDED");
-            
-            
+
+
             db.delete(TEmployee.T_EMPLOYEE).execute();
             sw.reset();
             // INSERT
@@ -194,25 +193,30 @@ public class TestPerformance extends TestBootstrap {
             sex = !sex;
         }
 
+        Driver driver = db.getDriver();
         Stopwatch sw = new Stopwatch();
         Query query = null;
         // warm up
-        query = db.query(TEmployee.T_EMPLOYEE).all();
-        query.list(new MapTransformer<>(query, false, new EmployeeDAOTransformer(query.getDb().getDriver())));
+        for (int i = 0; i < WARM_UP; i++) {
+            query = db.query(TEmployee.T_EMPLOYEE).all();
+            query.list(new MapTransformer<>(query, false, new EmployeeDAOTransformer(driver)));
+        }
         // READ - ORM transformer
         query = db.query(TEmployee.T_EMPLOYEE).all();
         sw.reset().start();
-        query.list(new MapTransformer<>(query, false, new EmployeeDAOTransformer(query.getDb().getDriver())));
-        sw.stop().showTotal("query.list(EmployeeDAOBase.factory)");
+        query.list(new MapTransformer<>(query, false, new EmployeeDAOTransformer(driver)));
+        sw.stop().showTotal("query.list(EmployeeDAOTransformer)");
 
         // warm up
-        query = db.query(TEmployee.T_EMPLOYEE).all();
-        query.list(new SimpleAbstractRowTransformer<Employee>() {
-            @Override
-            public Employee transform(ResultSetWrapper rs) throws SQLException {
-                return new Employee();
-            }
-        });
+        for (int i = 0; i < WARM_UP; i++) {
+            query = db.query(TEmployee.T_EMPLOYEE).all();
+            query.list(new SimpleAbstractRowTransformer<Employee>() {
+                @Override
+                public Employee transform(ResultSetWrapper rs) throws SQLException {
+                    return new Employee();
+                }
+            });
+        }
         // READ - transformer
         query = db.query(TEmployee.T_EMPLOYEE).all();
         sw.reset().start();
@@ -230,8 +234,10 @@ public class TestPerformance extends TestBootstrap {
         sw.stop().showTotal("query.list(new SimpleAbstractDbRowTransformer<Employee>(db))");
 
         // warm up
-        query = db.query(TEmployee.T_EMPLOYEE).all();
-        query.list(Employee.class);
+        for (int i = 0; i < WARM_UP; i++) {
+            query = db.query(TEmployee.T_EMPLOYEE).all();
+            query.list(Employee.class);
+        }
         // READ - Reflection
         query = db.query(TEmployee.T_EMPLOYEE).all();
         sw.reset().start();
