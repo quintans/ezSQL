@@ -2,11 +2,12 @@ package com.github.quintans.ezSQL.dml;
 
 import static com.github.quintans.ezSQL.dml.Definition.param;
 
+import java.beans.PropertyDescriptor;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
+import com.github.quintans.ezSQL.toolkit.utils.Misc;
 import org.apache.log4j.Logger;
 
 import com.github.quintans.ezSQL.AbstractDb;
@@ -17,7 +18,6 @@ import com.github.quintans.ezSQL.db.Discriminator;
 import com.github.quintans.ezSQL.db.PreDeleteTrigger;
 import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.exceptions.OptimisticLockException;
-import com.github.quintans.ezSQL.transformers.BeanProperty;
 import com.github.quintans.jdbc.RawSql;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 
@@ -144,19 +144,13 @@ public class Delete extends Dml<Delete> {
     }
 
     private void mapBean(Object bean, boolean versioned){
-        this.parameters = new LinkedHashMap<String, Object>();
-        this.values = new LinkedHashMap<Column<?>, Function>();
+        this.parameters = new LinkedHashMap<>();
+        this.values = new LinkedHashMap<>();
                 
-        Map<String, BeanProperty> mappings = null;
         List<Condition> conditions = null;
-        if (bean.getClass() == this.lastBeanClass) {
-            mappings = this.lastMappings;
-        }
-        else {
-            mappings = BeanProperty.populateMapping(null, bean.getClass());
-            conditions = new ArrayList<Condition>();
+        if (bean.getClass() != this.lastBeanClass) {
+            conditions = new ArrayList<>();
             this.condition = null;
-            this.lastMappings = mappings;
             this.lastBeanClass = bean.getClass();
             this.rawSql = null;
         }
@@ -164,13 +158,13 @@ public class Delete extends Dml<Delete> {
         for (Column<?> column : table.getColumns()) {
             if(column.isKey() || versioned && column.isVersion()) {
                 String alias = column.getAlias();
-                BeanProperty bp = mappings.get(alias);
-                if (bp != null) {
+                PropertyDescriptor pd = Misc.getPropertyDescriptor(bean.getClass(), alias);
+                if (pd != null) {
                     Object o = null;
                     try {
-                        o = bp.invokeReadMethod(bean);
+                        o = pd.getReadMethod().invoke(bean);
                     } catch (Exception e) {
-                        throw new PersistenceException("Unable to read from " + bean.getClass().getSimpleName() + "." + bp.getReadMethod().getName(), e);
+                        throw new PersistenceException("Unable to read from " + bean.getClass().getSimpleName() + "." + pd.getReadMethod().getName(), e);
                     }
     
                     if (column.isKey()) {

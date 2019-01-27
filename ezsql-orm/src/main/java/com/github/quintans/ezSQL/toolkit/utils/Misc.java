@@ -88,8 +88,14 @@ public class Misc {
         return null;
     }
 
-    public static PropertyDescriptor getBeanProperty(Class<?> klass, String name) throws IntrospectionException {
-        BeanInfo info = Introspector.getBeanInfo(klass);
+    public static PropertyDescriptor getPropertyDescriptor(Class<?> klass, String name) {
+        BeanInfo info;
+        try {
+            info = Introspector.getBeanInfo(klass);
+        } catch (IntrospectionException e) {
+            throw new PersistenceException("Unable to get bean information for " + klass.getCanonicalName(), e);
+        }
+
         PropertyDescriptor[] props = info.getPropertyDescriptors();
         for (PropertyDescriptor p : props) {
             if (p.getName().equals(name)) {
@@ -98,11 +104,12 @@ public class Misc {
                 return p;
             }
         }
+
         return null;
     }
 
     private static void makeAccessible(Method m) {
-        if(!m.isAccessible()) {
+        if (!m.isAccessible()) {
             m.setAccessible(true);
         }
     }
