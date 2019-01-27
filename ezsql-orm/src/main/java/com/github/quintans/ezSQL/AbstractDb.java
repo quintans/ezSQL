@@ -1,5 +1,6 @@
 package com.github.quintans.ezSQL;
 
+import java.beans.PropertyDescriptor;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.github.quintans.ezSQL.toolkit.utils.Misc;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
@@ -35,7 +37,6 @@ import com.github.quintans.ezSQL.dml.Update;
 import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.ezSQL.toolkit.io.BinStore;
 import com.github.quintans.ezSQL.toolkit.io.TextStore;
-import com.github.quintans.ezSQL.transformers.BeanProperty;
 import com.github.quintans.jdbc.JdbcSession;
 import com.github.quintans.jdbc.SimpleJdbc;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
@@ -83,13 +84,12 @@ public abstract class AbstractDb {
 	 */
 	@SuppressWarnings("unchecked")
     public <T> T loadAssociation(Object bean, Association association){
-        Map<String, BeanProperty> mappings = BeanProperty.populateMapping(null, bean.getClass());
         // check if target property is set
         String targetAlias = association.getAlias();
-        BeanProperty targetBp = mappings.get(targetAlias);
-        Object value = null;
+        PropertyDescriptor targetBp = Misc.getPropertyDescriptor(bean.getClass(), targetAlias);
+        Object value;
         try {
-            value = targetBp.invokeReadMethod(bean);
+            value = targetBp.getReadMethod().invoke(bean);
             if(value != null){ // if value is set returns
                 return (T) value;
             } else if(bean instanceof Updatable) {
@@ -99,22 +99,22 @@ public abstract class AbstractDb {
                 }
             }
             
-            Class<?> klass = targetBp.getKlass();
+            Class<?> klass = targetBp.getPropertyType();
             
             Relation[] relations = association.getRelations();
             List<Condition> restrictions = new ArrayList<Condition>();
             for(Relation relation : relations) {
                 // from source FK
                 String fkAlias = relation.getFrom().getColumn().getAlias();
-                BeanProperty bp = mappings.get(fkAlias);
-                value = bp.invokeReadMethod(bean);
+                PropertyDescriptor pd = Misc.getPropertyDescriptor(bean.getClass(), fkAlias);
+                value = pd.getReadMethod().invoke(bean);
                 restrictions.add(relation.getTo().getColumn().is(Definition.raw(value)));
             }
     
             Query query = query(association.getTableTo()).all()
             .where(restrictions);
             if(Collection.class.isAssignableFrom(klass)){
-                Class<?> genKlass = targetBp.getGenericClass();
+                Class<?> genKlass = Misc.genericClass(targetBp.getWriteMethod().getGenericParameterTypes()[0]);
                 value = query.list(genKlass);
                 if(Set.class.isAssignableFrom(klass)){
                     value = new LinkedHashSet<Object>((Collection<? extends Object>) value);
@@ -125,7 +125,7 @@ public abstract class AbstractDb {
                 value = query.select(klass);
             }
         
-            targetBp.invokeWriteMethod(bean, value);
+            targetBp.getWriteMethod().invoke(bean, value);
             
         } catch(Exception ex) {
             throw new PersistenceException("Unable to retrive association " + association + " for " + bean, ex);

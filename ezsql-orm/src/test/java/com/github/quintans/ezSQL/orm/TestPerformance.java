@@ -95,7 +95,7 @@ public class TestPerformance extends TestBootstrap {
 
             db.delete(TEmployee.T_EMPLOYEE).execute();
             sw.reset();
-            insert = db.insert(TEmployee.T_EMPLOYEE).retriveKeys(false)
+            insert = db.insert(TEmployee.T_EMPLOYEE).retrieveKeys(false)
                     .sets(TEmployee.C_ID, TEmployee.C_NAME, TEmployee.C_SEX, TEmployee.C_CREATION);
             sex = rnd.nextBoolean();
             for (int i = 1; i <= LOOP; i++) {
@@ -123,7 +123,7 @@ public class TestPerformance extends TestBootstrap {
             db.delete(TEmployee.T_EMPLOYEE).execute();
             sw.reset();
             // INSERT
-            insert = db.insert(TEmployee.T_EMPLOYEE).retriveKeys(false)
+            insert = db.insert(TEmployee.T_EMPLOYEE).retrieveKeys(false)
                     .sets(TEmployee.C_ID, TEmployee.C_NAME, TEmployee.C_SEX, TEmployee.C_CREATION);
 
             sex = rnd.nextBoolean();

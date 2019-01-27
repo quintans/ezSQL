@@ -6,20 +6,16 @@ import java.util.Map;
 import com.github.quintans.ezSQL.db.Association;
 
 /**
- * 
- * @author PQP
- * 
- *         O objectivo desta classe é fornecer a funcionalidade de obtenção dos MESMOS alias ao percorrer os JOINS
- *         Nota: duas listas de joins, mesmo tendo ForeignKey's iguais, produzem alias diferentes
+ *  The goal of this class is to keep track of alias assigned for the different JOINs.
+ *  Keep in mind that the same foreign key can have different alias.
  */
 public class AliasBag {
-	protected String prefixo = "b";
-	protected int contador = 1;
+	protected String prefix;
+	protected int counter = 1;
 	protected Map<Association, String> bag = new LinkedHashMap<Association, String>();
 
-	public AliasBag(String prefixo) {
-		super();
-		this.prefixo = prefixo;
+	public AliasBag(String prefix) {
+		this.prefix = prefix;
 	}
 
 	public void setAlias(Association fk, String alias) {
@@ -27,15 +23,7 @@ public class AliasBag {
 	}
 
 	public String getAlias(Association fk) {
-		String alias = this.bag.get(fk);
-		if (alias == null) {
-			alias = this.prefixo + (this.contador++);
-			this.bag.put(fk, alias);
-		}
-		return alias;
+		return bag.computeIfAbsent(fk, k ->  this.prefix + (this.counter++));
 	}
 
-	public boolean has(Association fk) {
-		return this.bag.get(fk) != null;
-	}
 }

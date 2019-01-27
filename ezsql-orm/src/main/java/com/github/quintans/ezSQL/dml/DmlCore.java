@@ -18,7 +18,6 @@ public abstract class DmlCore<T> extends DmlBase {
     protected final static String ID_UNDEFINED_MSG = "Field ID is undefined!";
 
 	protected Class<?> lastBeanClass = null;
-	protected Map<String, BeanProperty> lastMappings;
 
 	protected Map<Column<?>, Function> values;
 	protected Column<?>[] sets = null;

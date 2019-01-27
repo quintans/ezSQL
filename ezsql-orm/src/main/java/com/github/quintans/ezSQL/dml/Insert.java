@@ -1,11 +1,13 @@
 package com.github.quintans.ezSQL.dml;
 
+import java.beans.PropertyDescriptor;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.github.quintans.ezSQL.toolkit.utils.Misc;
 import org.apache.log4j.Logger;
 
 import com.github.quintans.ezSQL.AbstractDb;
@@ -32,7 +34,7 @@ public class Insert extends DmlCore<Insert> {
 
     public Insert(AbstractDb db, Table table) {
         super(db, table);
-        this.values = new LinkedHashMap<Column<?>, Function>();
+        this.values = new LinkedHashMap<>();
 
         List<Discriminator> discriminators = table.getDiscriminators();
         if (discriminators != null) {
@@ -42,7 +44,7 @@ public class Insert extends DmlCore<Insert> {
         }
     }
 
-    public Insert retriveKeys(boolean returnKey) {
+    public Insert retrieveKeys(boolean returnKey) {
         this.returnKey = returnKey;
         return this;
     }
@@ -241,7 +243,7 @@ public class Insert extends DmlCore<Insert> {
             ((PreInserter) bean).preInsert();
         }
 
-        Map<String, BeanProperty> mappings = mapBean(bean, true);
+        mapBean(bean, true);
 
         // table discriminators have higher priority - the is no way to override these values
         if (table.getDiscriminators() != null) {
@@ -256,10 +258,10 @@ public class Insert extends DmlCore<Insert> {
                 Column<?> col = entry.getKey();
                 Object val = entry.getValue();
                 // update bean key properties
-                BeanProperty bp = mappings.get(col.getAlias());
-                if (bp != null) {
+                PropertyDescriptor pd = Misc.getPropertyDescriptor(bean.getClass(), col.getAlias());
+                if (pd != null) {
                     try {
-                        Class<?> clazz = bp.getKlass();
+                        Class<?> clazz = pd.getPropertyType();
                         if (val instanceof Number) {
                             if (Long.class.isAssignableFrom(clazz)) {
                                 val = ((Number) val).longValue();
@@ -268,9 +270,9 @@ public class Insert extends DmlCore<Insert> {
                             }
                         }
 
-                        bp.invokeWriteMethod(bean, val);
+                        pd.getWriteMethod().invoke(bean, val);
                     } catch (Exception e) {
-                        throw new PersistenceException("Unable to write to " + bean.getClass().getSimpleName() + "." + bp.getWriteMethod().getName(), e);
+                        throw new PersistenceException("Unable to write to " + bean.getClass().getSimpleName() + "." + pd.getWriteMethod().getName(), e);
                     }
                 }
             }
@@ -287,17 +289,11 @@ public class Insert extends DmlCore<Insert> {
         return keys;
     }
 
-    private Map<String, BeanProperty> mapBean(Object bean, boolean versioned) {
-        this.parameters = new LinkedHashMap<String, Object>();
-        this.values = new LinkedHashMap<Column<?>, Function>();
+    private void mapBean(Object bean, boolean versioned) {
+        this.parameters = new LinkedHashMap<>();
+        this.values = new LinkedHashMap<>();
         
-        Map<String, BeanProperty> mappings = null;
-        if (bean.getClass() == this.lastBeanClass) {
-            mappings = this.lastMappings;
-        }
-        else {
-            mappings = BeanProperty.populateMapping(null, bean.getClass());
-            this.lastMappings = mappings;
+        if (bean.getClass() != this.lastBeanClass) {
             this.lastBeanClass = bean.getClass();
             this.rawSql = null;
         }
@@ -310,16 +306,16 @@ public class Insert extends DmlCore<Insert> {
         boolean ignoreNullKeys = db.getDriver().ignoreNullKeys();
         for (Column<?> column : table.getColumns()) {
             String alias = column.getAlias();
-            BeanProperty bp = null;
+            PropertyDescriptor pd = null;
             if(changed == null || column.isKey() || column.isVersion() || changed.contains(alias)){
-                bp = mappings.get(alias);
+                pd = Misc.getPropertyDescriptor(bean.getClass(), alias);
             }
-            if (bp != null) {
-                Object o = null;
+            if (pd != null) {
+                Object o;
                 try {
-                    o = bp.invokeReadMethod(bean);
+                    o = pd.getReadMethod().invoke(bean);
                 } catch (Exception e) {
-                    throw new PersistenceException("Unable to read from " + bean.getClass().getSimpleName() + "." + bp.getReadMethod().getName(), e);
+                    throw new PersistenceException("Unable to read from " + bean.getClass().getSimpleName() + "." + pd.getReadMethod().getName(), e);
                 }
 
                 if(column.isKey()){
@@ -328,21 +324,19 @@ public class Insert extends DmlCore<Insert> {
                     }
                 } else if (versioned && column.isVersion() && o == null) {
                     try {
-                        if (Long.class.isAssignableFrom(bp.getKlass())) {
+                        if (Long.class.isAssignableFrom(pd.getPropertyType())) {
                             o = 1L;
                         } else {
                             o = 1;
                         }
 
-                        bp.invokeWriteMethod(bean, o);
+                        pd.getWriteMethod().invoke(bean, o);
                     } catch (Exception e) {
-                        throw new PersistenceException("Unable to write to " + bean.getClass().getSimpleName() + "." + bp.getWriteMethod().getName(), e);
+                        throw new PersistenceException("Unable to write to " + bean.getClass().getSimpleName() + "." + pd.getWriteMethod().getName(), e);
                     }
                 }
                 this._set(column, o);
             }
         }
-        
-        return mappings;
     }
 }

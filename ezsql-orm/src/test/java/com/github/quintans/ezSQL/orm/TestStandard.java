@@ -16,7 +16,6 @@ import com.github.quintans.ezSQL.orm.app.dtos.ImageDTO;
 import com.github.quintans.ezSQL.orm.app.mappings.*;
 import com.github.quintans.ezSQL.orm.extended.FunctionExt;
 import com.github.quintans.ezSQL.toolkit.io.BinStore;
-import com.github.quintans.ezSQL.transformers.MapBeanTransformer;
 import com.github.quintans.ezSQL.transformers.MapTransformer;
 import com.github.quintans.ezSQL.transformers.SimpleAbstractDbRowTransformer;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
@@ -624,7 +623,7 @@ public class TestStandard extends TestBootstrap {
     @Test
     public void testTemporal() {
         // INSERT
-        Insert insert = db.insert(TTemporal.T_TEMPORAL).retriveKeys(false)
+        Insert insert = db.insert(TTemporal.T_TEMPORAL).retrieveKeys(false)
                 .sets(TTemporal.C_ID, TTemporal.C_CLOCK, TTemporal.C_TODAY, TTemporal.C_NOW, TTemporal.C_INSTANT);
 
         MyTime myTime = new MyTime();
@@ -691,7 +690,7 @@ public class TestStandard extends TestBootstrap {
     @Test
     public void testInsert() {
         // INSERT
-        Insert insert = db.insert(TArtist.T_ARTIST).retriveKeys(false)
+        Insert insert = db.insert(TArtist.T_ARTIST).retrieveKeys(false)
                 .sets(TArtist.C_ID, TArtist.C_VERSION, TArtist.C_GENDER, TArtist.C_NAME, TArtist.C_BIRTHDAY);
 
         Stopwatch sw = Stopwatch.createAndStart();
