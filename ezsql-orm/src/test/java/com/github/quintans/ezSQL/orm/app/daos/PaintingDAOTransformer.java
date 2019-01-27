@@ -5,21 +5,21 @@ import com.github.quintans.ezSQL.orm.app.domain.Artist;
 import com.github.quintans.ezSQL.orm.app.domain.Painting;
 import com.github.quintans.ezSQL.orm.app.mappings.TPainting;
 import com.github.quintans.ezSQL.transformers.MapColumn;
-import com.github.quintans.ezSQL.transformers.Mapper;
+import com.github.quintans.ezSQL.transformers.QueryMapper;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
 import java.util.List;
 
-public class PaintingDAOTransformer implements Mapper {
+public class PaintingDAOTransformer implements QueryMapper {
     private Driver driver;
-    private Mapper artistMapper;
+    private QueryMapper artistMapper;
 
     public PaintingDAOTransformer(Driver driver) {
         this.driver = driver;
     }
 
-    private Mapper getArtistMapper() {
+    private QueryMapper getArtistMapper() {
         if (artistMapper == null) {
             artistMapper = new ArtistDAOTransformer(driver);
         }

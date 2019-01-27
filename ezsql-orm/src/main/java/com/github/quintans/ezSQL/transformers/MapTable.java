@@ -102,7 +102,7 @@ public class MapTable {
         return sb.toString();
     }
 
-    private boolean create(ResultSetWrapper rsw, Object parentInstance, Mapper mapper) {
+    private boolean create(ResultSetWrapper rsw, Object parentInstance, QueryMapper mapper) {
         // collect all values from the columns
         instance = mapper.createFrom(parentInstance, associationAlias);
         boolean finalize = false;
@@ -112,7 +112,7 @@ public class MapTable {
         return finalize;
     }
 
-    public void process(ResultSetWrapper rsw, Map<List<Object>, Object> domainCache, int offset, Object parentInstance, Mapper mapper) {
+    public void process(ResultSetWrapper rsw, Map<List<Object>, Object> domainCache, int offset, Object parentInstance, QueryMapper mapper) {
         List<Object> keyValues = null;
         boolean finalize = false;
         if (domainCache != null) {

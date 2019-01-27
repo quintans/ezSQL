@@ -20,9 +20,9 @@ public class MapTransformer<T> implements IQueryRowTransformer<T> {
     private Driver driver;
     private int offset;
     private boolean reuse;
-    private Mapper mapper;
+    private QueryMapper mapper;
 
-    public MapTransformer(Query query, boolean reuse, Mapper mapper) {
+    public MapTransformer(Query query, boolean reuse, QueryMapper mapper) {
         this.query = query;
         this.reuse = reuse;
         this.mapper = mapper;

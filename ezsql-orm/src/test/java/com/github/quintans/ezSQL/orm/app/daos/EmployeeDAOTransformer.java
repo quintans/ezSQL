@@ -4,14 +4,14 @@ import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.ezSQL.orm.app.domain.Employee;
 import com.github.quintans.ezSQL.orm.app.mappings.TEmployee;
 import com.github.quintans.ezSQL.transformers.MapColumn;
-import com.github.quintans.ezSQL.transformers.Mapper;
+import com.github.quintans.ezSQL.transformers.QueryMapper;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
 import java.util.Date;
 import java.util.List;
 
-public class EmployeeDAOTransformer implements Mapper {
+public class EmployeeDAOTransformer implements QueryMapper {
     private Driver driver;
 
     public EmployeeDAOTransformer(Driver driver) {

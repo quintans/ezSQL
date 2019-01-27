@@ -5,14 +5,13 @@ import com.github.quintans.ezSQL.toolkit.utils.Misc;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
-import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-public class MapBeanTransformer<T> implements Mapper {
+public class MapBeanTransformer<T> implements QueryMapper {
     private Class<T> clazz;
     private Driver driver;
 
@@ -29,7 +28,7 @@ public class MapBeanTransformer<T> implements Mapper {
                 return clazz.newInstance();
             }
 
-            PropertyDescriptor pd = Misc.getBeanProperty(parentInstance.getClass(), name);
+            PropertyDescriptor pd = Misc.getPropertyDescriptor(parentInstance.getClass(), name);
             if (pd != null) {
                 Class<?> type = pd.getPropertyType();
 
@@ -46,7 +45,7 @@ public class MapBeanTransformer<T> implements Mapper {
             } else {
                 throw new PersistenceException(parentInstance.getClass() + " does not have setter for " + name);
             }
-        } catch (IntrospectionException | InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
             throw new PersistenceException(e);
         }
     }
@@ -54,7 +53,7 @@ public class MapBeanTransformer<T> implements Mapper {
     @Override
     public void apply(Object instance, String name, Object value) {
         try {
-            PropertyDescriptor pd = Misc.getBeanProperty(instance.getClass(), name);
+            PropertyDescriptor pd = Misc.getPropertyDescriptor(instance.getClass(), name);
             if (pd != null) {
                 Class<?> type = pd.getPropertyType();
 
@@ -83,7 +82,7 @@ public class MapBeanTransformer<T> implements Mapper {
             boolean touched = false;
             for (MapColumn mapColumn : mapColumns) {
 
-                PropertyDescriptor pd = Misc.getBeanProperty(instance.getClass(), mapColumn.getAlias());
+                PropertyDescriptor pd = Misc.getPropertyDescriptor(instance.getClass(), mapColumn.getAlias());
                 if (pd != null) {
                     Class<?> type = pd.getPropertyType();
 
