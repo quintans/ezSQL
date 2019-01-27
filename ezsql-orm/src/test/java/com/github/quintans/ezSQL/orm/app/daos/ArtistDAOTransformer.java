@@ -10,6 +10,7 @@ import com.github.quintans.jdbc.exceptions.PersistenceException;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
 import java.util.LinkedHashSet;
+import java.util.List;
 
 public class ArtistDAOTransformer implements Mapper {
     private Driver driver;
@@ -21,7 +22,7 @@ public class ArtistDAOTransformer implements Mapper {
 
 
     private Mapper getPaintingMapper() {
-        if(paintingMapper == null) {
+        if (paintingMapper == null) {
             paintingMapper = new PaintingDAOTransformer(driver);
         }
         return paintingMapper;
@@ -43,7 +44,7 @@ public class ArtistDAOTransformer implements Mapper {
         if (instance instanceof Artist) {
             Artist entity = (Artist) instance;
 
-            if(TArtist.A_PAINTINGS.getAlias().equals(name)) {
+            if (TArtist.A_PAINTINGS.getAlias().equals(name)) {
                 if (entity.getPaintings() == null) {
                     entity.setPaintings(new LinkedHashSet<>());
                 }
@@ -55,31 +56,36 @@ public class ArtistDAOTransformer implements Mapper {
     }
 
     @Override
-    public Object map(ResultSetWrapper rsw, Object instance, MapColumn mapColumn) {
+    public boolean map(ResultSetWrapper rsw, Object instance, List<MapColumn> mapColumns) {
         try {
-            int idx = mapColumn.getColumnIndex();
-            String alias = mapColumn.getAlias();
+            boolean touched = false;
 
             if (instance instanceof Artist) {
                 Artist entity = (Artist) instance;
 
-                if (TArtist.C_ID.getAlias().equals(alias)) {
-                    Long value = driver.fromDb(rsw, idx, Long.class);
-                    entity.setId(value);
-                    return value;
-                } else if (TArtist.C_VERSION.getAlias().equals(alias)) {
-                    Integer value = driver.fromDb(rsw, idx, Integer.class);
-                    entity.setVersion(value);
-                    return value;
-                } else if (TArtist.C_NAME.getAlias().equals(alias)) {
-                    String value = driver.fromDb(rsw, idx, String.class);
-                    entity.setName(value);
-                    return value;
+                for (MapColumn mapColumn : mapColumns) {
+                    int idx = mapColumn.getColumnIndex();
+                    String alias = mapColumn.getAlias();
+
+                    if (TArtist.C_ID.getAlias().equals(alias)) {
+                        Long value = driver.fromDb(rsw, idx, Long.class);
+                        entity.setId(value);
+                        touched |= value != null;
+                    } else if (TArtist.C_VERSION.getAlias().equals(alias)) {
+                        Integer value = driver.fromDb(rsw, idx, Integer.class);
+                        entity.setVersion(value);
+                        touched |= value != null;
+                    } else if (TArtist.C_NAME.getAlias().equals(alias)) {
+                        String value = driver.fromDb(rsw, idx, String.class);
+                        entity.setName(value);
+                        touched |= value != null;
+                    }
                 }
             } else if (instance instanceof Painting) {
-                return getPaintingMapper().map(rsw, instance, mapColumn);
+                touched = getPaintingMapper().map(rsw, instance, mapColumns);
             }
-            return null;
+            return touched;
+
         } catch (Exception e) {
             throw new PersistenceException(e);
         }

@@ -10,6 +10,7 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.List;
 
 public class MapBeanTransformer<T> implements Mapper {
     private Class<T> clazz;
@@ -77,18 +78,22 @@ public class MapBeanTransformer<T> implements Mapper {
     }
 
     @Override
-    public Object map(ResultSetWrapper rsw, Object instance, MapColumn mapColumn) {
+    public boolean map(ResultSetWrapper rsw, Object instance, List<MapColumn> mapColumns) {
         try {
-            Object value = null;
-            PropertyDescriptor pd = Misc.getBeanProperty(instance.getClass(), mapColumn.getAlias());
-            if (pd != null) {
-                Class<?> type = pd.getPropertyType();
+            boolean touched = false;
+            for (MapColumn mapColumn : mapColumns) {
 
-                value = driver.fromDb(rsw, mapColumn.getColumnIndex(), type);
+                PropertyDescriptor pd = Misc.getBeanProperty(instance.getClass(), mapColumn.getAlias());
+                if (pd != null) {
+                    Class<?> type = pd.getPropertyType();
 
-                pd.getWriteMethod().invoke(instance, value);
+                    Object value = driver.fromDb(rsw, mapColumn.getColumnIndex(), type);
+                    pd.getWriteMethod().invoke(instance, value);
+                    touched |= value != null;
+                }
             }
-            return value;
+
+            return touched;
         } catch (Exception e) {
             throw new PersistenceException(e);
         }

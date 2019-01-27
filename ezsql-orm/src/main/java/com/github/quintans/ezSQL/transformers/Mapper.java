@@ -2,6 +2,8 @@ package com.github.quintans.ezSQL.transformers;
 
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
+import java.util.List;
+
 public interface Mapper {
     /**
      * Method called to get domain instance (POJO) when calling the <code>property()</code> method.
@@ -24,10 +26,10 @@ public interface Mapper {
      * collecting the data from the database and put in the domain instance.
      * The value from a column is always put in an domain instance.
      *
-     * @param rsw
-     * @param instance
-     * @param mapColumn
-     * @return
+     * @param rsw resultset wrapper
+     * @param instance domain instance to return
+     * @param mapColumns column mapping info
+     * @return true if the instance was populated with data
      */
-    Object map(ResultSetWrapper rsw, Object instance, MapColumn mapColumn);
+    boolean map(ResultSetWrapper rsw, Object instance, List<MapColumn> mapColumns);
 }

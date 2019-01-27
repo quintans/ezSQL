@@ -106,10 +106,8 @@ public class MapTable {
         // collect all values from the columns
         instance = mapper.createFrom(parentInstance, associationAlias);
         boolean finalize = false;
-        for (MapColumn cn : mapColumns) {
-            if (mapper.map(rsw, instance, cn) != null) {
-                finalize = true;
-            }
+        if (mapper.map(rsw, instance, mapColumns)) {
+            finalize = true;
         }
         return finalize;
     }
