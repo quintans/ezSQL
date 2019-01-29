@@ -9,7 +9,6 @@ import com.github.quintans.ezSQL.AbstractDb;
 import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.db.NullSql;
 import com.github.quintans.ezSQL.db.Table;
-import com.github.quintans.ezSQL.transformers.BeanProperty;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 public abstract class DmlCore<T> extends DmlBase {
