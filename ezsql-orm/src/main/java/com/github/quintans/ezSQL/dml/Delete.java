@@ -76,11 +76,6 @@ public class Delete extends Dml<Delete> {
     @Override
     public RawSql getSql() {
         if (this.rawSql == null) {
-            // if the discriminator conditions have not yet been processed, apply them now
-            if (this.discriminatorConditions != null && this.condition == null) {
-                where(this.discriminatorConditions);
-            }
-
             String sql = driver().getSql(this);
             this.rawSql = getSimpleJdbc().toRawSql(sql);
         }

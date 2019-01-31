@@ -1260,11 +1260,6 @@ public class Query extends DmlBase {
     @Override
     public RawSql getSql() {
         if (this.rawSql == null) {
-            // if the discriminator conditions have not yet been processed, apply them now
-            if (this.discriminatorConditions != null && this.condition == null) {
-                where(new ArrayList<Condition>());
-            }
-
             String sql = driver().getSql(this);
             this.rawSql = getSimpleJdbc().toRawSql(sql);
         }

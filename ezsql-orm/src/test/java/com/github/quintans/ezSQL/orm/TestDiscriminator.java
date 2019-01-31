@@ -110,10 +110,24 @@ public class TestDiscriminator extends TestBootstrap {
 	}
 
 	@Test
+	public void testUpdateAllWithDiscriminatorColumn() {
+		Update update = db.update(TGender.T_GENDER).sets(TGender.C_VALUE);
+		int result = update.values("Undefined").execute();
+
+		assertTrue("Unable to update with discriminator column", result == 3);
+	}
+
+	@Test
 	public void testDeleteWithDiscriminatorColumn() {
 		int result = db.delete(T_EYE_COLOR).where(T_EYE_COLOR.C_KEY.like("B%")).execute();
 		
         assertTrue("Unable to update with discriminator column", result == 2);
 	}
 
-}
+
+	@Test
+	public void testDeleteAllWithDiscriminatorColumn() {
+		int result = db.delete(T_EYE_COLOR).execute();
+
+		assertTrue("Unable to update with discriminator column", result == 3);
+	}}

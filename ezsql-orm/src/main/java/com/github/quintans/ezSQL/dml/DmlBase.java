@@ -56,7 +56,7 @@ public abstract class DmlBase {
 		return ++this.rawIndex;
 	}
 
-	protected class PathCondition {
+	protected static class PathCondition {
 		private List<Function> columns;
 		private List<Condition> conditions;
 
@@ -134,7 +134,23 @@ public abstract class DmlBase {
 	}
 
 	public Condition getCondition() {
-		return this.condition;
+
+		List<Condition> conditions = new ArrayList<Condition>();
+		if (this.discriminatorConditions != null) {
+			conditions.addAll(this.discriminatorConditions);
+		}
+
+		if(condition != null) {
+			conditions.add(condition);
+		}
+
+		if (!conditions.isEmpty()) {
+			Condition cond = Definition.and(conditions);
+			cond.setTableAlias(this.tableAlias);
+			return cond;
+		}
+
+		return null;
 	}
 
 	/**
@@ -258,7 +274,7 @@ public abstract class DmlBase {
 		}
 	}
 
-	protected PathCondition[] buildPathConditions(List<PathElement> paths) {
+	private PathCondition[] buildPathConditions(List<PathElement> paths) {
 		// see if any targeted table has discriminator columns
 		int index = 0;
 		List<Condition> tableConditions = null;
