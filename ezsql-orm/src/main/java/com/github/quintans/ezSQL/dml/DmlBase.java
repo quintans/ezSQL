@@ -99,7 +99,8 @@ public abstract class DmlBase {
 		if(table != null) {
 			List<Condition> conditions = table.getConditions();
 			if (conditions != null) {
-				this.discriminatorConditions = new ArrayList<Condition>(conditions);
+				this.discriminatorConditions = new ArrayList<>(conditions);
+				applyWhere(null);
 			}
 		}
 	}	
@@ -134,23 +135,7 @@ public abstract class DmlBase {
 	}
 
 	public Condition getCondition() {
-
-		List<Condition> conditions = new ArrayList<Condition>();
-		if (this.discriminatorConditions != null) {
-			conditions.addAll(this.discriminatorConditions);
-		}
-
-		if(condition != null) {
-			conditions.add(condition);
-		}
-
-		if (!conditions.isEmpty()) {
-			Condition cond = Definition.and(conditions);
-			cond.setTableAlias(this.tableAlias);
-			return cond;
-		}
-
-		return null;
+		return this.condition;
 	}
 
 	/**
@@ -486,15 +471,7 @@ public abstract class DmlBase {
 
 	protected DmlBase where(List<Condition> restrictions) {
 		if (restrictions != null) {
-			List<Condition> conditions = new ArrayList<Condition>();
-			if (this.discriminatorConditions != null) {
-				conditions.addAll(this.discriminatorConditions);
-			}
-
-			conditions.addAll(restrictions);
-			if (!conditions.isEmpty()) {
-				applyWhere(Definition.and(conditions));
-			}
+			applyWhere(Definition.and(restrictions));
 		}
 		return this;
 	}
@@ -542,13 +519,26 @@ public abstract class DmlBase {
 
 	// WHERE ===
 	protected void applyWhere(Condition restriction) {
-		Condition function = (Condition) restriction.clone();
-		replaceRaw(function);
-		function.setTableAlias(this.tableAlias);
-
-		this.condition = function;
-
 		this.rawSql = null;
+		this.condition = null;
+
+		List<Condition> conditions = new ArrayList<>();
+		if (this.discriminatorConditions != null) {
+			conditions.addAll(this.discriminatorConditions);
+		}
+
+		if(restriction != null) {
+			Condition cond = (Condition) restriction.clone();
+			replaceRaw(cond);
+			cond.setTableAlias(this.tableAlias);
+			conditions.add(cond);
+		}
+
+		if (!conditions.isEmpty()) {
+			Condition cond = Definition.and(conditions);
+			cond.setTableAlias(this.tableAlias);
+			this.condition = cond;
+		}
 	}
 
 	protected String dumpParameters(Map<String, Object> map) {

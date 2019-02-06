@@ -389,7 +389,7 @@ public abstract class GenericDriver implements Driver {
 	    // JOINS
 	    // sel.append(proc.joinPart.String())
 	    // WHERE - conditions
-	    if (update.getCondition() != null) {
+	    if (!proc.getWherePart().isEmpty()) {
 	        sel.append(" WHERE ").append(proc.getWherePart());
 	    }
 
@@ -440,7 +440,7 @@ public abstract class GenericDriver implements Driver {
         // JOINS
         sel.append(proc.getJoinPart());
         // WHERE - conditions
-        if (query.getCondition() != null) {
+        if (!proc.getWherePart().isEmpty()) {
             sel.append(" WHERE ").append(proc.getWherePart());
         }
         // GROUP BY
