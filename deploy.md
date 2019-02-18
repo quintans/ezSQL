@@ -9,8 +9,8 @@ We should use a user token, as described in <https://www.youtube.com/watch?v=b5D
 <servers>
    <server>
       <id>ossrh</id>
-      <username>n4F/JrcX</username>
-      <password>7W4FAlpLTrwMsvUgyjulMUIjTf4aEgQyR1DdnPtpK/fU</password>
+      <username>username_token</username>
+      <password>password_token</password>
    </server>
 </servers>
 ```
