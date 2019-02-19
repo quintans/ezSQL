@@ -1,8 +1,8 @@
 package com.github.quintans.ezSQL;
 
-import java.sql.Connection;
-
 import com.github.quintans.ezSQL.jdbc.AbstractJdbcSession;
+
+import java.sql.Connection;
 
 public class DbJdbcSession extends AbstractJdbcSession {
     private AbstractDb db;
@@ -14,10 +14,6 @@ public class DbJdbcSession extends AbstractJdbcSession {
     @Override
     public Connection getConnection() {
         return db.getConnection();
-    }
-
-    @Override
-    public void returnConnection(Connection connection) {
     }
 
 }

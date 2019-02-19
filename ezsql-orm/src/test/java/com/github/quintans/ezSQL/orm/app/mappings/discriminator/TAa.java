@@ -8,5 +8,4 @@ public class TAa {
 	
 	public static final Column<Long> C_ID = T_TAA.BIGINT("ID").AS("id").key();
 	public static final Column<String> C_TYPE = T_TAA.VARCHAR("TIPO").AS("tipo");
-	public static final Column<Long> C_FK = T_TAA.BIGINT("FK").AS("fk");
 }

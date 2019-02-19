@@ -1,22 +1,5 @@
 package com.github.quintans.jdbc;
 
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.ParameterMetaData;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.SQLIntegrityConstraintViolationException;
-import java.sql.Statement;
-import java.sql.Types;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 import com.github.quintans.jdbc.exceptions.PersistenceIntegrityConstraintException;
 import com.github.quintans.jdbc.sp.SqlParameter;
@@ -25,22 +8,24 @@ import com.github.quintans.jdbc.transformers.IRowTransformer;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 import com.github.quintans.jdbc.transformers.SimpleAbstractRowTransformer;
 
+import java.sql.*;
+import java.util.*;
+
 /**
  * Class that simplifies the execution o JDBC
- * 
+ *
  * @author paulo.quintans
- * 
  */
 public class SimpleJdbc {
     private JdbcSession jdbcSession;
     private PreparedStatement batchStmt = null;
     private String batchSql;
     private int batchPending;
-    
+
     public SimpleJdbc(JdbcSession jdbcSession) {
         this.jdbcSession = jdbcSession;
     }
-    
+
     public JdbcSession getJdbcSession() {
         return jdbcSession;
     }
@@ -52,18 +37,11 @@ public class SimpleJdbc {
     public int[] flushUpdate() {
         int rows[] = null;
 
-        if(batchPending > 0) {
+        if (batchPending > 0) {
             try {
                 rows = batchStmt.executeBatch();
             } catch (SQLException e) {
-                Connection conn = null;
-                try {
-                    conn = batchStmt.getConnection();
-                    close(batchStmt);
-                } catch (Exception ex) {
-                } finally {
-                    close(conn);                
-                }
+                closeQuietly(null, batchStmt);
                 throw new PersistenceException(e);
             }
         }
@@ -74,17 +52,17 @@ public class SimpleJdbc {
     public void batch(String sql, String[] keyColumns, Object[] params) {
         Connection conn = null;
         try {
-            if(!sql.equals(batchSql)) {
+            if (!sql.equals(batchSql)) {
                 closeBatch();
                 this.batchSql = sql;
-                
+
                 conn = jdbcSession.getConnection();
                 /*
                  * poor performance. this will ask the db for the meta data
                  */
                 // boolean retriveGenKeys = keyColumns != null && conn.getMetaData().supportsGetGeneratedKeys();
                 boolean retriveGenKeys = keyColumns != null;
-    
+
                 if (retriveGenKeys)
                     batchStmt = conn.prepareStatement(sql, keyColumns);
                 else
@@ -95,10 +73,7 @@ public class SimpleJdbc {
             batchStmt.addBatch();
             batchPending++;
         } catch (SQLException e) {
-            try {
-                closeBatch();
-            } catch (Exception ex) {
-            }
+            closeBatch();
             rethrow(e, sql, params);
         }
     }
@@ -106,16 +81,16 @@ public class SimpleJdbc {
     public void flushInsert() {
         flushInsert(null);
     }
-    
+
     public List<Map<String, Object>> flushInsert(String[] keyColumns) {
         List<Map<String, Object>> keyList = null;
 
-        if(batchPending > 0) {
+        if (batchPending > 0) {
             try {
                 batchStmt.executeBatch();
-    
+
                 if (keyColumns != null) {
-                    keyList = new ArrayList<Map<String, Object>>();
+                    keyList = new ArrayList<>();
                     ResultSet rs = batchStmt.getGeneratedKeys();
                     if (rs.next()) {
                         Map<String, Object> keys = new LinkedHashMap<String, Object>();
@@ -125,64 +100,43 @@ public class SimpleJdbc {
                         keyList.add(keys);
                     }
                 }
-    
+
             } catch (SQLException e) {
-                Connection conn = null;
-                try {
-                    conn = batchStmt.getConnection();
-                    close(batchStmt);
-                } catch (SQLException ex) {
-                } finally {
-                    close(conn);                
-                }
+                closeQuietly(null, batchStmt);
                 throw new PersistenceException(e);
             }
         }
 
         return keyList;
     }
-    
+
     public void closeBatch() {
-        if(batchStmt != null) {
+        if (batchStmt != null) {
             PreparedStatement stmt = batchStmt;
             batchStmt = null;
             batchSql = null;
-            Connection conn = null;
-            try {
-                conn = stmt.getConnection();
-                if (stmt != null) {
-                    stmt.close();
-                }
-            } catch (SQLException ex) {
-                throw new PersistenceException(ex);
-            } finally {
-                close(conn);                
-            }
+            closeQuietly(null, stmt);
         }
     }
-    
+
     public int getPending() {
         return batchPending;
     }
-    
 
-	/**
-	 * Execute an SQL SELECT query with replacement parameters.<br>
-	 * The caller is responsible for closing the connection.
-	 * 
-	 * @param <T>
-	 *            The type of object that the handler returns
-	 * @param sql
-	 *            The query to execute.
-	 * @param rt
-	 *            The handler that converts the results into an object.
-	 * @param params
-	 *            The replacement parameters.
-	 * @return List of objects.
-	 */
-	public <T> List<T> query(String sql, IRowTransformer<T> rt, Object... params) {
-		return queryRange(sql, rt, 0, 0, params);
-	}
+
+    /**
+     * Execute an SQL SELECT query with replacement parameters.<br>
+     * The caller is responsible for closing the connection.
+     *
+     * @param <T>    The type of object that the handler returns
+     * @param sql    The query to execute.
+     * @param rt     The handler that converts the results into an object.
+     * @param params The replacement parameters.
+     * @return List of objects.
+     */
+    public <T> List<T> query(String sql, IRowTransformer<T> rt, Object... params) {
+        return queryRange(sql, rt, 0, 0, params);
+    }
 
     public <T> T queryUnique(String sql, IRowTransformer<T> rt, Object... params) {
         List<T> result = queryRange(sql, rt, 0, 1, params);
@@ -192,536 +146,452 @@ public class SimpleJdbc {
             return null;
     }
 
-	/**
-	 * Execute an SQL SELECT query with replacement parameters.<br>
-	 * The caller is responsible for closing the connection.
-	 * 
-	 * @param <T>
-	 *            The type of object that the handler returns
-	 * @param sql
-	 *            The query to execute.
-	 * @param rt
-	 *            The handler that converts the results into an object.
-	 * @param firstRow
-	 *            The position of the first row. Starts at 1. If zero (0), ignores the positioning.
-	 * @param maxRows
-	 *            The number of rows to return. Starts at 1. If zero (0), returns all.
-	 * @param params
-	 *            The replacement parameters.
-	 * @return The list of objects returned by the handler.
-	 */
-	public <T> List<T> queryRange(String sql, IRowTransformer<T> rt, int firstRow, int maxRows, Object... params) {
+    /**
+     * Execute an SQL SELECT query with replacement parameters.<br>
+     * The caller is responsible for closing the connection.
+     *
+     * @param <T>      The type of object that the handler returns
+     * @param sql      The query to execute.
+     * @param rt       The handler that converts the results into an object.
+     * @param firstRow The position of the first row. Starts at 1. If zero (0), ignores the positioning.
+     * @param maxRows  The number of rows to return. Starts at 1. If zero (0), returns all.
+     * @param params   The replacement parameters.
+     * @return The list of objects returned by the handler.
+     */
+    public <T> List<T> queryRange(String sql, IRowTransformer<T> rt, int firstRow, int maxRows, Object... params) {
 
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		Collection<T> result = null;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        Collection<T> result = null;
 
         Connection conn = null;
         try {
             conn = jdbcSession.getConnection();
-			if (firstRow > 0) {
-				stmt = conn.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-				// Set the fetch size and search results for the result set
-				if (maxRows > 0)
-					stmt.setFetchSize(maxRows);
-				stmt.setFetchDirection(ResultSet.FETCH_FORWARD);
-			} else
-				stmt = conn.prepareStatement(sql);
+            if (firstRow > 0) {
+                stmt = conn.prepareStatement(sql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+                // Set the fetch size and search results for the result set
+                if (maxRows > 0)
+                    stmt.setFetchSize(maxRows);
+                stmt.setFetchDirection(ResultSet.FETCH_FORWARD);
+            } else
+                stmt = conn.prepareStatement(sql);
 
-			fillStatement(stmt, params);
-			rs = stmt.executeQuery();
+            fillStatement(stmt, params);
+            rs = stmt.executeQuery();
 
-			ResultSetWrapper rsw = new ResultSetWrapper(rs);
+            ResultSetWrapper rsw = new ResultSetWrapper(rs);
 
-			if (firstRow > 0)
-				rs.absolute(firstRow);
+            if (firstRow > 0)
+                rs.absolute(firstRow);
 
-			// the returned collection can be null
-			result = rt.beforeAll(rsw);
-			int rowNum = 0;
+            // the returned collection can be null
+            result = rt.beforeAll(rsw);
+            int rowNum = 0;
 
-			//while (rs.next() && (maxRows == 0 || rowNum < maxRows)) {
-			while (rs.next()) {
-			    // if the returned rows are higher than the requested one we have a problem and we want to know about it
-		        if (maxRows != 0 && rowNum == maxRows) {
-		            throw new PersistenceException("The query returned more than one result!");
-		        }
-		        
-				rt.onTransformation(result, rt.transform(rsw));
-				rowNum++;
-			}
+            //while (rs.next() && (maxRows == 0 || rowNum < maxRows)) {
+            while (rs.next()) {
+                // if the returned rows are higher than the requested one we have a problem and we want to know about it
+                if (maxRows != 0 && rowNum == maxRows) {
+                    throw new PersistenceException("The query returned more than one result!");
+                }
 
-		} catch (SQLException e) {
-			rethrow(e, sql, params);
+                rt.onTransformation(result, rt.transform(rsw));
+                rowNum++;
+            }
 
-		} finally {
-			try {
-	            rt.afterAll(result);
-				close(rs);
-			} catch (SQLException e) {
-				// throw new PersistenceException(e);
-			} finally {
-				try {
-					close(stmt);
-				} catch (SQLException e) {
-					// throw new PersistenceException(e);
-	            } finally {
-	                close(conn);                
-				}
-			}
-		}
+        } catch (SQLException e) {
+            rethrow(e, sql, params);
+        } finally {
+            rt.afterAll(result);
+            closeQuietly(rs, stmt);
+        }
 
-		if(result instanceof List) {
-		    return (List<T>) result;
-		} else if (result != null) {
-		    return new ArrayList<T>(result);
-		} else {
-			return null;
-		}
-	}
-
-	/**
-	 * Execute an SQL SELECT query with named parameters returning a collection of objects.
-	 * 
-	 * @param <T>
-	 *            list return type
-	 * @param sql
-	 *            The query to execute.
-	 * @param rt
-	 *            The handler that converts the results into an object.
-	 * @param params
-	 *            The named parameters.
-	 * @return The transformed result
-	 */
-	public <T> List<T> queryForList(String sql, IRowTransformer<T> rt, Map<String, Object> params) {
-		return queryForList(sql, rt, 0, 0, params);
-	}
-
-	/**
-	 * Execute an SQL SELECT query with named parameters returning a collection of objects.
-	 * 
-	 * @param <T>
-	 *            list return type
-	 * @param sql
-	 *            The query to execute.
-	 * @param rt
-	 *            The handler that converts the results into an object.
-	 * @param firstRow
-	 * @param maxRows
-	 * @param params
-	 *            The named parameters.
-	 * @return The transformed result
-	 */
-	public <T> List<T> queryForList(String sql, IRowTransformer<T> rt, int firstRow, int maxRows, Map<String, Object> params) {
-		RawSql rawSql = toRawSql(sql);
-		return queryRange(rawSql.getSql(), rt, firstRow, maxRows, rawSql.buildValues(params));
-	}
-
-	/**
-	 * converts SQL with named parameters to JDBC standard sql
-	 * 
-	 * @param sql
-	 *            The SQL to be converted
-	 * @return The {@link RawSql} with the result
-	 */
-	public RawSql toRawSql(String sql) {
-		ParsedSql parsedSql = NamedParameterUtils.parseSqlStatement(sql);
-        RawSql rawSql = new RawSql(parsedSql);
-		return rawSql;
-	}
-
-	/**
-	 * Execute an SQL SELECT query with named parameters.
-	 * 
-	 * @param sql
-	 *            The query to execute.
-	 * @param params
-	 *            The named parameters.
-	 * @return list with array of objects representing each result row
-	 */
-	public List<Object[]> queryForList(final String sql, Map<String, Object> params) {
-		IRowTransformer<Object[]> rt = new SimpleAbstractRowTransformer<Object[]>() {
-			@Override
-			public Object[] transform(ResultSetWrapper rsw) throws SQLException {
-				int[] columnTypes = rsw.getColumnTypes();
-				int cnt = columnTypes.length;
-
-				ResultSet rs = rsw.getResultSet();
-
-				Object[] objs = new Object[cnt];
-				for (int i = 0; i < cnt; i++) {
-					objs[i] = rs.getObject(i + 1);
-				}
-				return objs;
-			}
-		};
-
-		RawSql rawSql = toRawSql(sql);
-		return query(rawSql.getSql(), rt, 0, rawSql.buildValues(params));
-	}
-
-	/**
-	 * Execute an SQL SELECT query with named parameters returning the first result.
-	 * 
-	 * @param <T>
-	 *            the result object type
-	 * @param sql
-	 *            The query to execute.
-	 * @param rt
-	 *            The handler that converts the results into an object.
-	 * @param params
-	 *            The named parameters.
-	 * @return The transformed result
-	 */
-	public <T> T queryForObject(String sql, final IRowTransformer<T> rt, Map<String, Object> params) {
-		RawSql rawSql = toRawSql(sql);
-		return queryUnique(rawSql.getSql(), rt, rawSql.buildValues(params));
-	}
-
-	/**
-	 * Execute an SQL SELECT query with named parameters returning the first result as a Long.
-	 * 
-	 * @param sql
-	 *            The query to execute.
-	 * @param params
-	 *            The named parameters.
-	 * @return The result as a Long
-	 */
-	public Long queryForLong(String sql, Map<String, Object> params) {
-		IRowTransformer<Long> rt = new SimpleAbstractRowTransformer<Long>() {
-			@Override
-			public Long transform(ResultSetWrapper rsw) throws SQLException {
-				return rsw.getResultSet().getLong(1);
-			}
-		};
-
-		return queryForObject(sql, rt, params);
-	}
-
-	/**
-	 * Execute an SQL INSERT, UPDATE, or DELETE query.
-	 * 
-	 * @param sql
-	 *            The SQL to execute.
-	 * @param params
-	 *            The query replacement parameters.
-	 * @return The number of rows affected.
-	 */
-	public int update(String sql, Object... params) {
-
-		PreparedStatement stmt = null;
-		int rows = 0;
-
-        Connection conn = null;
-        try {
-            conn = jdbcSession.getConnection();
-			stmt = conn.prepareStatement(sql);
-			fillStatement(stmt, params);
-			rows = stmt.executeUpdate();
-
-		} catch (SQLException e) {
-			rethrow(e, sql, params);
-
-		} finally {
-			try {
-				close(stmt);
-			} catch (SQLException e) {
-				throw new PersistenceException(e);
-            } finally {
-                close(conn);                
-			}
-		}
-
-		return rows;
-	}
-
-	/**
-	 * Execute an named parameter SQL INSERT, UPDATE, or DELETE query.
-	 * 
-	 * @param sql
-	 *            The SQL to execute.
-	 * @param params
-	 *            The query named parameters.
-	 * @return The number of rows affected.
-	 */
-	public int update(String sql, Map<String, Object> params) {
-		RawSql rawSql = toRawSql(sql);
-		return update(rawSql.getSql(), rawSql.buildValues(params));
-	}
-
-	/**
-	 * Executa INSERT devolvendo uma array com as chaves geradas.
-	 * Se o driver não suportar a obtenção de chaves geradas, devolve null.
-	 * 
-	 * @param sql
-	 *            instrução sql (INSERT) a executar
-	 * @param keyColumns
-	 *            as colunas chaves a devolver
-	 * @param params
-	 *            os dados do registo
-	 * @return as chaves
-	 */
-	public Object[] insert(String sql, String[] keyColumns, Object... params) {
-		PreparedStatement stmt = null;
-		Object[] keys = null;
-
-        Connection conn = null;
-        try {
-            conn = jdbcSession.getConnection();
-			/*
-			 * poor performance. this will ask the db for the meta data
-			 */
-			// boolean retriveGenKeys = keyColumns != null && conn.getMetaData().supportsGetGeneratedKeys();
-		    
-			boolean retriveGenKeys = keyColumns != null;
-			if (retriveGenKeys)
-				stmt = conn.prepareStatement(sql, keyColumns);
-			else
-				stmt = conn.prepareStatement(sql);
-
-			fillStatement(stmt, params);
-			stmt.executeUpdate();
-
-			if (retriveGenKeys) {
-			    keys = new Object[keyColumns.length];
-				ResultSet rs = stmt.getGeneratedKeys();
-				if (rs.next()) {
-					for (int i = 0; i < keyColumns.length; i++) {
-						keys[i] = rs.getObject(i + 1);
-					}
-				}
-			}
-
-		} catch (SQLException e) {
-			rethrow(e, sql, params);
-
-		} finally {
-			try {
-				close(stmt);
-			} catch (SQLException e) {
-				throw new PersistenceException(e);
-            } finally {
-                close(conn);                
-			}
-		}
-
-		return keys;
-	}
-
-	/**
-	 * Fill the <code>PreparedStatement</code> replacement parameters with
-	 * the given objects.
-	 * 
-	 * @param stmt
-	 *            PreparedStatement to fill
-	 * @param params
-	 *            Query replacement parameters; <code>null</code> is a valid
-	 *            value to pass in.
-	 * @throws SQLException
-	 *             if a database access error occurs
-	 */
-	public void fillStatement(PreparedStatement stmt, Object... params) throws SQLException {
-
-		if (params == null) {
-			return;
-		}
-
-		ParameterMetaData pmd = null;
-		for (int i = 0; i < params.length; i++) {
-			if (params[i] != null) {
-				if (params[i] instanceof PreparedStatementCallback)
-					((PreparedStatementCallback) params[i]).execute(stmt, i + 1);
-				else
-					stmt.setObject(i + 1, params[i]);
-			} else {
-				// throw new SQLException(String.format("Valores nulos como parâmetro não são permitidos. Usar %s", NullSql.class.toString()));
-
-				// VARCHAR works with many drivers regardless
-				// of the actual column type. Oddly, NULL and
-				// OTHER don't work with Oracle's drivers.
-				int sqlType = Types.VARCHAR;
-				if (!jdbcSession.getPmdKnownBroken()) {
-			        if (pmd == null) {
-			            try {
-			                pmd = stmt.getParameterMetaData();
-			                if (pmd.getParameterCount() < params.length) {
-			                    throw new SQLException("Too many parameters: expected "
-			                        + pmd.getParameterCount() + ", was given " + params.length);
-			                }
-			            } catch (SQLException e) {
-			                jdbcSession.setPmdKnownBroken(true);
-			            }
-			        }
-				    
-					try {
-						if(pmd != null) {
-							sqlType = pmd.getParameterType(i + 1);
-						}
-					} catch (SQLException e) {
-                        jdbcSession.setPmdKnownBroken(true);
-					}
-				}
-				stmt.setNull(i + 1, sqlType);
-			}
-		}
-	}
-
-	/**
-	 * Close a <code>ResultSet</code>, avoid closing if null.
-	 * 
-	 * @param rs
-	 *            ResultSet to close.
-	 * @throws SQLException
-	 *             if a database access error occurs
-	 */
-	public void close(ResultSet rs) throws SQLException {
-		if (rs != null) {
-			rs.close();
-		}
-	}
-
-	/**
-	 * Close a <code>Statement</code>, avoid closing if null.
-	 * 
-	 * @param stmt
-	 *            Statement to close.
-	 * @throws SQLException
-	 *             if a database access error occurs
-	 */
-	public void close(Statement stmt) throws SQLException {
-		if (stmt != null) {
-			stmt.close();
-		}
-	}
-
-	public void close(Connection conn) {
-	    jdbcSession.returnConnection(conn);
+        if (result instanceof List) {
+            return (List<T>) result;
+        } else if (result != null) {
+            return new ArrayList<T>(result);
+        } else {
+            return null;
+        }
     }
 
-	/**
-	 * Execute a stored procedure call.<br>
-	 * The caller is responsible for closing the connection.
-	 * 
-	 * @param sql
-	 *            The JDBC string with call to the procedure
-	 * @param parameters
-	 *            The list with the parameter values
-	 * @return output The values mapped by parameter name
-	 */
-	public Map<String, Object> call(String sql, List<SqlParameter> parameters) {
+    /**
+     * Execute an SQL SELECT query with named parameters returning a collection of objects.
+     *
+     * @param <T>    list return type
+     * @param sql    The query to execute.
+     * @param rt     The handler that converts the results into an object.
+     * @param params The named parameters.
+     * @return The transformed result
+     */
+    public <T> List<T> queryForList(String sql, IRowTransformer<T> rt, Map<String, Object> params) {
+        return queryForList(sql, rt, 0, 0, params);
+    }
 
-		CallableStatement stmt = null;
-		Map<String, Object> outParameters = new HashMap<String, Object>();
+    /**
+     * Execute an SQL SELECT query with named parameters returning a collection of objects.
+     *
+     * @param <T>      list return type
+     * @param sql      The query to execute.
+     * @param rt       The handler that converts the results into an object.
+     * @param firstRow
+     * @param maxRows
+     * @param params   The named parameters.
+     * @return The transformed result
+     */
+    public <T> List<T> queryForList(String sql, IRowTransformer<T> rt, int firstRow, int maxRows, Map<String, Object> params) {
+        RawSql rawSql = toRawSql(sql);
+        return queryRange(rawSql.getSql(), rt, firstRow, maxRows, rawSql.buildValues(params));
+    }
 
-		Connection conn = null;
-		try {
+    /**
+     * converts SQL with named parameters to JDBC standard sql
+     *
+     * @param sql The SQL to be converted
+     * @return The {@link RawSql} with the result
+     */
+    public RawSql toRawSql(String sql) {
+        ParsedSql parsedSql = NamedParameterUtils.parseSqlStatement(sql);
+        RawSql rawSql = new RawSql(parsedSql);
+        return rawSql;
+    }
+
+    /**
+     * Execute an SQL SELECT query with named parameters.
+     *
+     * @param sql    The query to execute.
+     * @param params The named parameters.
+     * @return list with array of objects representing each result row
+     */
+    public List<Object[]> queryForList(final String sql, Map<String, Object> params) {
+        IRowTransformer<Object[]> rt = new SimpleAbstractRowTransformer<Object[]>() {
+            @Override
+            public Object[] transform(ResultSetWrapper rsw) throws SQLException {
+                int[] columnTypes = rsw.getColumnTypes();
+                int cnt = columnTypes.length;
+
+                ResultSet rs = rsw.getResultSet();
+
+                Object[] objs = new Object[cnt];
+                for (int i = 0; i < cnt; i++) {
+                    objs[i] = rs.getObject(i + 1);
+                }
+                return objs;
+            }
+        };
+
+        RawSql rawSql = toRawSql(sql);
+        return query(rawSql.getSql(), rt, 0, rawSql.buildValues(params));
+    }
+
+    /**
+     * Execute an SQL SELECT query with named parameters returning the first result.
+     *
+     * @param <T>    the result object type
+     * @param sql    The query to execute.
+     * @param rt     The handler that converts the results into an object.
+     * @param params The named parameters.
+     * @return The transformed result
+     */
+    public <T> T queryForObject(String sql, final IRowTransformer<T> rt, Map<String, Object> params) {
+        RawSql rawSql = toRawSql(sql);
+        return queryUnique(rawSql.getSql(), rt, rawSql.buildValues(params));
+    }
+
+    /**
+     * Execute an SQL SELECT query with named parameters returning the first result as a Long.
+     *
+     * @param sql    The query to execute.
+     * @param params The named parameters.
+     * @return The result as a Long
+     */
+    public Long queryForLong(String sql, Map<String, Object> params) {
+        IRowTransformer<Long> rt = new SimpleAbstractRowTransformer<Long>() {
+            @Override
+            public Long transform(ResultSetWrapper rsw) throws SQLException {
+                return rsw.getResultSet().getLong(1);
+            }
+        };
+
+        return queryForObject(sql, rt, params);
+    }
+
+    /**
+     * Execute an SQL INSERT, UPDATE, or DELETE query.
+     *
+     * @param sql    The SQL to execute.
+     * @param params The query replacement parameters.
+     * @return The number of rows affected.
+     */
+    public int update(String sql, Object... params) {
+
+        PreparedStatement stmt = null;
+        int rows = 0;
+
+        Connection conn = null;
+        try {
             conn = jdbcSession.getConnection();
-			stmt = conn.prepareCall(sql);
+            stmt = conn.prepareStatement(sql);
+            fillStatement(stmt, params);
+            rows = stmt.executeUpdate();
 
-			int pos = 0;
-			for (SqlParameter parameter : parameters) {
-				pos++;
-				if (parameter.isOut()) {
-					stmt.registerOutParameter(pos, parameter.getJdbcType());
-				}
-			}
+        } catch (SQLException e) {
+            rethrow(e, sql, params);
 
-			// set INs
-			pos = 0;
-			for (SqlParameter parameter : parameters) {
-				pos++;
-				if (parameter.isDefined()) {
-					if (parameter.getValue() != null)
-						stmt.setObject(pos, parameter.getValue(), parameter.getJdbcType());
-					else
-						stmt.setNull(pos, parameter.getJdbcType());
-				}
-			}
+        } finally {
+            closeQuietly(null, stmt);
+        }
 
-			stmt.execute();
+        return rows;
+    }
 
-			// obtem primeiro os results set
-			pos = 0;
-			for (SqlParameter parameter : parameters) {
-				if (SqlParameterType.RESULTSET.equals(parameter.getType())) {
-					ResultSet rs = (ResultSet) stmt.getObject(parameter.getName());
-					ResultSetWrapper rsw = new ResultSetWrapper(rs);
-					IRowTransformer<Object> rt = parameter.getRowTransformer();
-					Collection<Object> result = rt.beforeAll(rsw);
+    /**
+     * Execute an named parameter SQL INSERT, UPDATE, or DELETE query.
+     *
+     * @param sql    The SQL to execute.
+     * @param params The query named parameters.
+     * @return The number of rows affected.
+     */
+    public int update(String sql, Map<String, Object> params) {
+        RawSql rawSql = toRawSql(sql);
+        return update(rawSql.getSql(), rawSql.buildValues(params));
+    }
 
-					try {
-						while (rs.next()) {
-							rt.onTransformation(result, rt.transform(rsw));
-						}
-					} finally {
-						rt.afterAll(result);
-					}
+    /**
+     * Executa INSERT devolvendo uma array com as chaves geradas.
+     * Se o driver não suportar a obtenção de chaves geradas, devolve null.
+     *
+     * @param sql        instrução sql (INSERT) a executar
+     * @param keyColumns as colunas chaves a devolver
+     * @param params     os dados do registo
+     * @return as chaves
+     */
+    public Object[] insert(String sql, String[] keyColumns, Object... params) {
+        PreparedStatement stmt = null;
+        Object[] keys = null;
 
-					rs.close();
-					outParameters.put(parameter.getName(), result);
-				}
-			}
+        Connection conn = null;
+        try {
+            conn = jdbcSession.getConnection();
+            /*
+             * poor performance. this will ask the db for the meta data
+             */
+            // boolean retriveGenKeys = keyColumns != null && conn.getMetaData().supportsGetGeneratedKeys();
 
-			pos = 0;
-			for (SqlParameter parameter : parameters) {
-				pos++;
-				if (parameter.isOut() && !SqlParameterType.RESULTSET.equals(parameter.getType())) {
-					Object o = stmt.getObject(pos);
-					outParameters.put(parameter.getName(), o);
-				}
-			}
+            boolean retriveGenKeys = keyColumns != null;
+            if (retriveGenKeys)
+                stmt = conn.prepareStatement(sql, keyColumns);
+            else
+                stmt = conn.prepareStatement(sql);
 
-		} catch (SQLException e) {
-			rethrow(e, sql, parameters.toArray());
-		} finally {
-			try {
-				close(stmt);
-			} catch (SQLException e) {
-				throw new PersistenceException(e);
-			} finally {
-                close(conn);			    
-			}
-		}
+            fillStatement(stmt, params);
+            stmt.executeUpdate();
 
-		return outParameters;
-	}
+            if (retriveGenKeys) {
+                keys = new Object[keyColumns.length];
+                ResultSet rs = stmt.getGeneratedKeys();
+                if (rs.next()) {
+                    for (int i = 0; i < keyColumns.length; i++) {
+                        keys[i] = rs.getObject(i + 1);
+                    }
+                }
+            }
 
-	/**
-	 * Throws a new exception with a more informative error message.
-	 * 
-	 * @param cause
-	 *            The original exception that will be chained to the new
-	 *            exception when it's rethrown.
-	 * 
-	 * @param sql
-	 *            The query that was executing when the exception happened.
-	 * 
-	 * @param params
-	 *            The query replacement parameters; <code>null</code> is a
-	 *            valid value to pass in.
-	 */
-	public void rethrow(SQLException cause, String sql, Object... params) {
+        } catch (SQLException e) {
+            rethrow(e, sql, params);
+        } finally {
+            closeQuietly(null, stmt);
+        }
 
-		String causeMessage = cause.getMessage();
-		if (causeMessage == null) {
-			causeMessage = "";
-		}
-		StringBuffer msg = new StringBuffer(causeMessage);
+        return keys;
+    }
 
-		msg.append(" Query: ");
-		msg.append(sql);
-		msg.append(" Parameters: ");
+    /**
+     * Fill the <code>PreparedStatement</code> replacement parameters with
+     * the given objects.
+     *
+     * @param stmt   PreparedStatement to fill
+     * @param params Query replacement parameters; <code>null</code> is a valid
+     *               value to pass in.
+     * @throws SQLException if a database access error occurs
+     */
+    public void fillStatement(PreparedStatement stmt, Object... params) throws SQLException {
+        if (params == null) {
+            return;
+        }
 
-		if (params == null) {
-			msg.append("[]");
-		} else {
-			msg.append(Arrays.deepToString(params));
-		}
+        ParameterMetaData pmd = null;
+        for (int i = 0; i < params.length; i++) {
+            if (params[i] != null) {
+                if (params[i] instanceof PreparedStatementCallback)
+                    ((PreparedStatementCallback) params[i]).execute(stmt, i + 1);
+                else
+                    stmt.setObject(i + 1, params[i]);
+            } else {
+                // throw new SQLException(String.format("Valores nulos como parâmetro não são permitidos. Usar %s", NullSql.class.toString()));
 
-		if(cause instanceof SQLIntegrityConstraintViolationException){
+                // VARCHAR works with many drivers regardless
+                // of the actual column type. Oddly, NULL and
+                // OTHER don't work with Oracle's drivers.
+                int sqlType = Types.VARCHAR;
+                if (!jdbcSession.getPmdKnownBroken()) {
+                    if (pmd == null) {
+                        try {
+                            pmd = stmt.getParameterMetaData();
+                            if (pmd.getParameterCount() < params.length) {
+                                throw new SQLException("Too many parameters: expected "
+                                        + pmd.getParameterCount() + ", was given " + params.length);
+                            }
+                        } catch (SQLException e) {
+                            jdbcSession.setPmdKnownBroken(true);
+                        }
+                    }
+
+                    try {
+                        if (pmd != null) {
+                            sqlType = pmd.getParameterType(i + 1);
+                        }
+                    } catch (SQLException e) {
+                        jdbcSession.setPmdKnownBroken(true);
+                    }
+                }
+                stmt.setNull(i + 1, sqlType);
+            }
+        }
+    }
+
+    /**
+     * Close a <code>Statement</code>, avoid closing if null.
+     *
+     * @param rs   ResultSet to close.
+     * @param stmt Statement to close.
+     */
+    public void closeQuietly(ResultSet rs, Statement stmt) {
+        if (rs != null) {
+            try {
+                rs.close();
+            } catch (SQLException e) {
+            }
+        }
+        if (stmt != null) {
+            try {
+                stmt.close();
+            } catch (SQLException e) {
+            }
+        }
+    }
+
+    /**
+     * Execute a stored procedure call.<br>
+     * The caller is responsible for closing the connection.
+     *
+     * @param sql        The JDBC string with call to the procedure
+     * @param parameters The list with the parameter values
+     * @return output The values mapped by parameter name
+     */
+    public Map<String, Object> call(String sql, List<SqlParameter> parameters) {
+
+        CallableStatement stmt = null;
+        Map<String, Object> outParameters = new HashMap<String, Object>();
+
+        Connection conn = null;
+        try {
+            conn = jdbcSession.getConnection();
+            stmt = conn.prepareCall(sql);
+
+            int pos = 0;
+            for (SqlParameter parameter : parameters) {
+                pos++;
+                if (parameter.isOut()) {
+                    stmt.registerOutParameter(pos, parameter.getJdbcType());
+                }
+            }
+
+            // set INs
+            pos = 0;
+            for (SqlParameter parameter : parameters) {
+                pos++;
+                if (parameter.isDefined()) {
+                    if (parameter.getValue() != null)
+                        stmt.setObject(pos, parameter.getValue(), parameter.getJdbcType());
+                    else
+                        stmt.setNull(pos, parameter.getJdbcType());
+                }
+            }
+
+            stmt.execute();
+
+            // obtem primeiro os results set
+            pos = 0;
+            for (SqlParameter parameter : parameters) {
+                if (SqlParameterType.RESULTSET.equals(parameter.getType())) {
+                    ResultSet rs = (ResultSet) stmt.getObject(parameter.getName());
+                    ResultSetWrapper rsw = new ResultSetWrapper(rs);
+                    IRowTransformer<Object> rt = parameter.getRowTransformer();
+                    Collection<Object> result = rt.beforeAll(rsw);
+
+                    try {
+                        while (rs.next()) {
+                            rt.onTransformation(result, rt.transform(rsw));
+                        }
+                    } finally {
+                        rt.afterAll(result);
+                    }
+
+                    rs.close();
+                    outParameters.put(parameter.getName(), result);
+                }
+            }
+
+            pos = 0;
+            for (SqlParameter parameter : parameters) {
+                pos++;
+                if (parameter.isOut() && !SqlParameterType.RESULTSET.equals(parameter.getType())) {
+                    Object o = stmt.getObject(pos);
+                    outParameters.put(parameter.getName(), o);
+                }
+            }
+
+        } catch (SQLException e) {
+            rethrow(e, sql, parameters.toArray());
+        } finally {
+            closeQuietly(null, stmt);
+        }
+
+        return outParameters;
+    }
+
+    /**
+     * Throws a new exception with a more informative error message.
+     *
+     * @param cause  The original exception that will be chained to the new
+     *               exception when it's rethrown.
+     * @param sql    The query that was executing when the exception happened.
+     * @param params The query replacement parameters; <code>null</code> is a
+     *               valid value to pass in.
+     */
+    public void rethrow(SQLException cause, String sql, Object... params) {
+
+        String causeMessage = cause.getMessage();
+        if (causeMessage == null) {
+            causeMessage = "";
+        }
+        StringBuffer msg = new StringBuffer(causeMessage);
+
+        msg.append(" Query: ");
+        msg.append(sql);
+        msg.append(" Parameters: ");
+
+        if (params == null) {
+            msg.append("[]");
+        } else {
+            msg.append(Arrays.deepToString(params));
+        }
+
+        if (cause instanceof SQLIntegrityConstraintViolationException) {
             throw new PersistenceIntegrityConstraintException(msg.toString(), cause);
-		} else {
+        } else {
             throw new PersistenceException(msg.toString(), cause);
-		}
-	}
+        }
+    }
 }

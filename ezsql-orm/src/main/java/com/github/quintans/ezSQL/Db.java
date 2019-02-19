@@ -19,8 +19,5 @@ public class Db extends AbstractDb {
 	public void setConnection(Connection connection) {
 		this.connection = connection;
 	}
-
-    protected void releaseConnection(Connection connection) {
-    }
 	
 }

@@ -160,7 +160,10 @@ public class MapTransformer<T> implements IQueryRowTransformer<T> {
 
     @Override
     public void afterAll(Collection<T> result) {
-        rootNode.reset();
+        // is null when there are no results
+        if(rootNode != null) {
+            rootNode.reset();
+        }
     }
 
 

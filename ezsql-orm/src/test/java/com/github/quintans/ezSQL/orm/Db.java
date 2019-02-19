@@ -9,6 +9,7 @@ import com.github.quintans.ezSQL.dml.DmlBase;
 import com.github.quintans.ezSQL.dml.Insert;
 import com.github.quintans.ezSQL.dml.Query;
 import com.github.quintans.ezSQL.dml.Update;
+import com.github.quintans.ezSQL.driver.Driver;
 
 public class Db extends AbstractDb {
 	// for testing
@@ -17,22 +18,15 @@ public class Db extends AbstractDb {
 
 	private Connection connection = null;
 
-	public Db(Connection connection) {
+	public Db(Connection connection, Driver driver) {
 		super();
 		this.connection = connection;
+		setDriver(driver);
 	}
 
 	@Override
 	protected Connection connection() {
 		return this.connection;
-	}
-
-    @Override
-    protected void releaseConnection(Connection connection) {
-    }
-
-	public void setConnection(Connection connection) {
-		this.connection = connection;
 	}
 
 	@Override

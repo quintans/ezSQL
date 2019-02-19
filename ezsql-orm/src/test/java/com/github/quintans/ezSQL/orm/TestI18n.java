@@ -19,49 +19,46 @@ public class TestI18n extends TestBootstrap {
 
     @Test
     public void testI18n() {
-        Collection<Book> books = db.query(TBook.T_BOOK).all()
-                .outer(TBook.A_I18N).fetch()
-                .orderBy(TBook18.C_NAME).asc()
-                .list(Book.class, false);
-        
-        dumpCollection(books);
-
-        for (Book book : books) {
-            assertTrue("Book.name is null", book.getI18n().getName() != null);
-        }
-    }
-
-    @Test
-    public void testI18nWhere() throws Exception {
-        try {
+        tm.readOnly(db -> {
             Collection<Book> books = db.query(TBook.T_BOOK).all()
-                    .inner(TBook.A_I18N).on(TBook18.C_NAME.like("%SQL%")).fetch()
-                    .where(TBook.C_PRICE.lt(20.0D))
+                    .outer(TBook.A_I18N).fetch()
+                    .orderBy(TBook18.C_NAME).asc()
                     .list(Book.class, false);
-            
+
             dumpCollection(books);
 
             for (Book book : books) {
                 assertTrue("Book.name is null", book.getI18n().getName() != null);
             }
+        });
+    }
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+    @Test
+    public void testI18nWhere() throws Exception {
+        tm.readOnly(db -> {
+            Collection<Book> books = db.query(TBook.T_BOOK).all()
+                    .inner(TBook.A_I18N).on(TBook18.C_NAME.like("%SQL%")).fetch()
+                    .where(TBook.C_PRICE.lt(20.0D))
+                    .list(Book.class, false);
 
+            dumpCollection(books);
+
+            for (Book book : books) {
+                assertTrue("Book.name is null", book.getI18n().getName() != null);
+            }
+        });
     }
 
     @Test
     public void testI18nAssociation() throws Exception {
-        try {
+        tm.readOnly(db -> {
             db.languague = "es";
 
             Collection<Author> authors = db.query(T_AUTHOR).all()
                     .inner(T_AUTHOR.A_BOOKS, TBook.A_I18N).fetch()
                     .orderBy(TBook18.C_NAME).desc()
                     .list(Author.class, false);
-            
+
             dumpCollection(authors);
             assertTrue("Authors is NOT empty", authors.isEmpty());
 
@@ -70,7 +67,7 @@ public class TestI18n extends TestBootstrap {
                     .outer(T_AUTHOR.A_BOOKS, TBook.A_I18N).fetch()
                     .orderBy(TBook18.C_NAME).asc()
                     .list(Author.class, true);
-            
+
             dumpCollection(authors);
             for (Author author : authors) {
                 if (author.getBooks() != null) {
@@ -79,26 +76,19 @@ public class TestI18n extends TestBootstrap {
                     }
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        });
     }
 
     @Test
     public void testI18nAssociationConditioned() throws Exception {
-        try {
+        tm.readOnly(db -> {
             db.languague = "en";
             Collection<Author> result = db.query(T_AUTHOR).all()
                     .inner(T_AUTHOR.A_BOOKS).on(TBook.C_PRICE.lt(20.0))
                     .inner(TBook.A_I18N).on(TBook18.C_NAME.like("%SQL%").not()).fetch()
                     .list(Author.class, false);
-            
-            dumpCollection(result);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
-    }
 
+            dumpCollection(result);
+        });
+    }
 }

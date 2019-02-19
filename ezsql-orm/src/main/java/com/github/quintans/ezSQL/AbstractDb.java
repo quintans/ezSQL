@@ -46,6 +46,7 @@ public abstract class AbstractDb {
 	private Driver driver;
 	// using the same simple jdbc will allow an efficient use of sql types, because they are cached by SimpleJdbc instance. see SimpleJdbc.columnTypeCache
 	private JdbcSession jdbcSession = new DbJdbcSession(this);
+	private Connection connection;
 
 	public AbstractDb() {
 	}
@@ -61,18 +62,14 @@ public abstract class AbstractDb {
 	 * @return
 	 */
 	protected abstract Connection connection();
-	
-    protected abstract void releaseConnection(Connection connection);
-    
+
 	public Connection getConnection() {
-		Connection conn = connection();
-		this.driver.prepareConnection(conn);
-		return conn;
+	    if(connection == null) {
+            connection = connection();
+            this.driver.prepareConnection(connection);
+        }
+		return connection;
 	}
-	
-    public void returnConnection(Connection connection) {
-        releaseConnection(connection);
-    }
 
 	/**
 	 * gets the value at the end of the association from the database, puts in the input bean and returns the value.

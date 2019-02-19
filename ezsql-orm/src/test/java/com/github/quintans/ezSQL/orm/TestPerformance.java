@@ -36,7 +36,7 @@ public class TestPerformance extends TestBootstrap {
 
     @Test
     public void testInsertDirectOrByReflectian() throws Exception {
-        try {
+        tm.transaction(db -> {
             Insert insert;
             Stopwatch sw = new Stopwatch();
             Random rnd = new Random();
@@ -46,7 +46,7 @@ public class TestPerformance extends TestBootstrap {
             db.delete(TEmployee.T_EMPLOYEE).execute();
             // INSERT
             sex = rnd.nextBoolean();
-            // the insert object is created just to get an database agnostic sql
+            // the insert object is created just to getConnection an database agnostic sql
             insert = db.insert(TEmployee.T_EMPLOYEE)
                     .sets(TEmployee.C_ID, TEmployee.C_NAME, TEmployee.C_SEX, TEmployee.C_CREATION)
                     .set(TEmployee.C_ID, 0L); // Force the ID placeholder generation for Postgresql. The Postgresql Driver does not generate ? for null IDs.
@@ -167,82 +167,79 @@ public class TestPerformance extends TestBootstrap {
                 sex = !sex;
             }
             sw.showAverage("BEANS");
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        });
     }
 
     @Test
     public void testQueryByReflectianAndByTransformer() {
+        tm.readOnly(db -> {
+            db.delete(TEmployee.T_EMPLOYEE).execute();
 
-        db.delete(TEmployee.T_EMPLOYEE).execute();
+            Insert insert = new Insert(db, TEmployee.T_EMPLOYEE)
+                    .sets(TEmployee.C_ID, TEmployee.C_NAME, TEmployee.C_SEX, TEmployee.C_CREATION);
 
-        Insert insert = new Insert(db, TEmployee.T_EMPLOYEE)
-                .sets(TEmployee.C_ID, TEmployee.C_NAME, TEmployee.C_SEX, TEmployee.C_CREATION);
+            Random rnd = new Random();
+            boolean sex = rnd.nextBoolean();
+            for (int i = 1; i <= LOOP; i++) {
+                int firstNameIdx = rnd.nextInt(7);
+                int lastNameIdx = rnd.nextInt(7);
+                String name = (sex ? maleFirstNames[firstNameIdx] : femaleFirstNames[firstNameIdx]) + " " + lastNames[lastNameIdx];
+                Date birth = new Date(System.currentTimeMillis() - (rnd.nextInt(40) * YEAR));
 
-        Random rnd = new Random();
-        boolean sex = rnd.nextBoolean();
-        for (int i = 1; i <= LOOP; i++) {
-            int firstNameIdx = rnd.nextInt(7);
-            int lastNameIdx = rnd.nextInt(7);
-            String name = (sex ? maleFirstNames[firstNameIdx] : femaleFirstNames[firstNameIdx]) + " " + lastNames[lastNameIdx];
-            Date birth = new Date(System.currentTimeMillis() - (rnd.nextInt(40) * YEAR));
+                insert.values(i, name, sex, birth).execute();
+                sex = !sex;
+            }
 
-            insert.values(i, name, sex, birth).execute();
-            sex = !sex;
-        }
-
-        Driver driver = db.getDriver();
-        Stopwatch sw = new Stopwatch();
-        Query query = null;
-        // warm up
-        for (int i = 0; i < WARM_UP; i++) {
+            Driver driver = db.getDriver();
+            Stopwatch sw = new Stopwatch();
+            Query query = null;
+            // warm up
+            for (int i = 0; i < WARM_UP; i++) {
+                query = db.query(TEmployee.T_EMPLOYEE).all();
+                query.list(new MapTransformer<>(query, false, new EmployeeDAOTransformer(driver)));
+            }
+            // READ - ORM transformer
             query = db.query(TEmployee.T_EMPLOYEE).all();
+            sw.reset().start();
             query.list(new MapTransformer<>(query, false, new EmployeeDAOTransformer(driver)));
-        }
-        // READ - ORM transformer
-        query = db.query(TEmployee.T_EMPLOYEE).all();
-        sw.reset().start();
-        query.list(new MapTransformer<>(query, false, new EmployeeDAOTransformer(driver)));
-        sw.stop().showTotal("query.list(EmployeeDAOTransformer)");
+            sw.stop().showTotal("query.list(EmployeeDAOTransformer)");
 
-        // warm up
-        for (int i = 0; i < WARM_UP; i++) {
+            // warm up
+            for (int i = 0; i < WARM_UP; i++) {
+                query = db.query(TEmployee.T_EMPLOYEE).all();
+                query.list(new SimpleAbstractRowTransformer<Employee>() {
+                    @Override
+                    public Employee transform(ResultSetWrapper rs) throws SQLException {
+                        return new Employee();
+                    }
+                });
+            }
+            // READ - transformer
             query = db.query(TEmployee.T_EMPLOYEE).all();
-            query.list(new SimpleAbstractRowTransformer<Employee>() {
+            sw.reset().start();
+            query.list(new SimpleAbstractDbRowTransformer<Employee>(db) {
                 @Override
-                public Employee transform(ResultSetWrapper rs) throws SQLException {
-                    return new Employee();
+                public Employee transform(ResultSetWrapper rsw) throws SQLException {
+                    Employee dto = new Employee();
+                    dto.setId(toLong(rsw, 1));
+                    dto.setName(toString(rsw, 2));
+                    dto.setSex(toBoolean(rsw, 3));
+                    dto.setCreation(toDate(rsw, 4));
+                    return dto;
                 }
             });
-        }
-        // READ - transformer
-        query = db.query(TEmployee.T_EMPLOYEE).all();
-        sw.reset().start();
-        query.list(new SimpleAbstractDbRowTransformer<Employee>(db) {
-            @Override
-            public Employee transform(ResultSetWrapper rsw) throws SQLException {
-                Employee dto = new Employee();
-                dto.setId(toLong(rsw, 1));
-                dto.setName(toString(rsw, 2));
-                dto.setSex(toBoolean(rsw, 3));
-                dto.setCreation(toDate(rsw, 4));
-                return dto;
+            sw.stop().showTotal("query.list(new SimpleAbstractDbRowTransformer<Employee>(db))");
+
+            // warm up
+            for (int i = 0; i < WARM_UP; i++) {
+                query = db.query(TEmployee.T_EMPLOYEE).all();
+                query.list(Employee.class);
             }
-        });
-        sw.stop().showTotal("query.list(new SimpleAbstractDbRowTransformer<Employee>(db))");
-
-        // warm up
-        for (int i = 0; i < WARM_UP; i++) {
+            // READ - Reflection
             query = db.query(TEmployee.T_EMPLOYEE).all();
-            query.list(Employee.class);
-        }
-        // READ - Reflection
-        query = db.query(TEmployee.T_EMPLOYEE).all();
-        sw.reset().start();
-        query.list(Employee.class, false);
-        sw.stop().showTotal("query.list(Employee.class)");
-
+            sw.reset().start();
+            query.list(Employee.class, false);
+            sw.stop().showTotal("query.list(Employee.class)");
+        });
     }
 }

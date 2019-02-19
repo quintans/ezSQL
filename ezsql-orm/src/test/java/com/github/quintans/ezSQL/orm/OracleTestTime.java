@@ -2,9 +2,11 @@ package com.github.quintans.ezSQL.orm;
 
 import static com.github.quintans.ezSQL.dml.Definition.raw;
 
+import java.sql.Connection;
 import java.util.Collection;
 import java.util.Date;
 
+import com.github.quintans.ezSQL.TransactionManager;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -25,8 +27,8 @@ import com.github.quintans.ezSQL.orm.app.mappings.TTimer;
 public class OracleTestTime extends TestCase {
 	private IDatabaseTester databaseTester;
 
-	private Db db;
 	private Driver driver;
+	private TransactionManager<Db> tm;
 
 	/**
 	 * Create the test case
@@ -51,12 +53,21 @@ public class OracleTestTime extends TestCase {
 
 		this.databaseTester = new JdbcDatabaseTester("oracle.jdbc.driver.OracleDriver", "jdbc:oracle:thin:@vmdb:1521:XE", "LIXO", "LIXO");
 
-		this.db = new Db(this.databaseTester.getConnection().getConnection());
+		Connection conn = this.databaseTester.getConnection().getConnection();
 		Oracle5Driver drv = new Oracle5Driver();
 		drv.setTimeZoneId("GMT");
 		System.out.println("tz: " + drv.getCalendar().getTimeZone().getID());
 		this.driver = drv;
-		this.db.setDriver(this.driver);
+
+		tm = new TransactionManager<Db>(
+				() -> conn,
+				c -> new Db(c, this.driver)
+		) {
+			@Override
+			protected void close(Connection con) {
+				// no-op
+			}
+		};
 	}
 
 	@Override
@@ -65,25 +76,20 @@ public class OracleTestTime extends TestCase {
 	}
 
 	public void testUpdate() {
-		try {
-		    long ticks = 1307882799572L;
-			Update upd = new Update(this.db, TTimer.T_TIMER)
-				.set(TTimer.C_DATE, new MyDateTime(ticks))
-				.set(TTimer.C_TIMESTAMP, new Date(ticks))
-				.where(TTimer.C_ID.is(raw(1L)));
-
+		tm.transaction(db -> {
+			long ticks = 1307882799572L;
+			Update upd = new Update(db, TTimer.T_TIMER)
+					.set(TTimer.C_DATE, new MyDateTime(ticks))
+					.set(TTimer.C_TIMESTAMP, new Date(ticks))
+					.where(TTimer.C_ID.is(raw(1L)));
 
 			upd.execute();
-
-			this.db.getConnection().commit();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		});
 	}
 
 	public void testSelect() {
-		try {
-			Query query = this.db.queryAll(TTimer.T_TIMER);
+		tm.readOnly(db -> {
+			Query query = db.queryAll(TTimer.T_TIMER);
 			Collection<Object[]> list = query.listRaw();
 			for (Object o : list) {
 				Object[] objs = (Object[]) o;
@@ -93,8 +99,6 @@ public class OracleTestTime extends TestCase {
 			}
 
 			assertTrue(list.size() > 0);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		});
 	}
 }

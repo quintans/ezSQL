@@ -1,5 +1,6 @@
 package com.github.quintans.ezSQL.orm;
 
+import com.github.quintans.ezSQL.TransactionManager;
 import com.github.quintans.ezSQL.driver.Driver;
 import org.apache.log4j.Logger;
 import org.dbunit.IDatabaseTester;
@@ -13,6 +14,7 @@ import org.junit.BeforeClass;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.sql.Connection;
 import java.util.Collection;
 import java.util.Properties;
 
@@ -23,7 +25,7 @@ public class TestBootstrap {
     private static Logger LOGGER = Logger.getLogger(TestBootstrap.class);
 
     private static IDatabaseTester databaseTester;
-    protected static Db db;
+    protected static TransactionManager<Db> tm;
 
     @BeforeClass
     public static void testSetup() throws Exception {
@@ -44,17 +46,25 @@ public class TestBootstrap {
             //databaseTester = new JdbcDatabaseTester("com.mysql.jdbc.Driver", "jdbc:mysql://localhost:3306/ezsql", "quintans", "quintans");
             // databaseTester = new JdbcDatabaseTester("org.postgresql.Driver", "jdbc:postgresql://localhost:5432/ezsql", "quintans", "quintans");
 
-            db = new Db(databaseTester.getConnection().getConnection());
-
-            Class<?> clazz = Class.forName(ormDriver);
-            Driver driver = (Driver) clazz.newInstance();
 
             //Driver driver = new MySQLDriverExt();
             // Driver driver = new H2DriverExt();
             //Driver driver = new Oracle8iDriver();
             //Driver driver = new PostgreSQLDriverExt();
 
-            db.setDriver(driver);
+            Class<?> clazz = Class.forName(ormDriver);
+            Driver driver = (Driver) clazz.newInstance();
+
+            Connection conn = databaseTester.getConnection().getConnection();
+            tm = new TransactionManager<Db>(
+                    () -> conn,
+                    c -> new Db(c, driver)
+            ) {
+                @Override
+                protected void close(Connection con) {
+                    // no-op for tests
+                }
+            };
 
         } catch (Exception e) {
             e.printStackTrace();

@@ -333,18 +333,7 @@ the direction of the association.
 Beside the following examples you should also inspect the `ezsql-orm/src/java/test/`
 folder for a lot more examples.
 
-In every example there is an object, named `db` that is used to create the CRUD
-operations. This object extend the abstract class AbstractDb that is nothing more than a wrapper
-over the real DataSource provider.
-
-```java
-/*
- * db get the connections from a running transaction.
- * ex: from a spring transaction.
- */
-AbstractDb db = new Db();
-db.setDriver(new H2Driver());
-```
+### Introduction
 
 All examples also import the following:
 
@@ -376,6 +365,111 @@ public enum EGender implements Value<String> {
 
 `Enum` must implements the interface `Value<T>`. The value persisted in the Database
 will be the value returned by the `value()` method.
+
+### Transactions
+
+In every example there is an TransactionManager, for the transactions, that passes a `db` object that is used to create the CRUD
+operations. This object extend the abstract class AbstractDb that is nothing more than a wrapper over a connection.
+
+
+```java
+public class Config {
+  public static final TransactionManager<Db> TM = new TransactionManager<Db>(
+    () -> dataSource.getConnection(),
+    c -> new Db(c, driver)
+  );
+}
+```
+
+```java
+public class Service {
+  public void doStuff() {
+    Config.TM.transaction(db -> {
+      List<Employee> employees = repository.listAll(db);
+      // ...
+    });
+  }
+}
+```
+
+```java
+public class Repository {  
+  public List<Employee> listAll(Db db) {
+    return db.query(TEmployee.T_EMPLOYEE).all().list(Employee.class);
+  }
+}
+```
+
+For Spring we could do:
+
+```java
+@Configuration
+public class BeansConfig {
+        @Autowired
+        private Environment env;
+        
+        @Bean(destroyMethod = "close")
+        public DataSource dataSource() throws ClassNotFoundException {
+            org.apache.tomcat.jdbc.pool.DataSource dataSource = new org.apache.tomcat.jdbc.pool.DataSource();
+            
+            // set dataSource properties
+            
+            return dataSource;        
+        }
+        
+        @Bean
+        public Db db(DataSource ds) throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+            Driver driver = (Driver) Class.forName(env.getProperty("ezSQL.driver")).newInstance();
+            return new Db(ds, driver);           
+        }
+}
+
+```
+
+where the Db class would look like
+
+```java
+public class Db extends AbstractDb {
+
+	private DataSource dataSource;
+
+	public Db(DataSource dataSource, Driver driver) {
+		this.dataSource = dataSource;
+		setDriver(driver);
+	}
+
+	@Override
+	protected Connection connection() {
+		/**
+		 * If an existing transaction exists, and already has a connection
+		 * synchronized (linked) to it, that instance will be returned.
+		 * Otherwise, the method call will trigger the creation of a new
+		 * connection, which will be (optionally) synchronized to any existing
+		 * transaction, and made available for subsequent reuse in that same
+		 * transaction.
+		 */
+
+		return DataSourceUtils.getConnection(dataSource);
+	}
+
+}
+```
+
+and then you can use it in your repositories like this.
+
+```java
+@Repository
+public class UserRepositoryImpl implements UserRepository {
+    @Autowire
+    private Db db;
+    
+    public List<Artist> findAll() {
+        return db.query(TArtist.T_ARTIST).list(Artist.class);
+    }
+}
+
+```
+
 
 ### Updatable
 
