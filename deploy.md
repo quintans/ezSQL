@@ -43,3 +43,4 @@ Essentially:
 * (select the **Activity** tab to verify the progress of requirements validation)
 * click on **Release**
 * wait for 2 Hours :)
+* check if it is mirrored in <https://repo.maven.apache.org/maven2/com/github/quintans/>
