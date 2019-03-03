@@ -61,7 +61,7 @@ public class OracleTestTime extends TestCase {
 
 		tm = new TransactionManager<Db>(
 				() -> conn,
-				c -> new Db(c, this.driver)
+				c -> new Db(this.driver, c)
 		) {
 			@Override
 			protected void close(Connection con) {
@@ -76,7 +76,7 @@ public class OracleTestTime extends TestCase {
 	}
 
 	public void testUpdate() {
-		tm.transaction(db -> {
+		tm.transactionNoResult(db -> {
 			long ticks = 1307882799572L;
 			Update upd = new Update(db, TTimer.T_TIMER)
 					.set(TTimer.C_DATE, new MyDateTime(ticks))
@@ -88,7 +88,7 @@ public class OracleTestTime extends TestCase {
 	}
 
 	public void testSelect() {
-		tm.readOnly(db -> {
+		tm.readOnlyNoResult(db -> {
 			Query query = db.queryAll(TTimer.T_TIMER);
 			Collection<Object[]> list = query.listRaw();
 			for (Object o : list) {

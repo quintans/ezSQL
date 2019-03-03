@@ -20,7 +20,7 @@ public class TestProcedures extends TestBootstrap {
     @Test
 	public void testProcedure() throws Exception {
 		// calls the function SYSDATE
-		tm.readOnly(db -> {
+		tm.readOnlyNoResult(db -> {
 			MyFunctionsDao spDao = new MyFunctionsDao(db);
 			Date date = spDao.getSysdate();
 			System.out.println("date: " + date);

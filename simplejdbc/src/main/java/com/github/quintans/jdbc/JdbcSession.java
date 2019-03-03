@@ -5,6 +5,6 @@ import java.sql.ResultSet;
 
 public interface JdbcSession {
     Connection getConnection();
-    boolean getPmdKnownBroken();
+    boolean isPmdKnownBroken();
     void setPmdKnownBroken(boolean pmdKnownBroken);
 }

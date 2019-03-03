@@ -12,6 +12,19 @@ import java.util.Map;
 public class RawSql {
     private ParsedSql parsedSql;
     private String sql;
+
+
+	/**
+	 * converts SQL with named parameters to JDBC standard sql
+	 *
+	 * @param sql The SQL to be converted
+	 * @return The {@link RawSql} with the result
+	 */
+	public static RawSql of(String sql) {
+		ParsedSql parsedSql = NamedParameterUtils.parseSqlStatement(sql);
+		RawSql rawSql = new RawSql(parsedSql);
+		return rawSql;
+	}
     
 	public RawSql(ParsedSql parsedSql) {
         this.parsedSql = parsedSql;

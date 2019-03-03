@@ -566,10 +566,6 @@ public abstract class DmlBase {
 
 	public abstract RawSql getSql();
 
-	protected Connection connection() {
-		return this.db.getConnection();
-	}
-
     protected void debug(Logger logger, String fqcn, String format, Object... args) {
         if (logger.isDebugEnabled()) {
             logger.log(fqcn, Level.DEBUG, String.format(format, args), null);

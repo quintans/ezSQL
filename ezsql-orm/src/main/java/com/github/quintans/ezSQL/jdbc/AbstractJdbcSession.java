@@ -10,13 +10,16 @@ public abstract class AbstractJdbcSession implements JdbcSession {
      * Is {@link ParameterMetaData#getParameterType(int)} broken (have we tried it yet)?
      */
     private boolean pmdKnownBroken = false;
-    
+
+    public AbstractJdbcSession(boolean pmdKnownBroken) {
+        this.pmdKnownBroken = pmdKnownBroken;
+    }
 
     @Override
     public abstract Connection getConnection();
 
     @Override
-    public boolean getPmdKnownBroken() {
+    public boolean isPmdKnownBroken() {
         return pmdKnownBroken;
     }
 
@@ -24,5 +27,4 @@ public abstract class AbstractJdbcSession implements JdbcSession {
     public void setPmdKnownBroken(boolean pmdKnownBroken) {
         this.pmdKnownBroken = pmdKnownBroken;
     }
-
 }

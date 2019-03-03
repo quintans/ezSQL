@@ -11,22 +11,13 @@ import com.github.quintans.ezSQL.dml.Query;
 import com.github.quintans.ezSQL.dml.Update;
 import com.github.quintans.ezSQL.driver.Driver;
 
-public class Db extends AbstractDb {
+public class Db extends com.github.quintans.ezSQL.Db {
 	// for testing
 	public String languague = "pt";
 	public static final String LANG_PARAMETER = "language";
 
-	private Connection connection = null;
-
-	public Db(Connection connection, Driver driver) {
-		super();
-		this.connection = connection;
-		setDriver(driver);
-	}
-
-	@Override
-	protected Connection connection() {
-		return this.connection;
+	public Db(Driver driver, Connection connection) {
+		super(driver, connection);
 	}
 
 	@Override

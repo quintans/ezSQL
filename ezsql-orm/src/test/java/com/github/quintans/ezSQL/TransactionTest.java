@@ -35,7 +35,7 @@ public class TransactionTest {
             Driver driver = new H2DriverExt();
             tm = new TransactionManager<>(
                     () -> cp.getConnection(),
-                    c -> new Db(c, driver)
+                    c -> new Db(driver, c)
             );
 
         } catch (Exception e) {
@@ -46,7 +46,7 @@ public class TransactionTest {
 
     @Before
     public void setup() {
-        tm.transaction(db -> {
+        tm.transactionNoResult(db -> {
             db.delete(T_TAA).execute();
         });
     }
@@ -64,13 +64,13 @@ public class TransactionTest {
 
     @Test
     public void testHasReadOnlyTransactions() {
-        tm.readOnly(db -> {
+        tm.readOnlyNoResult(db -> {
             Connection conn = db.getConnection();
             assertTrue("No readonly transaction", conn != null);
 
             populateTAa(db);
         });
-        tm.readOnly(db -> {
+        tm.readOnlyNoResult(db -> {
             List<TAa> list = listTAa(db);
             assertTrue("List should be empty.", list.isEmpty());
         });
@@ -78,13 +78,13 @@ public class TransactionTest {
 
     @Test
     public void testHasRequiredTransactions() {
-        tm.transaction(db -> {
+        tm.transactionNoResult(db -> {
             Connection conn = db.getConnection();
             assertTrue("No transaction transaction", conn != null);
 
             populateTAa(db);
         });
-        tm.readOnly(db -> {
+        tm.readOnlyNoResult(db -> {
             List<TAa> list = listTAa(db);
             assertTrue("Expected size 1, got" + list.size(), list.size() == 1);
         });
@@ -92,14 +92,14 @@ public class TransactionTest {
 
     @Test(expected = PersistenceException.class)
     public void testHasRequiredNewTransactions() {
-        tm.transaction(db -> {
+        tm.transactionNoResult(db -> {
             Connection conn = db.getConnection();
             assertTrue("No transaction new transaction", conn != null);
             populateTAa(db);
             throw new PersistenceException("Rollback");
         });
 
-        tm.readOnly(db -> {
+        tm.readOnlyNoResult(db -> {
             List<TAa> list = listTAa(db);
             assertTrue("List should be empty.", list.isEmpty());
         });
@@ -107,10 +107,10 @@ public class TransactionTest {
 
     @Test
     public void testHasNewInnerTransactions() {
-        tm.transaction(db1 -> {
+        tm.transactionNoResult(db1 -> {
             Connection conn1 = db1.getConnection();
 
-            tm.transaction(db2 -> {
+            tm.transactionNoResult(db2 -> {
                 Connection conn2 = db2.getConnection();
                 assertTrue("No transaction new inner transaction", conn2 != null && conn1 != null && conn1 != conn2);
             });

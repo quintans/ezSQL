@@ -64,9 +64,9 @@ public class Column<T> extends Base<T> {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-    public <C> Column<C> AS(String alias) {
+    public Column<T> AS(String alias) {
 		this.alias = alias;
-		return (Column<C>) this;
+		return this;
 	}
 
 	public ColumnHolder of(String tableAlias) {
@@ -79,10 +79,10 @@ public class Column<T> extends Base<T> {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-    public <C> Column<C> key() {
+    public Column<T> key() {
 		this.key = true;
 		this.table.addKey(this);
-		return (Column<C>) this;
+		return this;
 	}
 
 	/**
@@ -101,10 +101,10 @@ public class Column<T> extends Base<T> {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-    public <C> Column<C> version() {
+    public Column<T> version() {
 		this.version = true;
 		this.table.setVersionColumn(this);
-		return (Column<C>) this;
+		return this;
 	}
 
 	/**
@@ -113,10 +113,10 @@ public class Column<T> extends Base<T> {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-    public <C> Column<C> deletion() {
+    public Column<T> deletion() {
 		this.deletion = true;
 		this.table.setDeletionColumn(this);
-		return (Column<C>) this;
+		return this;
 	}
 
 	public Column<T> WITH(T... values) {
@@ -146,7 +146,7 @@ public class Column<T> extends Base<T> {
 		return this.name;
 	}
 
-	/**
+    /**
 	 * indica se é uma coluna chave
 	 * 
 	 * @return se é coluna chave

@@ -99,8 +99,17 @@ public class Misc {
         PropertyDescriptor[] props = info.getPropertyDescriptors();
         for (PropertyDescriptor p : props) {
             if (p.getName().equals(name)) {
-                makeAccessible(p.getReadMethod());
-                makeAccessible(p.getWriteMethod());
+                Method m = p.getReadMethod();
+                if( m == null) {
+                    throw new RuntimeException(klass.getSimpleName() + "#" + name + " has no read method");
+                }
+                makeAccessible(m);
+
+                m = p.getWriteMethod();
+                if( m == null) {
+                    throw new RuntimeException(klass.getSimpleName() + "#" + name + " has no write method");
+                }
+                makeAccessible(m);
                 return p;
             }
         }

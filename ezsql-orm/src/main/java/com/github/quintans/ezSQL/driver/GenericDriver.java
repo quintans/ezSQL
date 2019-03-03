@@ -14,6 +14,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
+import com.github.quintans.ezSQL.db.*;
+import com.github.quintans.ezSQL.toolkit.utils.Appender;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
@@ -23,10 +25,6 @@ import com.github.quintans.ezSQL.common.api.Value;
 import com.github.quintans.ezSQL.common.type.MyDate;
 import com.github.quintans.ezSQL.common.type.MyDateTime;
 import com.github.quintans.ezSQL.common.type.MyTime;
-import com.github.quintans.ezSQL.db.Column;
-import com.github.quintans.ezSQL.db.NullSql;
-import com.github.quintans.ezSQL.db.Sequence;
-import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.dml.ColumnHolder;
 import com.github.quintans.ezSQL.dml.Condition;
 import com.github.quintans.ezSQL.dml.Delete;
@@ -70,6 +68,11 @@ public abstract class GenericDriver implements Driver {
 
 	public String getAutoNumberQuery(Column<? extends Number> column, boolean current) {
 	    throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isPmdKnownBroken() {
+		return false;
 	}
 
 	@Override
@@ -327,7 +330,7 @@ public abstract class GenericDriver implements Driver {
 	public boolean ignoreNullKeys() {
         return false;	    
 	}
-	
+
 	@Override
 	public String getSql(SqlProcedure procedure) {
 		StringBuilder sb = new StringBuilder();

@@ -18,6 +18,7 @@ import java.util.*;
  */
 public class SimpleJdbc {
     private JdbcSession jdbcSession;
+
     private PreparedStatement batchStmt = null;
     private String batchSql;
     private int batchPending;
@@ -41,8 +42,9 @@ public class SimpleJdbc {
             try {
                 rows = batchStmt.executeBatch();
             } catch (SQLException e) {
-                closeQuietly(null, batchStmt);
                 throw new PersistenceException(e);
+            } finally {
+                closeQuietly(null, batchStmt);
             }
         }
 
@@ -73,8 +75,9 @@ public class SimpleJdbc {
             batchStmt.addBatch();
             batchPending++;
         } catch (SQLException e) {
-            closeBatch();
             rethrow(e, sql, params);
+        } finally {
+            closeBatch();
         }
     }
 
@@ -100,10 +103,10 @@ public class SimpleJdbc {
                         keyList.add(keys);
                     }
                 }
-
             } catch (SQLException e) {
-                closeQuietly(null, batchStmt);
                 throw new PersistenceException(e);
+            } finally {
+                closeQuietly(null, batchStmt);
             }
         }
 
@@ -240,20 +243,8 @@ public class SimpleJdbc {
      * @return The transformed result
      */
     public <T> List<T> queryForList(String sql, IRowTransformer<T> rt, int firstRow, int maxRows, Map<String, Object> params) {
-        RawSql rawSql = toRawSql(sql);
+        RawSql rawSql = RawSql.of(sql);
         return queryRange(rawSql.getSql(), rt, firstRow, maxRows, rawSql.buildValues(params));
-    }
-
-    /**
-     * converts SQL with named parameters to JDBC standard sql
-     *
-     * @param sql The SQL to be converted
-     * @return The {@link RawSql} with the result
-     */
-    public RawSql toRawSql(String sql) {
-        ParsedSql parsedSql = NamedParameterUtils.parseSqlStatement(sql);
-        RawSql rawSql = new RawSql(parsedSql);
-        return rawSql;
     }
 
     /**
@@ -280,7 +271,7 @@ public class SimpleJdbc {
             }
         };
 
-        RawSql rawSql = toRawSql(sql);
+        RawSql rawSql = RawSql.of(sql);
         return query(rawSql.getSql(), rt, 0, rawSql.buildValues(params));
     }
 
@@ -294,7 +285,7 @@ public class SimpleJdbc {
      * @return The transformed result
      */
     public <T> T queryForObject(String sql, final IRowTransformer<T> rt, Map<String, Object> params) {
-        RawSql rawSql = toRawSql(sql);
+        RawSql rawSql = RawSql.of(sql);
         return queryUnique(rawSql.getSql(), rt, rawSql.buildValues(params));
     }
 
@@ -334,10 +325,8 @@ public class SimpleJdbc {
             stmt = conn.prepareStatement(sql);
             fillStatement(stmt, params);
             rows = stmt.executeUpdate();
-
         } catch (SQLException e) {
             rethrow(e, sql, params);
-
         } finally {
             closeQuietly(null, stmt);
         }
@@ -353,7 +342,7 @@ public class SimpleJdbc {
      * @return The number of rows affected.
      */
     public int update(String sql, Map<String, Object> params) {
-        RawSql rawSql = toRawSql(sql);
+        RawSql rawSql = RawSql.of(sql);
         return update(rawSql.getSql(), rawSql.buildValues(params));
     }
 
@@ -421,6 +410,22 @@ public class SimpleJdbc {
         }
 
         ParameterMetaData pmd = null;
+        if (!jdbcSession.isPmdKnownBroken()) {
+            try {
+                pmd = stmt.getParameterMetaData();
+                if (pmd == null) { // can be returned by implementations that don't support the method
+                    jdbcSession.setPmdKnownBroken(true);
+                } else {
+                    if (pmd.getParameterCount() < params.length) {
+                        throw new SQLException("Too many parameters: expected "
+                                + pmd.getParameterCount() + ", was given " + params.length);
+                    }
+                }
+            } catch (SQLFeatureNotSupportedException e) {
+                jdbcSession.setPmdKnownBroken(true);
+            }
+        }
+
         for (int i = 0; i < params.length; i++) {
             if (params[i] != null) {
                 if (params[i] instanceof PreparedStatementCallback)
@@ -434,23 +439,13 @@ public class SimpleJdbc {
                 // of the actual column type. Oddly, NULL and
                 // OTHER don't work with Oracle's drivers.
                 int sqlType = Types.VARCHAR;
-                if (!jdbcSession.getPmdKnownBroken()) {
-                    if (pmd == null) {
-                        try {
-                            pmd = stmt.getParameterMetaData();
-                            if (pmd.getParameterCount() < params.length) {
-                                throw new SQLException("Too many parameters: expected "
-                                        + pmd.getParameterCount() + ", was given " + params.length);
-                            }
-                        } catch (SQLException e) {
-                            jdbcSession.setPmdKnownBroken(true);
-                        }
-                    }
-
+                if (!jdbcSession.isPmdKnownBroken()) {
                     try {
-                        if (pmd != null) {
-                            sqlType = pmd.getParameterType(i + 1);
-                        }
+                        /*
+                        pmd will not be null here if
+                        jdbcSession.getPmdKnownBroken() == false
+                         */
+                        sqlType = pmd.getParameterType(i + 1);
                     } catch (SQLException e) {
                         jdbcSession.setPmdKnownBroken(true);
                     }

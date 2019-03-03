@@ -112,7 +112,7 @@ public class Update extends Dml<Update> {
     public RawSql getSql() {
         if (this.rawSql == null) {
             String sql = driver().getSql(this);
-            this.rawSql = getSimpleJdbc().toRawSql(sql);
+            this.rawSql = RawSql.of(sql);
         }
         return this.rawSql;
     }

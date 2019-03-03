@@ -77,7 +77,7 @@ public class Delete extends Dml<Delete> {
     public RawSql getSql() {
         if (this.rawSql == null) {
             String sql = driver().getSql(this);
-            this.rawSql = getSimpleJdbc().toRawSql(sql);
+            this.rawSql = RawSql.of(sql);
         }
         return this.rawSql;
     }

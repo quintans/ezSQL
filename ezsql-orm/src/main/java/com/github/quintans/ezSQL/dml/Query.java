@@ -1259,9 +1259,13 @@ public class Query extends DmlBase {
      */
     @Override
     public RawSql getSql() {
+        if(columns.isEmpty()) {
+            all();
+        }
+
         if (this.rawSql == null) {
             String sql = driver().getSql(this);
-            this.rawSql = getSimpleJdbc().toRawSql(sql);
+            this.rawSql = RawSql.of(sql);
         }
 
         return this.rawSql;

@@ -9,10 +9,7 @@ import java.sql.SQLException;
 import com.github.quintans.ezSQL.common.type.MyDate;
 import com.github.quintans.ezSQL.common.type.MyDateTime;
 import com.github.quintans.ezSQL.common.type.MyTime;
-import com.github.quintans.ezSQL.db.Column;
-import com.github.quintans.ezSQL.db.NullSql;
-import com.github.quintans.ezSQL.db.Sequence;
-import com.github.quintans.ezSQL.db.Table;
+import com.github.quintans.ezSQL.db.*;
 import com.github.quintans.ezSQL.dml.AutoKeyStrategy;
 import com.github.quintans.ezSQL.dml.Delete;
 import com.github.quintans.ezSQL.dml.Function;
@@ -24,7 +21,7 @@ import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
 public interface Driver {
     String translate(EDml dmlType, Function function);
-    
+
     String getSql(SqlProcedure procedure);
 
     String getSql(Insert insert);
@@ -56,6 +53,7 @@ public interface Driver {
     String columnName(Column<?> column);
     String columnAlias(Function function, int position);
     
+    boolean isPmdKnownBroken();
 
     // == DB type to JAVA type
 

@@ -269,8 +269,8 @@ public class Table {
         return this.name;
     }
 
-    public Column<?> getSingleKeyColumn() {
-        return singleKey;
+    public <T> Column<T> getSingleKeyColumn() {
+        return (Column<T>) singleKey;
     }
 
     public Set<Column<?>> getKeyColumns() {

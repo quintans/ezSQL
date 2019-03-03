@@ -26,6 +26,7 @@ public class TestBootstrap {
 
     private static IDatabaseTester databaseTester;
     protected static TransactionManager<Db> tm;
+    protected static Driver driver;
 
     @BeforeClass
     public static void testSetup() throws Exception {
@@ -53,12 +54,12 @@ public class TestBootstrap {
             //Driver driver = new PostgreSQLDriverExt();
 
             Class<?> clazz = Class.forName(ormDriver);
-            Driver driver = (Driver) clazz.newInstance();
+            driver = (Driver) clazz.newInstance();
 
             Connection conn = databaseTester.getConnection().getConnection();
             tm = new TransactionManager<Db>(
                     () -> conn,
-                    c -> new Db(c, driver)
+                    c -> new Db(driver, c)
             ) {
                 @Override
                 protected void close(Connection con) {
@@ -104,7 +105,7 @@ public class TestBootstrap {
                 conn = DriverManager.getConnection("jdbc:h2:tcp://localhost:9092/test", "sa", "");
             }
             
-            db = new Db(conn);
+            db = new TypedDb(conn);
             Driver driver = new H2DriverExt();
             // Driver driver = new Oracle8iDriver();
             db.setDriver(driver);

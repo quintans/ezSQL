@@ -29,7 +29,7 @@ public enum NullSql implements PreparedStatementCallback {
 		return type;
 	}
 
-	private NullSql(int type) {
+	NullSql(int type) {
 		this.type = type;
 	}
 

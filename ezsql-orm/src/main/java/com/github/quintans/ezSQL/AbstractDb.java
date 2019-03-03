@@ -43,32 +43,31 @@ import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 public abstract class AbstractDb {
 	private static Logger LOGGER = Logger.getLogger(AbstractDb.class);
-	private Driver driver;
-	// using the same simple jdbc will allow an efficient use of sql types, because they are cached by SimpleJdbc instance. see SimpleJdbc.columnTypeCache
-	private JdbcSession jdbcSession = new DbJdbcSession(this);
-	private Connection connection;
 
-	public AbstractDb() {
-	}
+	private Driver driver;
+	private JdbcSession jdbcSession;
+
+	public AbstractDb(Driver driver) {
+	    this.driver = driver;
+	    this.jdbcSession = new DbJdbcSession(this, driver.isPmdKnownBroken());
+    }
 
 	/**
-	 * Obtem a ligação a usar para executar o SQL<br>
-	 * Implementações deste método podem ser a simples devolução de uma Connection previamente<br>
-	 * definida, ou obtenção de uma Connection definida na Thread por frameworks transacionais<br>
-	 * <p>
-	 * Spring ex: Connection conn = DataSourceUtils.getConnection(dataSource);
-	 * </p>
+	 * Returns a connection<br>
+     *     The implementation of this method can return a new one or an existing one.
+     *     The handling of this can delegated to transactional frameworks, like Spring.
+	 * <pre>
+	 * Spring eg: Connection conn = DataSourceUtils.getConnection(dataSource);
+	 * </pre>
 	 * 
 	 * @return
 	 */
 	protected abstract Connection connection();
 
 	public Connection getConnection() {
-	    if(connection == null) {
-            connection = connection();
-            this.driver.prepareConnection(connection);
-        }
-		return connection;
+        Connection conn = connection();
+        this.driver.prepareConnection(conn);
+        return conn;
 	}
 
 	/**
@@ -150,12 +149,8 @@ public abstract class AbstractDb {
 		return this.driver;
 	}
 
-	public void setDriver(Driver driver) {
-		this.driver = driver;
-	}
-
 	public JdbcSession getJdbcSession() {
-		return this.jdbcSession;
+        return jdbcSession;
 	}
 
 	public Long fetchAutoNumberBefore(Column<? extends Number> column) {

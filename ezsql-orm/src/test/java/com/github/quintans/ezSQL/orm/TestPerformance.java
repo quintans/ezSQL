@@ -36,7 +36,7 @@ public class TestPerformance extends TestBootstrap {
 
     @Test
     public void testInsertDirectOrByReflectian() throws Exception {
-        tm.transaction(db -> {
+        tm.transactionNoResult(db -> {
             Insert insert;
             Stopwatch sw = new Stopwatch();
             Random rnd = new Random();
@@ -68,7 +68,7 @@ public class TestPerformance extends TestBootstrap {
 
             db.delete(TEmployee.T_EMPLOYEE).execute();
             sw.reset();
-            jdbc = new SimpleJdbc(new DbJdbcSession(db));
+            jdbc = new SimpleJdbc(new DbJdbcSession(db, driver.isPmdKnownBroken()));
             String sql = cachedSql.getSql();
             sex = rnd.nextBoolean();
             for (int i = 1; i <= LOOP; i++) {
@@ -172,7 +172,7 @@ public class TestPerformance extends TestBootstrap {
 
     @Test
     public void testQueryByReflectianAndByTransformer() {
-        tm.readOnly(db -> {
+        tm.readOnlyNoResult(db -> {
             db.delete(TEmployee.T_EMPLOYEE).execute();
 
             Insert insert = new Insert(db, TEmployee.T_EMPLOYEE)

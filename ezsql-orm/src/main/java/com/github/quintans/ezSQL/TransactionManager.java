@@ -30,31 +30,30 @@ public class TransactionManager<T extends AbstractDb> {
         this.dbSupplier = dbSupplier;
     }
 
-    public void transaction(final Callback<T> callback) {
-        submit(false, db -> {
+    public void transactionNoResult(final Callback<T> callback) {
+        execute(false, db -> {
             callback.call(db);
             return null;
         });
     }
 
-    public <R> R transactionF(final CallbackF<T, R> callback) {
-        return submit(false, callback);
+    public <R> R transaction(final CallbackF<T, R> callback) {
+        return execute(false, callback);
     }
 
-    public void readOnly(final Callback<T> callback) {
-        submit(true, db -> {
+    public void readOnlyNoResult(final Callback<T> callback) {
+        execute(true, db -> {
             callback.call(db);
             return null;
         });
     }
 
-    public <R> R readOnlyF(final CallbackF<T, R> callback) {
-        return submit(true, callback);
+    public <R> R readOnly(final CallbackF<T, R> callback) {
+        return execute(true, callback);
     }
 
-    private <R> R submit(boolean readOnly, final CallbackF<T, R> callback) {
+    private <R> R execute(boolean readOnly, final CallbackF<T, R> callback) {
         Connection conn = fetchConnection(dataProvider);
-
         try {
             if (readOnly != conn.isReadOnly()) {
                 conn.setReadOnly(readOnly);
@@ -63,31 +62,28 @@ public class TransactionManager<T extends AbstractDb> {
             throw new IllegalStateException("Unable to disable auto commit ", e);
         }
 
+        R result;
         try {
-            return run(conn, readOnly, callback);
+            try {
+                result = callback.call(dbSupplier.apply(conn));
+            } catch (Exception e) {
+                rollback(conn);
+                if (e instanceof RuntimeException) {
+                    throw (RuntimeException) e;
+                } else {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            if (!readOnly) {
+                commit(conn);
+            } else {
+                rollback(conn);
+            }
         } finally {
             close(conn);
         }
-    }
 
-    private <R> R run(final Connection conn, boolean readOnly, final CallbackF<T, R> callback) {
-        R result;
-        try {
-            result = callback.call(dbSupplier.apply(conn));
-        } catch (Exception e) {
-            rollback(conn);
-            if (e instanceof RuntimeException) {
-                throw (RuntimeException) e;
-            } else {
-                throw new RuntimeException(e);
-            }
-        }
-
-        if (!readOnly) {
-            commit(conn);
-        } else {
-            rollback(conn);
-        }
         return result;
     }
 
@@ -118,9 +114,7 @@ public class TransactionManager<T extends AbstractDb> {
             throw new IllegalStateException("DataProvider returned null from getConnection(): " + dataProvider);
         }
         try {
-            if (conn.getAutoCommit()) {
-                conn.setAutoCommit(false);
-            }
+            conn.setAutoCommit(false);
         } catch (SQLException e) {
             throw new IllegalStateException("Unable to disable auto commit ", e);
         }
@@ -131,7 +125,7 @@ public class TransactionManager<T extends AbstractDb> {
         try {
             conn.close();
         } catch (SQLException e) {
-            throw new PersistenceException("Unable to closeQuietly connection", e);
+            throw new PersistenceException("Unable to close connection", e);
         }
     }
 

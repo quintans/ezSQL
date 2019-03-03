@@ -111,7 +111,7 @@ public class Insert extends DmlCore<Insert> {
     public RawSql getSql() {
         if (this.rawSql == null) {
             String sql = driver().getSql(this);
-            this.rawSql = getSimpleJdbc().toRawSql(sql);
+            this.rawSql = RawSql.of(sql);
         }
         return this.rawSql;
     }
@@ -133,7 +133,7 @@ public class Insert extends DmlCore<Insert> {
         Map<String, Object> params;
         Driver driver = db.getDriver();
         AutoKeyStrategy strategy = driver.getAutoKeyStrategy();
-        Column<? extends Number> singleKeyColumn = (Column<? extends Number>) table.getSingleKeyColumn();
+        Column<? extends Number> singleKeyColumn = table.getSingleKeyColumn();
         RawSql cachedSql = null;
         long now;
         Map<Column<?>, Object> kmap = null;
