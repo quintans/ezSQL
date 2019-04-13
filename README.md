@@ -835,8 +835,9 @@ Query query = db.query(TArtist.T_ARTIST)
 		.column(TArtist.C_ID)
 		.column(TArtist.C_NAME);
 
-// your editor will not like this form
-query.run(record -> System.out.println("id:" + record.getInteger(1) + ", name:" + record.getString(2)) );
+query.run(
+  r -> System.out.println("id:" + r.getInteger(1) + ", name:" + r.getString(2))
+);
 ```
 
 #### Bean Results
