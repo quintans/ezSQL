@@ -39,7 +39,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testEmptyTable() {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             List<Employee> list = db.query(TEmployee.T_EMPLOYEE).all().list(Employee.class);
             assertTrue("List should be empty.", list.isEmpty());
         });
@@ -47,7 +47,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testLoadAssociation() {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Artist artist = db.query(TArtist.T_ARTIST).all()
                     .where(TArtist.C_ID.is(1L))
                     .select(Artist.class);
@@ -61,7 +61,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testEnum() {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Query query = db.query(TArtist.T_ARTIST).column(TArtist.C_GENDER);
             List<EGender> genders = query.listRaw(EGender.class);
             dumpCollection(genders);
@@ -80,7 +80,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testAnd() {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             List<Artist> artists = db.queryAll(TArtist.T_ARTIST)
                     .where(
                             TArtist.C_NAME.like("%n%").and(TArtist.C_GENDER.is(EGender.FEMALE))
@@ -94,7 +94,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testOr() {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             List<Artist> artists = db.queryAll(TArtist.T_ARTIST)
                     .where(
                             TArtist.C_NAME.like("J%").or(TArtist.C_GENDER.is(EGender.MALE))
@@ -108,7 +108,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testCyclicFkReference() {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Query query = db.queryAll(TArtist.T_ARTIST).innerFetch(TArtist.A_PAINTINGS);
             List<Artist> artists = query.list(new MapTransformer<>(query, true, new ArtistDAOTransformer(query.getDb().getDriver())));
             dumpCollection(artists);
@@ -119,7 +119,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testCyclicFkReference2() {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Query query = db.queryAll(TPainting.T_PAINTING).innerFetch(TPainting.A_ARTIST);
             List<Painting> entities = query.list(new MapTransformer<>(query, true, new ArtistDAOTransformer(query.getDb().getDriver())));
             dumpCollection(entities);
@@ -130,7 +130,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testListRaw() {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Stopwatch sw = Stopwatch.createAndStart();
 
             Query query = db.query(TArtist.T_ARTIST)
@@ -148,7 +148,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testSimpleTransformer() throws Exception {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Query query = db.query(TArtist.T_ARTIST)
                     .column(TArtist.C_ID)
                     .column(TArtist.C_NAME)
@@ -172,7 +172,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testSimpleBeanTransformer() throws Exception {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Query query = db.queryAll(TArtist.T_ARTIST).order(TArtist.C_NAME).desc();
             // List<Artist> values = db.select(new
             // BeanTransformer<Artist>(query, Artist.class)); // long version
@@ -187,7 +187,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testSubQueryInWhere() throws Exception {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Query subquery = db.query(TPainting.T_PAINTING).as("t1")
                     .distinct()
                     .column(TPainting.C_ARTIST)
@@ -207,7 +207,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testSubQueryAsColumn() throws Exception {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             // select a.*, (select count(*) from Painting p where p.artist_id =
             // a.id) from Artist
             Query subquery = db.query(TPainting.T_PAINTING).as("p")
@@ -228,7 +228,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testNotExists() throws Exception {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Query subquery = db.query(TPainting.T_PAINTING).as("p")
                     .column(TPainting.C_NAME)
                     .where(
@@ -248,7 +248,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testGroupBy() throws Exception {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Query query = db.query(TArtist.T_ARTIST)
                     .column(TArtist.C_NAME)
                     .outer(TArtist.A_PAINTINGS).include(sum(TPainting.C_PRICE)).as("value").join()
@@ -268,7 +268,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testTransformer() throws Exception {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Query query = db.query(TArtist.T_ARTIST).as("a")
                     .column(TArtist.C_NAME).as("name")
                     .outer(TArtist.A_PAINTINGS).include(sum(TPainting.C_PRICE)).as("value").join()
@@ -298,7 +298,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testBeanTransformer() throws Exception {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Query query = db.query(TArtist.T_ARTIST).as("a")
                     .column(TArtist.C_ID).as("id")
                     .column(TArtist.C_NAME).as("name")
@@ -330,7 +330,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testWithtChildren() {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Query query = db.queryAll(TArtist.T_ARTIST).innerFetch(TArtist.A_PAINTINGS);
 
             String sql = db.getDriver().getSql(query);
@@ -352,7 +352,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testWithtChildrenORMTransformer() throws Exception {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Query query = db.queryAll(TArtist.T_ARTIST).innerFetch(TArtist.A_PAINTINGS);
             List<Artist> artists = query.list(Artist.class, true);
             // long version
@@ -366,7 +366,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testWithPartialChildrenORMTransformer() throws Exception {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Query query = db.query(TArtist.T_ARTIST).all()
                     .inner(TArtist.A_PAINTINGS).include(TPainting.C_NAME)
                     .inner(TPainting.A_GALLERIES).on(TGallery.C_ID.is(1L)).fetch();
@@ -388,7 +388,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testWithChildrenOnPaintingName() {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Query query = db.queryAll(TArtist.T_ARTIST)
                     .outer(TArtist.A_PAINTINGS)
                     .on(TPainting.C_NAME.like("Blue%"))
@@ -407,7 +407,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testWithNoChildrenOnPaintingName() {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Artist artist = db.queryAll(TArtist.T_ARTIST)
                     .all()
                     .outer(TArtist.A_PAINTINGS)
@@ -424,7 +424,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testOuterFetchManyToMany1() throws Exception {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             List<Gallery> galleries = db.queryAll(TGallery.T_GALLERY)
                     .outerFetch(TGallery.A_PAINTINGS)
                     .order(TGallery.C_ID).asc()
@@ -441,7 +441,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testOuterFetchManyToMany2() throws Exception {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Query query = db.queryAll(TPainting.T_PAINTING)
                     .outerFetch(TPainting.A_GALLERIES)
                     .order(TArtist.C_ID).asc();
@@ -463,7 +463,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testOuterFetchWithAll() throws Exception {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Query query = db.queryAll(TArtist.T_ARTIST)
                     .outerFetch(TArtist.A_PAINTINGS, TPainting.A_GALLERIES);
             List<Artist> artists = query.list(Artist.class);
@@ -487,7 +487,7 @@ public class TestStandard extends TestBootstrap {
     @Test
     public void testInnerJoin() throws Exception {
         // list all Paintings from Pablo Picasso (id = 1)
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Query query = db.queryAll(TPainting.T_PAINTING)
                     .inner(TPainting.A_ARTIST)
                     .on(TArtist.C_ID.is(1L))
@@ -506,7 +506,7 @@ public class TestStandard extends TestBootstrap {
     public void testOuterJoin() throws Exception {
         // Ex: list all Artists and the price of each painting, even if the
         // Artist doesn’t have paintings.
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Query query = db.query(TArtist.T_ARTIST)
                     .column(TArtist.C_NAME)
                     .outer(TArtist.A_PAINTINGS)
@@ -524,7 +524,7 @@ public class TestStandard extends TestBootstrap {
     public void testIncludeJoinAndFetch() throws Exception {
         // Ex: list all Artists and the price of each painting, even if the
         // Artist doesn’t have paintings.
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             List<ArtistValueDTO> values = db.query(TArtist.T_ARTIST)
                     .column(TArtist.C_NAME)
                     .inner(TArtist.A_PAINTINGS)
@@ -547,7 +547,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testJoinAndFetch() {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             /*
              * This example shows the difference between join() and fetch().
              * join() enforces only the constraint where fetch also brings all data
@@ -569,7 +569,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testSimpleFetch() {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Query query = db.query(TArtist.T_ARTIST).all()
                     .order(TArtist.C_NAME)
                     .outer(TArtist.A_PAINTINGS).fetch();
@@ -589,7 +589,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testCustomFunction() {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             // using custom functions
             Artist artist = db.query(TArtist.T_ARTIST)
                     .column(FunctionExt.ifNull(TArtist.C_BIRTHDAY, new Date())).as("birthday")
@@ -804,7 +804,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testLoadImage() throws IOException {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             List<BinStore> images = db.query(TImage.T_IMAGE)
                     .column(TImage.C_CONTENT)
                     .listRaw(BinStore.class);
@@ -817,7 +817,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testOnePaintingToOneImage() {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             List<Painting> paintings = db.query(TPainting.T_PAINTING).all()
                     .outerFetch(TPainting.A_IMAGE)
                     .list(Painting.class);
@@ -832,7 +832,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testOnePaintingToOneArtist() {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             List<Painting> paintings = db.query(TPainting.T_PAINTING).all()
                     .outerFetch(TPainting.A_ARTIST)
                     .list(Painting.class);
@@ -847,7 +847,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testLoadImageBytes() {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             List<ImageDTO> images = db.query(TImage.T_IMAGE).all()
                     .list(ImageDTO.class);
             dumpCollection(images);
@@ -901,7 +901,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testSimpleCase() {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Long sale = db.query(TPainting.T_PAINTING)
                     .column(
                             sum(
@@ -940,7 +940,7 @@ public class TestStandard extends TestBootstrap {
 
     @Test
     public void testSearchedCase() {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             List<Classification> c = db.query(TPainting.T_PAINTING)
                     .column(TPainting.C_NAME) // default maps to field name
                     .column(

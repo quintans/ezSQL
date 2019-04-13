@@ -19,7 +19,7 @@ public class TestI18n extends TestBootstrap {
 
     @Test
     public void testI18n() {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Collection<Book> books = db.query(TBook.T_BOOK).all()
                     .outer(TBook.A_I18N).fetch()
                     .orderBy(TBook18.C_NAME).asc()
@@ -35,7 +35,7 @@ public class TestI18n extends TestBootstrap {
 
     @Test
     public void testI18nWhere() throws Exception {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             Collection<Book> books = db.query(TBook.T_BOOK).all()
                     .inner(TBook.A_I18N).on(TBook18.C_NAME.like("%SQL%")).fetch()
                     .where(TBook.C_PRICE.lt(20.0D))
@@ -51,7 +51,7 @@ public class TestI18n extends TestBootstrap {
 
     @Test
     public void testI18nAssociation() throws Exception {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             db.languague = "es";
 
             Collection<Author> authors = db.query(T_AUTHOR).all()
@@ -81,7 +81,7 @@ public class TestI18n extends TestBootstrap {
 
     @Test
     public void testI18nAssociationConditioned() throws Exception {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             db.languague = "en";
             Collection<Author> result = db.query(T_AUTHOR).all()
                     .inner(T_AUTHOR.A_BOOKS).on(TBook.C_PRICE.lt(20.0))

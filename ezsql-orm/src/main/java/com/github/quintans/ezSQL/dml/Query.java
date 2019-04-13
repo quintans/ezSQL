@@ -697,7 +697,7 @@ public class Query extends DmlBase {
     }
 
     /**
-     * Restriction to apply to the previous association
+     * Restriction to get to the previous association
      * 
      * @param condition
      *            Restriction

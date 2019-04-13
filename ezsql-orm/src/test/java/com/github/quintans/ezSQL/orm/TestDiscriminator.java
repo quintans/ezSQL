@@ -29,7 +29,7 @@ public class TestDiscriminator extends TestBootstrap {
 
 	@Test
 	public void testDiscriminatorAssociation() {
-		tm.readOnlyNoResult(db -> {
+		tm.transactionNoResult(db -> {
 			List<Main> mains = db.query(T_MAIN).all()
 					.order(TMain.C_ID).asc()
 					.outerFetch(TMain.A_BE)
@@ -64,7 +64,7 @@ public class TestDiscriminator extends TestBootstrap {
 
     @Test
     public void testAssociationToTableDiscriminator() {
-		tm.readOnlyNoResult(db -> {
+		tm.transactionNoResult(db -> {
 			List<Thing> things = db.query(T_THING).all()
 					.order(TThing.C_ID).asc()
 					.outer(TThing.A_TAA_B).fetch()
@@ -80,7 +80,7 @@ public class TestDiscriminator extends TestBootstrap {
 
 	@Test
 	public void testQueryWithDiscriminatorColumn() {
-		tm.readOnlyNoResult(db -> {
+		tm.transactionNoResult(db -> {
 			List<Catalog> genders = db.query(TGender.T_GENDER).all()
 					.list(Catalog.class);
 
@@ -91,7 +91,7 @@ public class TestDiscriminator extends TestBootstrap {
 
     @Test
     public void testQueryWithDiscriminatorColumn2() {
-		tm.readOnlyNoResult(db -> {
+		tm.transactionNoResult(db -> {
 			List<Catalog> eyeColors = db.query(T_EYE_COLOR).all()
 					.where(T_EYE_COLOR.C_KEY.like("B%"))
 					.list(Catalog.class);

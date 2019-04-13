@@ -400,7 +400,9 @@ public class Repository {
 }
 ```
 
-For Spring we could do:
+For Spring we let it handle the transactions and we just need to implement an AbstractDb that returns the connection in context.
+
+So we would have to create the following beans
 
 ```java
 @Configuration
@@ -439,7 +441,7 @@ public class Db extends AbstractDb {
 	}
 
 	@Override
-	protected Connection connection() {
+	public Connection getConnection() {
 		/**
 		 * If an existing transaction exists, and already has a connection
 		 * synchronized (linked) to it, that instance will be returned.

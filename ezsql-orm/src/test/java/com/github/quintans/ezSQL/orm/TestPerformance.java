@@ -172,7 +172,7 @@ public class TestPerformance extends TestBootstrap {
 
     @Test
     public void testQueryByReflectianAndByTransformer() {
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             db.delete(TEmployee.T_EMPLOYEE).execute();
 
             Insert insert = new Insert(db, TEmployee.T_EMPLOYEE)

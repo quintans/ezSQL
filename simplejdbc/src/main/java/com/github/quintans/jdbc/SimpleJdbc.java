@@ -38,7 +38,7 @@ public class SimpleJdbc {
     public int[] flushUpdate() {
         int rows[] = null;
 
-        if (batchPending > 0) {
+        if (batchStmt != null && batchPending > 0) {
             try {
                 rows = batchStmt.executeBatch();
             } catch (SQLException e) {
@@ -88,7 +88,7 @@ public class SimpleJdbc {
     public List<Map<String, Object>> flushInsert(String[] keyColumns) {
         List<Map<String, Object>> keyList = null;
 
-        if (batchPending > 0) {
+        if (batchStmt != null && batchPending > 0) {
             try {
                 batchStmt.executeBatch();
 

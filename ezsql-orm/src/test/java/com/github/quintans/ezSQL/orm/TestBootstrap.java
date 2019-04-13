@@ -31,7 +31,7 @@ public class TestBootstrap {
     @BeforeClass
     public static void testSetup() throws Exception {
         try {
-            final String env = System.getProperty("env");
+            final String env = System.getProperty("env", "h2");
             Properties systemProps = new Properties();
             systemProps.load(new FileReader(new File("src/test/resources/" + env + ".properties")));
             String dbDriver = systemProps.getProperty("db.driver");
@@ -58,8 +58,7 @@ public class TestBootstrap {
 
             Connection conn = databaseTester.getConnection().getConnection();
             tm = new TransactionManager<Db>(
-                    () -> conn,
-                    c -> new Db(driver, c)
+                    () -> new Db(driver, conn)
             ) {
                 @Override
                 protected void close(Connection con) {

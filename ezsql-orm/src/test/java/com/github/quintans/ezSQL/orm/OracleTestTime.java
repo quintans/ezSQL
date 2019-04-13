@@ -60,8 +60,7 @@ public class OracleTestTime extends TestCase {
 		this.driver = drv;
 
 		tm = new TransactionManager<Db>(
-				() -> conn,
-				c -> new Db(this.driver, c)
+				() -> new Db(this.driver, conn)
 		) {
 			@Override
 			protected void close(Connection con) {
@@ -88,7 +87,7 @@ public class OracleTestTime extends TestCase {
 	}
 
 	public void testSelect() {
-		tm.readOnlyNoResult(db -> {
+		tm.transactionNoResult(db -> {
 			Query query = db.queryAll(TTimer.T_TIMER);
 			Collection<Object[]> list = query.listRaw();
 			for (Object o : list) {

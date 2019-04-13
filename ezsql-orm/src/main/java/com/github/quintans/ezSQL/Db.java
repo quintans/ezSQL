@@ -14,7 +14,7 @@ public class Db extends AbstractDb {
 	}
 
 	@Override
-	protected Connection connection() {
+	public Connection getConnection() {
 		return this.connection;
 	}
 	

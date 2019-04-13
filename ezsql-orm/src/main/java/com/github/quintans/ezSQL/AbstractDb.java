@@ -60,15 +60,9 @@ public abstract class AbstractDb {
 	 * Spring eg: Connection conn = DataSourceUtils.getConnection(dataSource);
 	 * </pre>
 	 * 
-	 * @return
+	 * @return the connection
 	 */
-	protected abstract Connection connection();
-
-	public Connection getConnection() {
-        Connection conn = connection();
-        this.driver.prepareConnection(conn);
-        return conn;
-	}
+	public abstract Connection getConnection();
 
 	/**
 	 * gets the value at the end of the association from the database, puts in the input bean and returns the value.

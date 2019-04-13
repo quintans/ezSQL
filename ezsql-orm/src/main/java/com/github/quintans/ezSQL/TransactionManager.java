@@ -4,14 +4,8 @@ import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.function.Function;
 
 public class TransactionManager<T extends AbstractDb> {
-    @FunctionalInterface
-    public interface DataProvider {
-        Connection getConnection() throws SQLException;
-    }
-
     @FunctionalInterface
     public interface Callback<T extends AbstractDb> {
         void call(T db) throws Exception;
@@ -22,51 +16,66 @@ public class TransactionManager<T extends AbstractDb> {
         R call(T db) throws Exception;
     }
 
-    private DataProvider dataProvider;
-    private Function<Connection, T> dbSupplier;
+    @FunctionalInterface
+    public interface DbSupplier<T extends AbstractDb> {
+        T get() throws SQLException;
+    }
 
-    public TransactionManager(DataProvider dataProvider, Function<Connection, T> dbSupplier) {
-        this.dataProvider = dataProvider;
+    private DbSupplier<T> dbSupplier;
+    private boolean nested;
+
+    public TransactionManager(DbSupplier<T> dbSupplier) {
+        this(dbSupplier, false);
+    }
+
+    public TransactionManager(DbSupplier<T> dbSupplier, boolean nested) {
         this.dbSupplier = dbSupplier;
+        this.nested = nested;
+    }
+
+    public static <T extends AbstractDb> TransactionManager nest(T db) {
+        return new TransactionManager(() -> db, true);
     }
 
     public void transactionNoResult(final Callback<T> callback) {
-        execute(false, db -> {
+        execute(db -> {
             callback.call(db);
             return null;
         });
     }
 
     public <R> R transaction(final CallbackF<T, R> callback) {
-        return execute(false, callback);
+        return execute(callback);
     }
 
-    public void readOnlyNoResult(final Callback<T> callback) {
-        execute(true, db -> {
-            callback.call(db);
-            return null;
-        });
-    }
-
-    public <R> R readOnly(final CallbackF<T, R> callback) {
-        return execute(true, callback);
-    }
-
-    private <R> R execute(boolean readOnly, final CallbackF<T, R> callback) {
-        Connection conn = fetchConnection(dataProvider);
+    private <R> R execute(final CallbackF<T, R> callback) {
+        T db;
         try {
-            if (readOnly != conn.isReadOnly()) {
-                conn.setReadOnly(readOnly);
-            }
+            db = dbSupplier.get();
         } catch (SQLException e) {
-            throw new IllegalStateException("Unable to disable auto commit ", e);
+            throw new PersistenceException("Unable to get the database handler", e);
+        }
+        Connection conn = db.getConnection();
+        if (conn == null) {
+            throw new IllegalStateException("DataProvider returned null for the database connection");
         }
 
-        R result;
-        try {
+        if (!nested) {
             try {
-                result = callback.call(dbSupplier.apply(conn));
-            } catch (Exception e) {
+                conn.setAutoCommit(false);
+            } catch (SQLException e) {
+                throw new IllegalStateException("Unable to disable auto commit ", e);
+            }
+        }
+
+        R result = null;
+        try {
+            result = callback.call(db);
+            if (!nested) {
+                commit(conn);
+            }
+        } catch (Exception e) {
+            if (!nested) {
                 rollback(conn);
                 if (e instanceof RuntimeException) {
                     throw (RuntimeException) e;
@@ -74,14 +83,10 @@ public class TransactionManager<T extends AbstractDb> {
                     throw new RuntimeException(e);
                 }
             }
-
-            if (!readOnly) {
-                commit(conn);
-            } else {
-                rollback(conn);
-            }
         } finally {
-            close(conn);
+            if (!nested) {
+                close(conn);
+            }
         }
 
         return result;
@@ -101,24 +106,6 @@ public class TransactionManager<T extends AbstractDb> {
         } catch (SQLException e) {
             throw new PersistenceException("Unable to rollback connection", e);
         }
-    }
-
-    private Connection fetchConnection(DataProvider dataProvider) {
-        Connection conn;
-        try {
-            conn = dataProvider.getConnection();
-        } catch (SQLException e) {
-            throw new PersistenceException("Unable to getConnection connection from " + dataProvider, e);
-        }
-        if (conn == null) {
-            throw new IllegalStateException("DataProvider returned null from getConnection(): " + dataProvider);
-        }
-        try {
-            conn.setAutoCommit(false);
-        } catch (SQLException e) {
-            throw new IllegalStateException("Unable to disable auto commit ", e);
-        }
-        return conn;
     }
 
     protected void close(Connection conn) {

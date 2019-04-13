@@ -16,7 +16,7 @@ public interface QueryMapper {
      *
      * @param parentInstance parent instance
      * @param name           name of the parent property that we want to instantiate for
-     * @return lambda where we apply the the instance value to the parent instance
+     * @return lambda where we get the the instance value to the parent instance
      */
     Object createFrom(Object parentInstance, String name);
 

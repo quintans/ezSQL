@@ -34,8 +34,7 @@ public class TransactionTest {
 
             Driver driver = new H2DriverExt();
             tm = new TransactionManager<>(
-                    () -> cp.getConnection(),
-                    c -> new Db(driver, c)
+                    () -> new Db(driver, cp.getConnection())
             );
 
         } catch (Exception e) {
@@ -63,20 +62,6 @@ public class TransactionTest {
     }
 
     @Test
-    public void testHasReadOnlyTransactions() {
-        tm.readOnlyNoResult(db -> {
-            Connection conn = db.getConnection();
-            assertTrue("No readonly transaction", conn != null);
-
-            populateTAa(db);
-        });
-        tm.readOnlyNoResult(db -> {
-            List<TAa> list = listTAa(db);
-            assertTrue("List should be empty.", list.isEmpty());
-        });
-    }
-
-    @Test
     public void testHasRequiredTransactions() {
         tm.transactionNoResult(db -> {
             Connection conn = db.getConnection();
@@ -84,7 +69,7 @@ public class TransactionTest {
 
             populateTAa(db);
         });
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             List<TAa> list = listTAa(db);
             assertTrue("Expected size 1, got" + list.size(), list.size() == 1);
         });
@@ -99,7 +84,7 @@ public class TransactionTest {
             throw new PersistenceException("Rollback");
         });
 
-        tm.readOnlyNoResult(db -> {
+        tm.transactionNoResult(db -> {
             List<TAa> list = listTAa(db);
             assertTrue("List should be empty.", list.isEmpty());
         });
