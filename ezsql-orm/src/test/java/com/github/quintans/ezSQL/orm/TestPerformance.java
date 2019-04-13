@@ -8,7 +8,6 @@ import com.github.quintans.ezSQL.orm.app.daos.EmployeeDAOTransformer;
 import com.github.quintans.ezSQL.orm.app.domain.Employee;
 import com.github.quintans.ezSQL.orm.app.mappings.TEmployee;
 import com.github.quintans.ezSQL.transformers.MapTransformer;
-import com.github.quintans.ezSQL.transformers.SimpleAbstractDbRowTransformer;
 import com.github.quintans.jdbc.RawSql;
 import com.github.quintans.jdbc.SimpleJdbc;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
@@ -217,16 +216,13 @@ public class TestPerformance extends TestBootstrap {
             // READ - transformer
             query = db.query(TEmployee.T_EMPLOYEE).all();
             sw.reset().start();
-            query.list(new SimpleAbstractDbRowTransformer<Employee>(db) {
-                @Override
-                public Employee transform(ResultSetWrapper rsw) throws SQLException {
-                    Employee dto = new Employee();
-                    dto.setId(toLong(rsw, 1));
-                    dto.setName(toString(rsw, 2));
-                    dto.setSex(toBoolean(rsw, 3));
-                    dto.setCreation(toDate(rsw, 4));
-                    return dto;
-                }
+            query.list(r -> {
+                Employee dto = new Employee();
+                dto.setId(r.getLong(1));
+                dto.setName(r.getString(2));
+                dto.setSex(r.getBoolean(3));
+                dto.setCreation(r.getDate(4));
+                return dto;
             });
             sw.stop().showTotal("query.list(new SimpleAbstractDbRowTransformer<Employee>(db))");
 
