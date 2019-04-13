@@ -83,38 +83,18 @@ public class SqlProcedure {
 		}
 	}
 
-	/**
-	 * getter for the return type
-	 * 
-	 * @return
-	 */
 	public SqlParameter getReturnType() {
 		return this.returnType;
 	}
 
-	/**
-	 * getter for the name
-	 * 
-	 * @return
-	 */
 	public String getName() {
 		return this.name;
 	}
 
-	/**
-	 * getter for the parameters
-	 * 
-	 * @return
-	 */
 	public List<SqlParameter> getParameters() {
 		return this.parameters;
 	}
 
-	/**
-	 * checks if it is a function
-	 * 
-	 * @return
-	 */
 	public boolean isFunction() {
 		return this.returnType != null;
 	}

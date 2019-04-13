@@ -2,7 +2,6 @@ package com.github.quintans.ezSQL.orm;
 
 import java.sql.Connection;
 
-import com.github.quintans.ezSQL.AbstractDb;
 import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.dml.Delete;
 import com.github.quintans.ezSQL.dml.DmlBase;
@@ -13,7 +12,7 @@ import com.github.quintans.ezSQL.driver.Driver;
 
 public class Db extends com.github.quintans.ezSQL.Db {
 	// for testing
-	public String languague = "pt";
+	public String language = "pt";
 	public static final String LANG_PARAMETER = "language";
 
 	public Db(Driver driver, Connection connection) {
@@ -55,7 +54,7 @@ public class Db extends com.github.quintans.ezSQL.Db {
 	}
 
 	private void setEnvironment(DmlBase dml) {
-		dml.setParameter(LANG_PARAMETER, this.languague);
+		dml.setParameter(LANG_PARAMETER, this.language);
 	}
 
 }

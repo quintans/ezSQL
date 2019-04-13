@@ -16,10 +16,6 @@ import com.github.quintans.jdbc.transformers.ResultSetWrapper;
  */
 public abstract class SimpleAbstractDbRowTransformer<T> extends AbstractDbRowTransformer<T> {
 
-	public SimpleAbstractDbRowTransformer(AbstractDb db) {
-		super(db);
-	}
-
 	@Override
 	public Collection<T> beforeAll(final ResultSetWrapper resultSet) {
 		return new LinkedList<T>();
@@ -27,9 +23,7 @@ public abstract class SimpleAbstractDbRowTransformer<T> extends AbstractDbRowTra
 
 	@Override
 	public void onTransformation(Collection<T> result, T object) {
-	    if(object instanceof Updatable) {
-	        ((Updatable) object).clear();
-	    }
+		super.onTransformation(result, object);
 		result.add(object);
 	}
 

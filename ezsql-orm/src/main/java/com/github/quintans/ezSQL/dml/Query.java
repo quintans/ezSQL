@@ -1,31 +1,24 @@
 package com.github.quintans.ezSQL.dml;
 
-import static com.github.quintans.ezSQL.toolkit.utils.Misc.length;
-
-import java.lang.reflect.Method;
-import java.math.BigDecimal;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import com.github.quintans.ezSQL.transformers.*;
-import org.apache.log4j.Logger;
-
 import com.github.quintans.ezSQL.AbstractDb;
 import com.github.quintans.ezSQL.db.Association;
 import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.db.Table;
+import com.github.quintans.ezSQL.transformers.*;
 import com.github.quintans.jdbc.RawSql;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 import com.github.quintans.jdbc.transformers.IRowTransformer;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 import com.github.quintans.jdbc.transformers.SimpleAbstractRowTransformer;
+import org.apache.log4j.Logger;
+
+import java.math.BigDecimal;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.function.Consumer;
+
+import static com.github.quintans.ezSQL.toolkit.utils.Misc.length;
 
 public class Query extends DmlBase {
     private static final Logger LOG = Logger.getLogger(Query.class);
@@ -164,11 +157,11 @@ public class Query extends DmlBase {
     }
 
     public Query column(Object... cols) {
-        if(cols != null && cols.length > 0){
-            for(Object col: cols) {
+        if (cols != null && cols.length > 0) {
+            for (Object col : cols) {
                 this.lastFunction = Function.converteOne(col);
                 replaceRaw(lastFunction);
-        
+
                 this.lastFunction.setTableAlias(this.tableAlias);
                 this.columns.add(this.lastFunction);
             }
@@ -185,8 +178,8 @@ public class Query extends DmlBase {
     }
 
     public Query count(Object... expr) {
-        if(expr != null && expr.length > 0){
-            for(Object e : expr) {
+        if (expr != null && expr.length > 0) {
+            for (Object e : expr) {
                 column(Definition.count(e));
             }
         }
@@ -195,16 +188,15 @@ public class Query extends DmlBase {
 
     /**
      * Defines the alias of the last column, or if none was defined, defines the table alias;
-     * 
-     * @param alias
-     *            The Alias
+     *
+     * @param alias The Alias
      * @return The query
      */
     public Query as(String alias) {
         if (this.lastFunction != null) {
             this.lastFunction.as(alias);
-        } else if(this.path != null) {
-        	this.path.get(this.path.size() - 1).setPreferredAlias(alias);
+        } else if (this.path != null) {
+            this.path.get(this.path.size() - 1).setPreferredAlias(alias);
         } else {
             this.joinBag = new AliasBag(alias + "_" + JOIN_PREFIX);
             this.tableAlias = alias;
@@ -255,14 +247,14 @@ public class Query extends DmlBase {
     /**
      * Order by a column belonging to the driving table<br>
      * If you want to order by a column from the table targeted by the last association, use orderBy
-     * 
+     *
      * @param column
      * @return
      */
     public Query order(Column<?> column) {
         return order(column, this.tableAlias);
     }
-    
+
     public Query asc(Column<?> column) {
         return order(column, this.tableAlias).asc();
     }
@@ -291,14 +283,12 @@ public class Query extends DmlBase {
     }
 
     /**
-     * Order by column belonging to another table. 
-     * This might come in handy when the order cannot be declared in the same order as the joins. 
-     * 
-     * @param column
-     *            a coluna de ordenação
-     * @param associations
-     *            associações para chegar à tabela que contem a coluna de
-     *            ordenação
+     * Order by column belonging to another table.
+     * This might come in handy when the order cannot be declared in the same order as the joins.
+     *
+     * @param column       a coluna de ordenação
+     * @param associations associações para chegar à tabela que contem a coluna de
+     *                     ordenação
      * @return devolve a query
      */
     public Query order(Column<?> column, Association... associations) {
@@ -322,21 +312,21 @@ public class Query extends DmlBase {
      * Define a coluna a ordenar. A coluna pertence à última associação
      * definida, <br>
      * ou se não houver nenhuma associação, a coluna pertencente à tabela
-     * 
+     *
      * @param column
      * @return
      */
     public Query orderBy(Column<?> column) {
-    	if (this.path != null) {
-    		PathElement last = this.path.get(this.path.size()-1);
-    		if (last.getOrders() == null) {
-    			last.setOrders(new ArrayList<Order>());
-    		}
-    		// delay adding order
-    		this.lastOrder = new Order(new ColumnHolder(column));
-    		last.getOrders().add(this.lastOrder);
-    		return this;
-    	} else if (this.lastJoin != null)
+        if (this.path != null) {
+            PathElement last = this.path.get(this.path.size() - 1);
+            if (last.getOrders() == null) {
+                last.setOrders(new ArrayList<Order>());
+            }
+            // delay adding order
+            this.lastOrder = new Order(new ColumnHolder(column));
+            last.getOrders().add(this.lastOrder);
+            return this;
+        } else if (this.lastJoin != null)
             return order(column, this.lastJoin.getPathElements());
         else
             return order(column, this.lastFkAlias);
@@ -361,18 +351,18 @@ public class Query extends DmlBase {
 
         return this;
     }
-    
+
     public Query asc(String column) {
         return order(column).asc();
     }
 
     public Query desc(String column) {
         return order(column).desc();
-    }    
+    }
 
     /**
      * Define a direção ASCENDENTE da ordem a aplicar na ultima ordem definida
-     * 
+     *
      * @return this
      */
     public Query asc() {
@@ -382,7 +372,7 @@ public class Query extends DmlBase {
 
     /**
      * Define a direção da ordem a aplicar na ultima ordem definida
-     * 
+     *
      * @param dir
      * @return this
      */
@@ -397,7 +387,7 @@ public class Query extends DmlBase {
 
     /**
      * Define a direção DESCENDENTE da ordem a aplicar na ultima ordem definida
-     * 
+     *
      * @return
      */
     public Query desc() {
@@ -420,13 +410,13 @@ public class Query extends DmlBase {
 
     /**
      * includes the associations as inner joins to the current path
-     * 
+     *
      * @param inner
      * @param associations
      * @return
      */
     private Query _associate(boolean inner, Association... associations) {
-        if(length(associations) == 0){
+        if (length(associations) == 0) {
             throw new PersistenceException("Inner cannot be used with an empty association list!");
         }
 
@@ -434,30 +424,30 @@ public class Query extends DmlBase {
             this.path = new ArrayList<PathElement>();
 
         Table lastTable = null;
-        if(path.size() > 0) {
+        if (path.size() > 0) {
             lastTable = path.get(path.size() - 1).getBase().getTableTo();
         } else {
             lastTable = table;
         }
         // all associations must be linked by table
-        for(Association assoc : associations){
-            if(!lastTable.equals(assoc.getTableFrom())){
+        for (Association assoc : associations) {
+            if (!lastTable.equals(assoc.getTableFrom())) {
                 StringBuilder sb = new StringBuilder();
                 sb.append("Association list ");
-                for(Association a : associations){
+                for (Association a : associations) {
                     sb.append("[")
-                    .append(a.genericPath())
-                    .append("]");
+                            .append(a.genericPath())
+                            .append("]");
                 }
                 sb.append(" is invalid. Association [")
-                .append(assoc.genericPath())
-                .append("] must start on table ")
-                .append(lastTable.getName());
+                        .append(assoc.genericPath())
+                        .append("] must start on table ")
+                        .append(lastTable.getName());
                 throw new PersistenceException(sb.toString());
             }
             lastTable = assoc.getTableTo();
         }
-        
+
         for (Association association : associations) {
             PathElement pe = new PathElement(association, inner);
             this.path.add(pe);
@@ -467,10 +457,10 @@ public class Query extends DmlBase {
 
         return this;
     }
-    
+
     /**
      * includes the associations as inner joins to the current path.
-     * 
+     *
      * @param associations
      * @return
      */
@@ -480,7 +470,7 @@ public class Query extends DmlBase {
 
     /**
      * includes the associations as outer joins to the current path
-     * 
+     *
      * @param associations
      * @return
      */
@@ -491,22 +481,22 @@ public class Query extends DmlBase {
     private void _fetch(List<PathElement> paths) {
         useTree = true;
 
-        if(paths != null) {
-            for(PathElement pe : paths) {
-            	// includes all columns if there wasn't a previous include
+        if (paths != null) {
+            for (PathElement pe : paths) {
+                // includes all columns if there wasn't a previous include
                 includeInPath(pe);
             }
         }
 
         _join(true);
-    }    
+    }
 
     /**
-     * This will trigger a result that can be dumped in a tree object 
+     * This will trigger a result that can be dumped in a tree object
      * using current association path to build the tree result.<br>
-     * If no columns where included in this path, it will includes all the columns 
+     * If no columns where included in this path, it will includes all the columns
      * of all the tables referred by the association path.
-     * 
+     *
      * @return
      */
     public Query fetch() {
@@ -517,8 +507,8 @@ public class Query extends DmlBase {
 
     /**
      * This will NOT trigger a result that can be dumped in a tree object.<br>
-     * Any included column, will be considered as belonging to the root object.  
-     * 
+     * Any included column, will be considered as belonging to the root object.
+     *
      * @return
      */
     public Query join() {
@@ -527,53 +517,53 @@ public class Query extends DmlBase {
     }
 
     private void _join(boolean fetch) {
-        if(this.path != null) {
+        if (this.path != null) {
             List<Function> tokens = new ArrayList<Function>();
-            for(PathElement pe : this.path) {
+            for (PathElement pe : this.path) {
                 List<Function> funs = pe.getColumns();
-                if(funs != null) {
-                    for(Function fun : funs){
+                if (funs != null) {
+                    for (Function fun : funs) {
                         tokens.add(fun);
-                        if(!fetch) {
+                        if (!fetch) {
                             fun.setPseudoTableAlias(this.tableAlias);
                         }
                     }
                 }
             }
-            
-            this.columns.addAll(tokens);            
+
+            this.columns.addAll(tokens);
         }
-        
+
         // only after this the joins will have the proper join table alias
         super.joinTo(this.path, fetch);
-        
-    	// process pending orders
-    	if (this.path != null) {
-    		for (PathElement pe : this.path) {
-    			if (pe.getOrders() != null) {
-    				for (Order o : pe.getOrders()) {
-    					o.getHolder().setTableAlias(pathElementAlias(pe));
-    					this.getOrders().add(o);
-    				}
-    			}
-    		}
-    	}        
+
+        // process pending orders
+        if (this.path != null) {
+            for (PathElement pe : this.path) {
+                if (pe.getOrders() != null) {
+                    for (Order o : pe.getOrders()) {
+                        o.getHolder().setTableAlias(pathElementAlias(pe));
+                        this.getOrders().add(o);
+                    }
+                }
+            }
+        }
         this.path = null;
         this.rawSql = null;
     }
-    
+
     private static String pathElementAlias(PathElement pe) {
-    	Association derived = pe.getDerived();
-    	if (derived.isMany2Many()) {
-    		return derived.getToM2M().getAliasTo();
-    	} else {
-    		return derived.getAliasTo();
-    	}
-    }    
+        Association derived = pe.getDerived();
+        if (derived.isMany2Many()) {
+            return derived.getToM2M().getAliasTo();
+        } else {
+            return derived.getAliasTo();
+        }
+    }
 
     /**
      * The same as inner(...).join()
-     * 
+     *
      * @param associations
      * @return
      */
@@ -583,7 +573,7 @@ public class Query extends DmlBase {
 
     /**
      * The same as outer(...).join()
-     * 
+     *
      * @param associations
      * @return
      */
@@ -592,9 +582,9 @@ public class Query extends DmlBase {
     }
 
     /**
-     * Includes any kind of column (table column or function) 
-     * referring to the table targeted by the last association. 
-     * 
+     * Includes any kind of column (table column or function)
+     * referring to the table targeted by the last association.
+     *
      * @param columns or functions
      * @return
      */
@@ -603,48 +593,48 @@ public class Query extends DmlBase {
         if (lenPath > 0) {
             PathElement lastPath = this.path.get(lenPath - 1);
             Table lastTable = lastPath.getBase().getTableTo();
-            for(Object c : columns){
+            for (Object c : columns) {
                 // if it is a columns check if it belongs to the last table
-                if(c instanceof Column) {
+                if (c instanceof Column) {
                     Column<?> col = (Column<?>) c;
-                    if(!col.getTable().equals(lastTable)) {
+                    if (!col.getTable().equals(lastTable)) {
                         throw new PersistenceException(
-                                String.format("Column %s does not belong to the table target by the association %s.", 
-                                        col.toString(), 
+                                String.format("Column %s does not belong to the table target by the association %s.",
+                                        col.toString(),
                                         lastPath.getBase().genericPath()));
                     }
                 }
             }
             includeInPath(lastPath, columns);
-            
+
             this.rawSql = null;
         } else {
             throw new PersistenceException("There is no current join");
         }
         return this;
     }
-    
-    private void includeInPath(PathElement lastPath, Object... columns){
-    	if(length(columns) > 0 || length(lastPath.getColumns()) == 0) {
-	        if (length(columns) == 0) {
-	            // use all columns of the targeted table
-	            columns = lastPath.getBase().getTableTo().getColumns().toArray();
-	        }
-	        List<Function> toks = lastPath.getColumns();
-	        if(toks == null) {
-	            toks = new ArrayList<Function>();
-	            lastPath.setColumns(toks);
-	        }
-	        for(Object c : columns){
-	            this.lastFunction = Function.converteOne(c);
-	            toks.add(this.lastFunction);
-	        }
-    	}
+
+    private void includeInPath(PathElement lastPath, Object... columns) {
+        if (length(columns) > 0 || length(lastPath.getColumns()) == 0) {
+            if (length(columns) == 0) {
+                // use all columns of the targeted table
+                columns = lastPath.getBase().getTableTo().getColumns().toArray();
+            }
+            List<Function> toks = lastPath.getColumns();
+            if (toks == null) {
+                toks = new ArrayList<Function>();
+                lastPath.setColumns(toks);
+            }
+            for (Object c : columns) {
+                this.lastFunction = Function.converteOne(c);
+                toks.add(this.lastFunction);
+            }
+        }
     }
 
     /**
      * includes all column from the table from the last association but the ones declared in this method.
-     * 
+     *
      * @param columns
      * @return
      */
@@ -656,25 +646,24 @@ public class Query extends DmlBase {
             }
             Set<Column<?>> cols = this.path.get(lenPath - 1).getBase().getTableTo().getColumns();
             LinkedHashSet<Column<?>> remain = new LinkedHashSet<Column<?>>(cols);
-            for(Column<?> c : columns) {
+            for (Column<?> c : columns) {
                 remain.remove(c);
             }
-            
+
             include(remain.toArray());
         } else {
             throw new PersistenceException("There is no current join");
         }
         return this;
-    }    
+    }
     /* INCLUDES */
 
     /**
      * Executa um OUTER join com as tabelas definidas pelas foreign keys.<br>
      * TODAS as colunas das tabelas intermédias são incluidas no select bem como
      * a TODAS as colunas da tabela no fim das associações.<br>
-     * 
-     * @param associations
-     *            as foreign keys que definem uma navegação
+     *
+     * @param associations as foreign keys que definem uma navegação
      * @return
      */
     public Query outerFetch(Association... associations) {
@@ -686,9 +675,8 @@ public class Query extends DmlBase {
      * Executa um INNER join com as tabelas definidas pelas foreign keys.<br>
      * TODAS as colunas das tabelas intermédias são incluidas no select bem como
      * TODAS as colunas da tabela no fim das associações.<br>
-     * 
-     * @param associations
-     *            as foreign keys que definem uma navegação
+     *
+     * @param associations as foreign keys que definem uma navegação
      * @return
      */
     public Query innerFetch(Association... associations) {
@@ -698,9 +686,8 @@ public class Query extends DmlBase {
 
     /**
      * Restriction to get to the previous association
-     * 
-     * @param condition
-     *            Restriction
+     *
+     * @param condition Restriction
      * @return
      */
     public Query on(Condition... condition) {
@@ -852,7 +839,7 @@ public class Query extends DmlBase {
     /**
      * Adds a Having clause to the query. The tokens are not processed. You will
      * have to explicitly set all table alias.
-     * 
+     *
      * @param having
      * @return this
      */
@@ -867,7 +854,7 @@ public class Query extends DmlBase {
 
     /**
      * replaces ALIAS with the respective select parcel
-     * 
+     *
      * @param token
      */
     private void replaceAlias(Function token) {
@@ -898,69 +885,36 @@ public class Query extends DmlBase {
     }
 
     // ======== RETRIVE ==============
-    
+
     /**
      * Every row will be processed by the only method of the supplied object.<br>
      * The Object type for each column is obtained from the types of the method parameters.<br>
      * The processed rows are not collected, so any returning object is discarded.
-     *  
+     *
      * @param processor A processor object that must have one declared method and this method must at least one parameter.
      */
-	public void run(final IProcessor processor) {
-        list(createReflectionTransformer(processor));
-	}
+    public void run(final Consumer<Record> processor) {
+        list(createTransformer(processor));
+    }
 
-	public void runOne(final IProcessor processor) {
-		fetchUnique(createReflectionTransformer(processor));
-	}
+    public void runOne(final Consumer<Record> processor) {
+        fetchUnique(createTransformer(processor));
+    }
 
-	public void runFirst(final IProcessor processor) {
-		select(createReflectionTransformer(processor));
-	}
+    public void runFirst(final Consumer<Record> processor) {
+        select(createTransformer(processor));
+    }
 
-    private AbstractDbRowTransformer<Void> createReflectionTransformer(final Object processor){
-		Method[] methods = processor.getClass().getDeclaredMethods();
-		if(methods.length != 1) {
-			throw new PersistenceException("The supplied object must have one declared method. Found " + methods.length + " methods!" );
-		}
-
-		final Method method = methods[0];
-	    final Class<?>[] clazzes = method.getParameterTypes();
-		if(clazzes.length == 0) {
-			throw new PersistenceException("The method " + method.getName() + " must have at least one parameter!");
-		}
-		
-		method.setAccessible(true);
-		
-        final int offset = driver().paginationColumnOffset(this);
-
-        return new AbstractDbRowTransformer<Void>(getDb()) {
+    private AbstractDbRowTransformer<Void> createTransformer(final Consumer<Record> processor) {
+        return new AbstractDbRowTransformer<Void>() {
             @Override
             public Void transform(ResultSetWrapper rsw) throws SQLException {
-            	Object[] objs = Query.this.transform(rsw, offset, clazzes);
-                // reflection call
-                try {
-					method.invoke(processor, objs);
-				} catch (Exception e) {
-					Class<?>[] c = new Class<?>[objs.length];
-					for(int i = 0; i< objs.length; i++) {
-						Object o = objs[i];
-						c[i] = o != null ? o.getClass() : null;
-					}
-					throw new PersistenceException(
-							"There was an error while calling the method \""
-									+ method.getName() + "\" with "
-									+ Arrays.toString(objs) + " -> "
-									+ Arrays.toString(c) + ": "
-									+ e.getMessage(), 
-									e);
-				}
-                
+                processor.accept(new Record(Query.this, rsw));
                 return null;
             }
         };
     }
-	
+
     public List<Object[]> listRaw(final Class<?>... clazzes) {
         return list(createRawTransformer(clazzes));
     }
@@ -968,49 +922,48 @@ public class Query extends DmlBase {
     public Object[] uniqueRaw(final Class<?>... clazzes) {
         return fetchUnique(createRawTransformer(clazzes));
     }
-    
-    private SimpleAbstractDbRowTransformer<Object[]> createRawTransformer(final Class<?>... clazzes){
-        if(length(clazzes) == 0){
+
+    private SimpleAbstractDbRowTransformer<Object[]> createRawTransformer(final Class<?>... clazzes) {
+        if (length(clazzes) == 0) {
             throw new PersistenceException("Classes must be defined!");
         }
-        
+
         final int offset = driver().paginationColumnOffset(this);
-        
-        return new SimpleAbstractDbRowTransformer<Object[]>(getDb()) {
+
+        return new SimpleAbstractDbRowTransformer<Object[]>() {
             @Override
             public Object[] transform(ResultSetWrapper rsw) throws SQLException {
-            	return Query.this.transform(rsw, offset, clazzes);
+                return Query.this.transform(rsw, offset, clazzes);
             }
         };
     }
-    
+
     private Object[] transform(ResultSetWrapper rsw, int offset, Class<?>... clazzes) throws SQLException {
-    	int[] columnTypes = rsw.getColumnTypes();
-        int cnt = 0;
-        if(clazzes.length > 0)
+        int[] columnTypes = rsw.getColumnTypes();
+        int cnt;
+        if (clazzes.length > 0)
             cnt = Math.min(columnTypes.length, clazzes.length);
         else
             cnt = columnTypes.length;
         Object objs[] = new Object[cnt];
-        for(int i = 0; i < cnt; i++){
+        for (int i = 0; i < cnt; i++) {
             objs[i] = driver().fromDb(rsw, i + 1 + offset, cnt > 0 ? clazzes[i] : null);
         }
         return objs;
     }
-    
+
 
     /**
      * Retrives a collection of objects of simple type (not beans). Ex: Boolean,
      * String, enum, ...
-     * 
-     * @param clazz
-     *            class of the object to return
+     *
+     * @param clazz class of the object to return
      * @return
      */
     public <T> List<T> listRaw(final Class<T> clazz) {
-        final int offset = driver().paginationColumnOffset(this);
+        final int offset = paginationColumnOffset();
 
-        return list(new SimpleAbstractDbRowTransformer<T>(getDb()) {
+        return list(new SimpleAbstractDbRowTransformer<T>() {
             @Override
             public T transform(ResultSetWrapper rsw) throws SQLException {
                 return driver().fromDb(rsw, 1 + offset, clazz);
@@ -1021,7 +974,7 @@ public class Query extends DmlBase {
     public <T> T uniqueRaw(final Class<T> clazz) {
         final int offset = driver().paginationColumnOffset(this);
 
-        return fetchUnique(new SimpleAbstractDbRowTransformer<T>(getDb()) {
+        return fetchUnique(new SimpleAbstractDbRowTransformer<T>() {
             @Override
             public T transform(ResultSetWrapper rsw) throws SQLException {
                 return driver().fromDb(rsw, 1 + offset, clazz);
@@ -1032,14 +985,14 @@ public class Query extends DmlBase {
     public Boolean uniqueBoolean() {
         final int offset = driver().paginationColumnOffset(this);
 
-        return fetchUnique(new SimpleAbstractDbRowTransformer<Boolean>(getDb()) {
+        return fetchUnique(new SimpleAbstractDbRowTransformer<Boolean>() {
             @Override
             public Boolean transform(ResultSetWrapper rsw) throws SQLException {
                 return driver().toBoolean(rsw, 1 + offset);
             }
         });
     }
-    
+
     public Integer uniqueInteger() {
         final int offset = driver().paginationColumnOffset(this);
 
@@ -1117,14 +1070,11 @@ public class Query extends DmlBase {
     /**
      * Executes a query and transform the results to the bean type,<br>
      * matching the alias with bean property name.
-     * 
-     * @param <T>
-     *            the bean type
-     * @param klass
-     *            The bean type
-     * @param reuse
-     *            Indicates if for the same entity, a new bean should be
-     *            created, or reused a previous instanciated one.
+     *
+     * @param <T>   the bean type
+     * @param klass The bean type
+     * @param reuse Indicates if for the same entity, a new bean should be
+     *              created, or reused a previous instanciated one.
      * @return A collection of beans
      */
     public <T> List<T> list(Class<T> klass, boolean reuse) {
@@ -1137,7 +1087,7 @@ public class Query extends DmlBase {
      * parameter,<br>
      * matching the alias with bean property name. If no alias is supplied, it
      * is used the column alias.
-     * 
+     *
      * @param klass
      * @return
      */
@@ -1145,23 +1095,36 @@ public class Query extends DmlBase {
         return list(klass, true);
     }
 
-    public <T> List<T> list(IQueryRowTransformer<T> transformer) {
-        transformer.setQuery(this);
-        return list((IRowTransformer<T>) transformer);
+    private <T> IRowTransformer<T> toRowTransformer(final IRecordTransformer<T> recordTransformer) {
+        return new SimpleAbstractRowTransformer<T>() {
+            @Override
+            public T transform(ResultSetWrapper rsw) throws SQLException {
+                return recordTransformer.transform(new Record(Query.this, rsw));
+            }
+        };
+    }
+
+    /**
+     * Executes a query and transforms the row with a record transformer
+     *
+     * @param recordTransformer
+     * @param <T>
+     * @return
+     */
+    public <T> List<T> list(final IRecordTransformer<T> recordTransformer) {
+        return list(toRowTransformer(recordTransformer));
     }
 
     /**
      * Executes a query and transform the results according to the transformer
-     * 
-     * @param <T>
-     *            the bean type
-     * @param rowMapper
-     *            The row transformer
+     *
+     * @param <T>       the bean type
+     * @param rowMapper The row transformer
      * @return A collection of transformed results
      */
     public <T> List<T> list(final IRowTransformer<T> rowMapper) {
         // closes any open path
-        if(this.path != null) {
+        if (this.path != null) {
             join();
         }
 
@@ -1181,23 +1144,25 @@ public class Query extends DmlBase {
         debugTime(LOG, FQCN, now);
         return list;
     }
-    
+
+    public <T> T unique(final IRecordTransformer<T> recordTransformer) {
+        return unique(toRowTransformer(recordTransformer));
+    }
+
     /**
      * Executes a query and transform the results according to the transformer.<br>
-     * If more than one result is returned an Exception will occur. 
-     * 
-     * @param <T>
-     *            the bean type
-     * @param rowMapper
-     *            The row transformer
+     * If more than one result is returned an Exception will occur.
+     *
+     * @param <T>       the bean type
+     * @param rowMapper The row transformer
      * @return A collection of transformed results
      */
     public <T> T unique(final IRowTransformer<T> rowMapper) {
         // closes any open path
-        if(this.path != null) {
+        if (this.path != null) {
             join();
         }
-        
+
         RawSql rsql = getSql();
         debugSQL(LOG, FQCN, rsql.getOriginalSql());
 
@@ -1208,21 +1173,21 @@ public class Query extends DmlBase {
         debugTime(LOG, FQCN, now);
         return result;
     }
-    
+
     // ======== SELECT (ONE RESULT) ================
-    
+
     public <T> T unique(Class<T> klass) {
-        if(useTree) {
+        if (useTree) {
             return select(klass);
         } else {
             return unique(new MapTransformer<>(this, false, new MapBeanTransformer<>(klass, this.getDb().getDriver())));
         }
     }
-    
+
     public <T> T select(Class<T> klass) {
         return select(klass, true);
     }
-    
+
     public <T> T select(Class<T> klass, boolean reuse) {
         if (useTree) {
             if (reuse) {
@@ -1240,6 +1205,10 @@ public class Query extends DmlBase {
         }
     }
 
+    public <T> T select(final IRecordTransformer<T> recordTransformer) {
+        return select(toRowTransformer(recordTransformer));
+    }
+
     public <T> T select(IRowTransformer<T> rowMapper) {
         int holdMax = this.limit;
         limit(1);
@@ -1253,13 +1222,13 @@ public class Query extends DmlBase {
         else
             return list.get(0); // first one
     }
-    
+
     /**
      * SQL String. It is cached for multiple access
      */
     @Override
     public RawSql getSql() {
-        if(columns.isEmpty()) {
+        if (columns.isEmpty()) {
             all();
         }
 
@@ -1270,8 +1239,12 @@ public class Query extends DmlBase {
 
         return this.rawSql;
     }
-    
-    public Function subQuery(){
+
+    public Function subQuery() {
         return Definition.subQuery(this);
+    }
+
+    public int paginationColumnOffset() {
+        return driver().paginationColumnOffset(this);
     }
 }

@@ -4,20 +4,19 @@ import com.github.quintans.ezSQL.db.Association;
 import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.dml.*;
-import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
+import com.github.quintans.jdbc.transformers.IRowTransformer;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
 import java.sql.SQLException;
 import java.util.*;
 
-public class MapTransformer<T> implements IQueryRowTransformer<T> {
+public class MapTransformer<T> implements IRowTransformer<T> {
 
     private MapTable rootNode;
     private Map<List<Object>, Object> domainCache;
 
     private Query query;
-    private Driver driver;
     private int offset;
     private boolean reuse;
     private QueryMapper mapper;
@@ -29,18 +28,7 @@ public class MapTransformer<T> implements IQueryRowTransformer<T> {
     }
 
     @Override
-    public Query getQuery() {
-        return query;
-    }
-
-    @Override
-    public void setQuery(Query query) {
-        this.query = query;
-    }
-
-    @Override
     public Collection<T> beforeAll(ResultSetWrapper rsw) {
-        driver = query.getDb().getDriver();
         this.offset = query.getDb().getDriver().paginationColumnOffset(query);
         if (!this.query.isFlat() && reuse) {
             domainCache = new HashMap<>();
@@ -99,7 +87,7 @@ public class MapTransformer<T> implements IQueryRowTransformer<T> {
             index++; // column position starts at 1
 
             boolean isKey = false;
-            if(reuse) {
+            if (reuse) {
                 if (column instanceof ColumnHolder) {
                     ColumnHolder ch = (ColumnHolder) column;
 
@@ -120,7 +108,7 @@ public class MapTransformer<T> implements IQueryRowTransformer<T> {
 
             // overrides the column table alias when the query result is flat
             String pseudoAlias;
-            if(query.isFlat()) {
+            if (query.isFlat()) {
                 pseudoAlias = query.getTableAlias();
             } else {
                 pseudoAlias = column.getPseudoTableAlias();
@@ -161,14 +149,9 @@ public class MapTransformer<T> implements IQueryRowTransformer<T> {
     @Override
     public void afterAll(Collection<T> result) {
         // is null when there are no results
-        if(rootNode != null) {
+        if (rootNode != null) {
             rootNode.reset();
         }
-    }
-
-
-    protected <T> T fromDb(ResultSetWrapper rsw, int columnIndex, Class<T> type) throws SQLException {
-        return driver.fromDb(rsw, columnIndex, type);
     }
 
 }

@@ -17,19 +17,15 @@ import com.github.quintans.ezSQL.orm.app.mappings.*;
 import com.github.quintans.ezSQL.orm.extended.FunctionExt;
 import com.github.quintans.ezSQL.toolkit.io.BinStore;
 import com.github.quintans.ezSQL.transformers.MapTransformer;
-import com.github.quintans.ezSQL.transformers.SimpleAbstractDbRowTransformer;
-import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
 
 import static com.github.quintans.ezSQL.dml.Definition.*;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Unit test for simple App.
@@ -69,7 +65,7 @@ public class TestStandard extends TestBootstrap {
             genders = query.listRaw(EGender.class);
             dumpCollection(genders);
 
-            assertTrue("Wrong size for gender list.", genders.size() == 3);
+            assertEquals("Wrong size for gender list.", 3, genders.size());
             assertTrue("Gender are incorrect null.",
                     genders.get(0) == EGender.MALE &&
                             genders.get(1) == EGender.MALE &&
@@ -88,7 +84,7 @@ public class TestStandard extends TestBootstrap {
                     .list(Artist.class);
             dumpCollection(artists);
 
-            assertTrue("Wrong list size when testing Artist AND! expected 2!" + artists.size(), artists.size() == 1);
+            assertEquals("Wrong list size when testing Artist AND! expected 2!" + artists.size(), 1, artists.size());
         });
     }
 
@@ -102,7 +98,7 @@ public class TestStandard extends TestBootstrap {
                     .list(Artist.class);
             dumpCollection(artists);
 
-            assertTrue("Wrong list size when testing Artist AND! expected 3!" + artists.size(), artists.size() == 3);
+            assertEquals("Wrong list size when testing Artist AND! expected 3!" + artists.size(), 3, artists.size());
         });
     }
 
@@ -113,7 +109,7 @@ public class TestStandard extends TestBootstrap {
             List<Artist> artists = query.list(new MapTransformer<>(query, true, new ArtistDAOTransformer(query.getDb().getDriver())));
             dumpCollection(artists);
 
-            assertTrue("Wrong size for artist list.", artists.size() == 2);
+            assertEquals("Wrong size for artist list.", 2, artists.size());
         });
     }
 
@@ -124,7 +120,7 @@ public class TestStandard extends TestBootstrap {
             List<Painting> entities = query.list(new MapTransformer<>(query, true, new ArtistDAOTransformer(query.getDb().getDriver())));
             dumpCollection(entities);
 
-            assertTrue("Wrong size for artist list.", entities.size() == 4);
+            assertEquals("Wrong size for artist list.", 4, entities.size());
         });
     }
 
@@ -147,31 +143,28 @@ public class TestStandard extends TestBootstrap {
     }
 
     @Test
-    public void testSimpleTransformer() throws Exception {
+    public void testSimpleTransformer() {
         tm.transactionNoResult(db -> {
             Query query = db.query(TArtist.T_ARTIST)
                     .column(TArtist.C_ID)
                     .column(TArtist.C_NAME)
                     .column(TArtist.C_GENDER);
 
-            List<Artist> values = query.list(new SimpleAbstractDbRowTransformer<Artist>(db) {
-                @Override
-                public Artist transform(ResultSetWrapper rsw) throws SQLException {
-                    Artist dto = new Artist();
-                    dto.setId(toLong(rsw, 1));
-                    dto.setName(toString(rsw, 2));
-                    dto.setGender(driver().fromDb(rsw, 3, EGender.class));
-                    return dto;
-                }
+            List<Artist> values = query.list(r -> {
+                Artist dto = new Artist();
+                dto.setId(r.getLong(1));
+                dto.setName(r.getString(2));
+                dto.setGender(r.get(3, EGender.class));
+                return dto;
             });
             dumpCollection(values);
 
-            assertTrue("Wrong size for artist list.", values.size() == 3);
+            assertEquals("Wrong size for artist list.", 3, values.size());
         });
     }
 
     @Test
-    public void testSimpleBeanTransformer() throws Exception {
+    public void testSimpleBeanTransformer() {
         tm.transactionNoResult(db -> {
             Query query = db.queryAll(TArtist.T_ARTIST).order(TArtist.C_NAME).desc();
             // List<Artist> values = db.select(new
@@ -181,12 +174,12 @@ public class TestStandard extends TestBootstrap {
             List<Artist> values = query.list(Artist.class);
             dumpCollection(values);
 
-            assertTrue("List returned form list is incorrect!", values.size() == 1);
+            assertEquals("List returned form list is incorrect!", 1, values.size());
         });
     }
 
     @Test
-    public void testSubQueryInWhere() throws Exception {
+    public void testSubQueryInWhere() {
         tm.transactionNoResult(db -> {
             Query subquery = db.query(TPainting.T_PAINTING).as("t1")
                     .distinct()
@@ -201,12 +194,12 @@ public class TestStandard extends TestBootstrap {
             List<ArtistValueDTO> values = query.list(ArtistValueDTO.class);
             dumpCollection(values);
 
-            assertTrue("Returned list of Subquery in Where has wrong size!", values.size() == 2);
+            assertEquals("Returned list of Subquery in Where has wrong size!", 2, values.size());
         });
     }
 
     @Test
-    public void testSubQueryAsColumn() throws Exception {
+    public void testSubQueryAsColumn() {
         tm.transactionNoResult(db -> {
             // select a.*, (select count(*) from Painting p where p.artist_id =
             // a.id) from Artist
@@ -222,12 +215,12 @@ public class TestStandard extends TestBootstrap {
             List<ArtistValueDTO> values = query.list(ArtistValueDTO.class);
             dumpCollection(values);
 
-            assertTrue("Returned list of Subquery in Column has wrong size!", values.size() == 3);
+            assertEquals("Returned list of Subquery in Column has wrong size!", 3, values.size());
         });
     }
 
     @Test
-    public void testNotExists() throws Exception {
+    public void testNotExists() {
         tm.transactionNoResult(db -> {
             Query subquery = db.query(TPainting.T_PAINTING).as("p")
                     .column(TPainting.C_NAME)
@@ -247,7 +240,7 @@ public class TestStandard extends TestBootstrap {
     }
 
     @Test
-    public void testGroupBy() throws Exception {
+    public void testGroupBy() {
         tm.transactionNoResult(db -> {
             Query query = db.query(TArtist.T_ARTIST)
                     .column(TArtist.C_NAME)
@@ -256,7 +249,7 @@ public class TestStandard extends TestBootstrap {
             List<ArtistValueDTO> values = query.list(ArtistValueDTO.class, false);
             dumpCollection(values);
 
-            assertTrue("Wrong size for artist list.", values.size() == 3);
+            assertEquals("Wrong size for artist list.", 3, values.size());
             ArtistValueDTO dto = values.get(0);
             assertTrue("Invalid GroupBy.", dto.getName() != null && dto.getValue() != null);
             dto = values.get(1);
@@ -267,25 +260,22 @@ public class TestStandard extends TestBootstrap {
     }
 
     @Test
-    public void testTransformer() throws Exception {
+    public void testTransformer() {
         tm.transactionNoResult(db -> {
             Query query = db.query(TArtist.T_ARTIST).as("a")
                     .column(TArtist.C_NAME).as("name")
                     .outer(TArtist.A_PAINTINGS).include(sum(TPainting.C_PRICE)).as("value").join()
                     .groupBy(1);
 
-            List<ArtistValueDTO> values = query.list(new SimpleAbstractDbRowTransformer<ArtistValueDTO>(db) {
-                @Override
-                public ArtistValueDTO transform(ResultSetWrapper rsw) throws SQLException {
-                    ArtistValueDTO dto = new ArtistValueDTO();
-                    dto.setName(toString(rsw, 1));
-                    dto.setValue(toDecimal(rsw, 2));
-                    return dto;
-                }
+            List<ArtistValueDTO> values = query.list(r -> {
+                ArtistValueDTO dto = new ArtistValueDTO();
+                dto.setName(r.getString(1));
+                dto.setValue(r.getDecimal(2));
+                return dto;
             });
             dumpCollection(values);
 
-            assertTrue("Wrong size for artist list.", values.size() == 3);
+            assertEquals("Wrong size for artist list.", 3, values.size());
             ArtistValueDTO dto = values.get(0);
             assertTrue("Invalid GroupBy.", dto.getName() != null && dto.getValue() != null);
             dto = values.get(1);
@@ -297,7 +287,7 @@ public class TestStandard extends TestBootstrap {
     }
 
     @Test
-    public void testBeanTransformer() throws Exception {
+    public void testBeanTransformer() {
         tm.transactionNoResult(db -> {
             Query query = db.query(TArtist.T_ARTIST).as("a")
                     .column(TArtist.C_ID).as("id")
@@ -308,7 +298,7 @@ public class TestStandard extends TestBootstrap {
             List<ArtistValueDTO> values = query.list(ArtistValueDTO.class, false);
             dumpCollection(values);
 
-            assertTrue("Wrong size for artist list.", values.size() == 3);
+            assertEquals("Wrong size for artist list.", 3, values.size());
             ArtistValueDTO dto = values.get(0);
             assertTrue("Invalid GroupBy.",
                     dto.getId() != null &&
@@ -339,19 +329,19 @@ public class TestStandard extends TestBootstrap {
             List<Artist> artists = query.list(new MapTransformer<>(query, true, new ArtistDAOTransformer(query.getDb().getDriver())));
             dumpCollection(artists);
 
-            assertTrue("Size of artist list is wrong!", artists.size() == 2);
+            assertEquals("Size of artist list is wrong!", 2, artists.size());
             for (Artist artist : artists) {
                 Set<Painting> paintings = artist.getPaintings();
-                assertTrue("branch artist.paintings was not found", paintings != null);
+                assertNotNull("branch artist.paintings was not found", paintings);
                 for (Painting painting : paintings) {
-                    assertTrue("branch artist.paintings.id was not found", painting.getId() != null);
+                    assertNotNull("branch artist.paintings.id was not found", painting.getId());
                 }
             }
         });
     }
 
     @Test
-    public void testWithtChildrenORMTransformer() throws Exception {
+    public void testWithtChildrenORMTransformer() {
         tm.transactionNoResult(db -> {
             Query query = db.queryAll(TArtist.T_ARTIST).innerFetch(TArtist.A_PAINTINGS);
             List<Artist> artists = query.list(Artist.class, true);
@@ -360,12 +350,12 @@ public class TestStandard extends TestBootstrap {
             // DomainBeanTransformer<Artist>(query, Artist.class, true));
             dumpCollection(artists);
 
-            assertTrue("Size of artist list is wrong!", artists.size() == 2);
+            assertEquals("Size of artist list is wrong!", 2, artists.size());
         });
     }
 
     @Test
-    public void testWithPartialChildrenORMTransformer() throws Exception {
+    public void testWithPartialChildrenORMTransformer() {
         tm.transactionNoResult(db -> {
             Query query = db.query(TArtist.T_ARTIST).all()
                     .inner(TArtist.A_PAINTINGS).include(TPainting.C_NAME)
@@ -373,14 +363,14 @@ public class TestStandard extends TestBootstrap {
             List<Artist> artists = query.list(Artist.class, false);
             dumpCollection(artists);
 
-            assertTrue("Size of artist list is wrong!", artists.size() == 3);
+            assertEquals("Size of artist list is wrong!", 3, artists.size());
             for (Artist artist : artists) {
                 Set<Painting> paintings = artist.getPaintings();
-                assertTrue("branch artist.paintings was not found", paintings != null);
+                assertNotNull("branch artist.paintings was not found", paintings);
                 for (Painting painting : paintings) {
-                    assertTrue("branch artist.paintings.id was found", painting.getId() == null);
-                    assertTrue("branch artist.paintings.name was not found", painting.getName() != null);
-                    assertTrue("branch artist.paintings.galleries was found", painting.getGalleries().size() == 1);
+                    assertNull("branch artist.paintings.id was found", painting.getId());
+                    assertNotNull("branch artist.paintings.name was not found", painting.getName());
+                    assertEquals("branch artist.paintings.galleries was found", 1, painting.getGalleries().size());
                 }
             }
         });
@@ -399,7 +389,7 @@ public class TestStandard extends TestBootstrap {
             List<Artist> artists = query.list(new MapTransformer<>(query, true, new ArtistDAOTransformer(query.getDb().getDriver())));
             dumpCollection(artists);
 
-            assertTrue("Size of artist list is wrong!", artists.size() == 3);
+            assertEquals("Size of artist list is wrong!", 3, artists.size());
             Set<Painting> paintings = artists.get(0).getPaintings();
             assertTrue("branch artist.paintings has wrong size. Must be 1.", paintings != null && paintings.size() == 1);
         });
@@ -418,12 +408,12 @@ public class TestStandard extends TestBootstrap {
 
             dump(artist);
 
-            assertTrue("branch artist.paintings is not null.", artist.getPaintings() == null);
+            assertNull("branch artist.paintings is not null.", artist.getPaintings());
         });
     }
 
     @Test
-    public void testOuterFetchManyToMany1() throws Exception {
+    public void testOuterFetchManyToMany1() {
         tm.transactionNoResult(db -> {
             List<Gallery> galleries = db.queryAll(TGallery.T_GALLERY)
                     .outerFetch(TGallery.A_PAINTINGS)
@@ -431,7 +421,7 @@ public class TestStandard extends TestBootstrap {
                     .list(Gallery.class, true);
             dumpCollection(galleries);
 
-            assertTrue("Size of galleries list is wrong!", galleries.size() == 2);
+            assertEquals("Size of galleries list is wrong!", 2, galleries.size());
             Set<Painting> paintings = galleries.get(0).getPaintings();
             assertTrue("branch galleries.paintings has wrong size. Must be 3.", paintings != null && paintings.size() == 3);
             paintings = galleries.get(1).getPaintings();
@@ -440,7 +430,7 @@ public class TestStandard extends TestBootstrap {
     }
 
     @Test
-    public void testOuterFetchManyToMany2() throws Exception {
+    public void testOuterFetchManyToMany2() {
         tm.transactionNoResult(db -> {
             Query query = db.queryAll(TPainting.T_PAINTING)
                     .outerFetch(TPainting.A_GALLERIES)
@@ -449,7 +439,7 @@ public class TestStandard extends TestBootstrap {
             List<Painting> paintings = query.list(Painting.class, true);
             dumpCollection(paintings);
 
-            assertTrue("Size of paintings list is wrong!", paintings.size() == 4);
+            assertEquals("Size of paintings list is wrong!", 4, paintings.size());
             Set<Gallery> galleries = paintings.get(0).getGalleries();
             assertTrue("branch paintings[0].galleries has wrong size. Must be 2.", galleries != null && galleries.size() == 2);
             galleries = paintings.get(1).getGalleries();
@@ -457,35 +447,35 @@ public class TestStandard extends TestBootstrap {
             galleries = paintings.get(2).getGalleries();
             assertTrue("branch paintings[2].galleries has wrong size. Must be 1.", galleries != null && galleries.size() == 1);
             galleries = paintings.get(3).getGalleries();
-            assertTrue("branch paintings[3].galleries has wrong size. Must be null.", galleries == null);
+            assertNull("branch paintings[3].galleries has wrong size. Must be null.", galleries);
         });
     }
 
     @Test
-    public void testOuterFetchWithAll() throws Exception {
+    public void testOuterFetchWithAll() {
         tm.transactionNoResult(db -> {
             Query query = db.queryAll(TArtist.T_ARTIST)
                     .outerFetch(TArtist.A_PAINTINGS, TPainting.A_GALLERIES);
             List<Artist> artists = query.list(Artist.class);
             dumpCollection(artists);
 
-            assertTrue("Wrong size for artist List", artists.size() == 3);
-            assertTrue("artist[0].paintings is null.", artists.get(0).getPaintings() != null);
+            assertEquals("Wrong size for artist List", 3, artists.size());
+            assertNotNull("artist[0].paintings is null.", artists.get(0).getPaintings());
             for (Painting paint : artists.get(0).getPaintings()) {
-                assertTrue("Gallery is null", paint.getGalleries() != null);
+                assertNotNull("Gallery is null", paint.getGalleries());
             }
-            assertTrue("artist[1].paintings is null.", artists.get(1).getPaintings() != null);
+            assertNotNull("artist[1].paintings is null.", artists.get(1).getPaintings());
             Iterator<Painting> it = artists.get(1).getPaintings().iterator();
             Painting paint = it.next();
-            assertTrue("Gallery is null", paint.getGalleries() != null);
+            assertNotNull("Gallery is null", paint.getGalleries());
             paint = it.next();
-            assertTrue("Gallery is not null", paint.getGalleries() == null);
-            assertTrue("artist[2].paintings is not null.", artists.get(2).getPaintings() == null);
+            assertNull("Gallery is not null", paint.getGalleries());
+            assertNull("artist[2].paintings is not null.", artists.get(2).getPaintings());
         });
     }
 
     @Test
-    public void testInnerJoin() throws Exception {
+    public void testInnerJoin() {
         // list all Paintings from Pablo Picasso (id = 1)
         tm.transactionNoResult(db -> {
             Query query = db.queryAll(TPainting.T_PAINTING)
@@ -495,15 +485,15 @@ public class TestStandard extends TestBootstrap {
             List<Painting> values = query.list(Painting.class);
             dumpCollection(values);
 
-            assertTrue("Wrong size for painting list", values.size() == 2);
+            assertEquals("Wrong size for painting list", 2, values.size());
             for (Painting paint : values) {
-                assertTrue("Artist is not null", paint.getArtist() == null);
+                assertNull("Artist is not null", paint.getArtist());
             }
         });
     }
 
     @Test
-    public void testOuterJoin() throws Exception {
+    public void testOuterJoin() {
         // Ex: list all Artists and the price of each painting, even if the
         // Artist doesn’t have paintings.
         tm.transactionNoResult(db -> {
@@ -515,13 +505,13 @@ public class TestStandard extends TestBootstrap {
             List<ArtistValueDTO> values = query.list(ArtistValueDTO.class, false);
             dumpCollection(values);
 
-            assertTrue("Wrong size for outer join.", values.size() == 5);
+            assertEquals("Wrong size for outer join.", 5, values.size());
 
         });
     }
 
     @Test
-    public void testIncludeJoinAndFetch() throws Exception {
+    public void testIncludeJoinAndFetch() {
         // Ex: list all Artists and the price of each painting, even if the
         // Artist doesn’t have paintings.
         tm.transactionNoResult(db -> {
@@ -536,11 +526,11 @@ public class TestStandard extends TestBootstrap {
                     .list(ArtistValueDTO.class, false);
             dumpCollection(values);
 
-            assertTrue("Wrong size for outer join. Expected 4, got " + values.size(), values.size() == 4);
+            assertEquals("Wrong size for outer join. Expected 4, got " + values.size(), 4, values.size());
             for (ArtistValueDTO val : values) {
-                assertTrue("Invalid Name", val.getName() != null);
-                assertTrue("Invalid Value", val.getValue() != null);
-                assertTrue("Invalid Value.paintings", val.getPaintings() != null);
+                assertNotNull("Invalid Name", val.getName());
+                assertNotNull("Invalid Value", val.getValue());
+                assertNotNull("Invalid Value.paintings", val.getPaintings());
             }
         });
     }
@@ -560,9 +550,9 @@ public class TestStandard extends TestBootstrap {
 
             dumpCollection(paintings);
 
-            assertTrue("Wrong size for paintings.", paintings.size() == 2);
+            assertEquals("Wrong size for paintings.", 2, paintings.size());
             for (Painting paint : paintings) {
-                assertTrue("Artis should be null.", paint.getArtist() == null);
+                assertNull("Artis should be null.", paint.getArtist());
             }
         });
     }
@@ -577,13 +567,13 @@ public class TestStandard extends TestBootstrap {
 
             dumpCollection(artists);
 
-            assertTrue("Wrong size for artists. Expected 3, got " + artists.size(), artists.size() == 3);
+            assertEquals("Wrong size for artists. Expected 3, got " + artists.size(), 3, artists.size());
             Set<Painting> paintings = artists.get(0).getPaintings();
-            assertTrue("Wrong size for Paintings, for artist[0]. Expected null, got not null", paintings == null);
+            assertNull("Wrong size for Paintings, for artist[0]. Expected null, got not null", paintings);
             int size = artists.get(1).getPaintings().size();
-            assertTrue("Wrong size for Paintings, for artist[1]. Expected 2, got " + size, size == 2);
+            assertEquals("Wrong size for Paintings, for artist[1]. Expected 2, got " + size, 2, size);
             size = artists.get(2).getPaintings().size();
-            assertTrue("Wrong size for Paintings, for artist[2]. Expected 3, got " + size, size == 2);
+            assertEquals("Wrong size for Paintings, for artist[2]. Expected 3, got " + size, 2, size);
         });
     }
 
@@ -596,7 +586,7 @@ public class TestStandard extends TestBootstrap {
                     .where(TArtist.C_ID.is(1L))
                     .unique(Artist.class);
 
-            assertTrue("Birthday is null when using custom function ifNull.", artist.getBirthday() != null);
+            assertNotNull("Birthday is null when using custom function ifNull.", artist.getBirthday());
         });
     }
 
@@ -622,17 +612,17 @@ public class TestStandard extends TestBootstrap {
             System.out.println("Time ===> " + sdf.format(myTime) + " <=> " + sdf.format(temporal.getClock()));
             String expected = sdf.format(myTime);
             String actual = sdf.format(temporal.getClock());
-            assertTrue("Clock is incorrect! Expected " + expected + ", got " + actual, myTime.equals(temporal.getClock()));
+            assertEquals("Clock is incorrect! Expected " + expected + ", got " + actual, myTime, temporal.getClock());
 
             sdf = new SimpleDateFormat("yyyy-MM-dd");
-            assertTrue("Today is incorrect!", sdf.format(myDate).equals(sdf.format(temporal.getToday())));
+            assertEquals("Today is incorrect!", sdf.format(myDate), sdf.format(temporal.getToday()));
 
             sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            assertTrue("Now is incorrect!", sdf.format(myDateTime).equals(sdf.format(temporal.getNow())));
+            assertEquals("Now is incorrect!", sdf.format(myDateTime), sdf.format(temporal.getNow()));
 
             //sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
             System.out.println("Timestamp ===> " + sdf.format(date) + " <=> " + sdf.format(temporal.getInstant()));
-            assertTrue("Instant is incorrect!", sdf.format(date).equals(sdf.format(temporal.getInstant())));
+            assertEquals("Instant is incorrect!", sdf.format(date), sdf.format(temporal.getInstant()));
         });
     }
 
@@ -700,7 +690,7 @@ public class TestStandard extends TestBootstrap {
             try {
                 painting.setVersion(3); // wrong version
                 db.delete(TPainting.T_PAINTING).submit(painting);
-                assertTrue("Version was not validated!", false);
+                fail("Version was not validated!");
             } catch (OptimisticLockException e) {
                 assertTrue(true);
             }
@@ -720,16 +710,16 @@ public class TestStandard extends TestBootstrap {
 
             artist.setName("Jane Mnomonic");
             db.update(TArtist.T_ARTIST).submit(artist);
-            assertTrue("Incorrect version!", artist.getVersion().equals(2));
+            assertEquals("Incorrect version!", 2, (int) artist.getVersion());
 
             artist.setGender(EGender.FEMALE);
             db.update(TArtist.T_ARTIST).submit(artist);
-            assertTrue("Incorrect version!", artist.getVersion().equals(3));
+            assertEquals("Incorrect version!", 3, (int) artist.getVersion());
         });
     }
 
     @Test
-    public void testQuickCRUD() throws Exception {
+    public void testQuickCRUD() {
         tm.transactionNoResult(db -> {
             // INSERT
             Artist artist = new Artist();
@@ -738,8 +728,8 @@ public class TestStandard extends TestBootstrap {
             db.insert(TArtist.T_ARTIST).submit(artist);
 
             dump(artist);
-            assertTrue("No id returned when inserting!", artist.getId() != null);
-            assertTrue("Generic Class for Id should be Long.class", artist.getId().getClass() == Long.class);
+            assertNotNull("No id returned when inserting!", artist.getId());
+            assertSame("Generic Class for Id should be Long.class", artist.getId().getClass(), Long.class);
 
             List<Artist> artists = db.query(TArtist.T_ARTIST).all()
                     .list(Artist.class);
@@ -751,7 +741,7 @@ public class TestStandard extends TestBootstrap {
             db.update(TArtist.T_ARTIST).submit(artist);
 
             dump(artist);
-            assertTrue("Incorrect version!", artist.getVersion().equals(2));
+            assertEquals("Incorrect version!", 2, (int) artist.getVersion());
 
             artists = db.query(TArtist.T_ARTIST).all()
                     .list(Artist.class);
@@ -785,10 +775,10 @@ public class TestStandard extends TestBootstrap {
     }
 
     @Test
-    public void testInsertImage() throws IOException {
+    public void testInsertImage() {
         tm.transactionNoResult(db -> {
             BinStore bc = new BinStore();
-            // throws IOException if file is not found
+            //  if file is not found
             bc.set(new File("./src/test/resources/StarryNight.jpg"));
 
             Insert insert = new Insert(db, TImage.T_IMAGE)
@@ -797,13 +787,13 @@ public class TestStandard extends TestBootstrap {
 
             Map<Column<?>, Object> keys = insert.execute();
             for (Entry<Column<?>, Object> entry : keys.entrySet()) {
-                assertTrue(entry.getKey().getName() + " was null", entry.getValue() != null);
+                assertNotNull(entry.getKey().getName() + " was null", entry.getValue());
             }
         });
     }
 
     @Test
-    public void testLoadImage() throws IOException {
+    public void testLoadImage() {
         tm.transactionNoResult(db -> {
             List<BinStore> images = db.query(TImage.T_IMAGE)
                     .column(TImage.C_CONTENT)
@@ -811,7 +801,7 @@ public class TestStandard extends TestBootstrap {
             for (BinStore image : images) {
                 System.out.println("size: " + image.get().length);
             }
-            assertTrue("Wrong size for Image List!", images.size() == 4);
+            assertEquals("Wrong size for Image List!", 4, images.size());
         });
     }
 
@@ -824,9 +814,9 @@ public class TestStandard extends TestBootstrap {
 
             dumpCollection(paintings);
 
-            assertTrue("Size of paintings list is wrong!", paintings.size() == 4);
+            assertEquals("Size of paintings list is wrong!", 4, paintings.size());
             Image image = paintings.get(0).getImage();
-            assertTrue("branch paintings[0].image was not returned.", image != null);
+            assertNotNull("branch paintings[0].image was not returned.", image);
         });
     }
 
@@ -839,9 +829,9 @@ public class TestStandard extends TestBootstrap {
 
             dumpCollection(paintings);
 
-            assertTrue("Size of paintings list is wrong!", paintings.size() == 4);
+            assertEquals("Size of paintings list is wrong!", 4, paintings.size());
             Artist artist = paintings.get(0).getArtist();
-            assertTrue("branch paintings[0].artist was not returned.", artist != null);
+            assertNotNull("branch paintings[0].artist was not returned.", artist);
         });
     }
 
@@ -859,10 +849,10 @@ public class TestStandard extends TestBootstrap {
     }
 
     @Test
-    public void testInsertImageBytes() throws IOException {
+    public void testInsertImageBytes() {
         tm.transactionNoResult(db -> {
             BinStore bc = new BinStore();
-            // throws IOException if file is not found
+            //  if file is not found
             bc.set(new File("./src/test/resources/StarryNight.jpg"));
 
             ImageDTO image = new ImageDTO();
@@ -880,7 +870,7 @@ public class TestStandard extends TestBootstrap {
     }
 
     @Test
-    public void testNumericEnum() throws IOException {
+    public void testNumericEnum() {
         tm.transactionNoResult(db -> {
             Insert insert = db.insert(TEmployee.T_EMPLOYEE)
                     .sets(TEmployee.C_ID, TEmployee.C_NAME, TEmployee.C_SEX, TEmployee.C_PAY_GRADE, TEmployee.C_CREATION);
@@ -893,9 +883,9 @@ public class TestStandard extends TestBootstrap {
 
             dumpCollection(employees);
 
-            assertTrue("Wrong list size for employees!", employees.size() == 2);
-            assertTrue("Wrong pay grade type!", employees.get(0).getPayGrade() == EPayGrade.LOW);
-            assertTrue("Wrong pay grade type!", employees.get(1).getPayGrade() == EPayGrade.HIGH);
+            assertEquals("Wrong list size for employees!", 2, employees.size());
+            assertSame("Wrong pay grade type!", employees.get(0).getPayGrade(), EPayGrade.LOW);
+            assertSame("Wrong pay grade type!", employees.get(1).getPayGrade(), EPayGrade.HIGH);
         });
     }
 
@@ -913,7 +903,7 @@ public class TestStandard extends TestBootstrap {
                     )
                     .uniqueLong();
 
-            assertTrue("Wrong sale value for Paintings! Expected 70, got " + sale, sale.equals(70L));
+            assertEquals("Wrong sale value for Paintings! Expected 70, got " + sale, 70L, (long) sale);
         });
     }
 
@@ -953,10 +943,10 @@ public class TestStandard extends TestBootstrap {
                     .order(TPainting.C_PRICE).desc()
                     .list(Classification.class);
 
-            assertTrue("Wrong category value for Paintings!", "expensive".equals(c.get(0).getCategory()));
-            assertTrue("Wrong category value for Paintings!", "normal".equals(c.get(1).getCategory()));
-            assertTrue("Wrong category value for Paintings!", "normal".equals(c.get(2).getCategory()));
-            assertTrue("Wrong category value for Paintings!", "cheap".equals(c.get(3).getCategory()));
+            assertEquals("Wrong category value for Paintings!", "expensive", c.get(0).getCategory());
+            assertEquals("Wrong category value for Paintings!", "normal", c.get(1).getCategory());
+            assertEquals("Wrong category value for Paintings!", "normal", c.get(2).getCategory());
+            assertEquals("Wrong category value for Paintings!", "cheap", c.get(3).getCategory());
         });
     }
 }

@@ -52,7 +52,7 @@ public class TestI18n extends TestBootstrap {
     @Test
     public void testI18nAssociation() throws Exception {
         tm.transactionNoResult(db -> {
-            db.languague = "es";
+            db.language = "es";
 
             Collection<Author> authors = db.query(T_AUTHOR).all()
                     .inner(T_AUTHOR.A_BOOKS, TBook.A_I18N).fetch()
@@ -82,7 +82,7 @@ public class TestI18n extends TestBootstrap {
     @Test
     public void testI18nAssociationConditioned() throws Exception {
         tm.transactionNoResult(db -> {
-            db.languague = "en";
+            db.language = "en";
             Collection<Author> result = db.query(T_AUTHOR).all()
                     .inner(T_AUTHOR.A_BOOKS).on(TBook.C_PRICE.lt(20.0))
                     .inner(TBook.A_I18N).on(TBook18.C_NAME.like("%SQL%").not()).fetch()

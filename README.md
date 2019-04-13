@@ -814,23 +814,19 @@ Query query = db.query(TArtist.T_ARTIST)
 		.column(TArtist.C_NAME)
 		.column(TArtist.C_GENDER);
 
-List<Artist> values = query.list(new SimpleAbstractRowTransformer<Artist>(db){
-	@Override
-	public Artist transform(ResultSet rs, int[] columnTypes)
-	throws SQLException {
-		Artist dto = new Artist();
-		dto.setId(toInteger(rs, 1));
-		dto.setName(toString(rs, 2));
-		dto.setGender(driver().fromDb(rs, 3, columnTypes[2], EGender.class));
-		return dto;
-	}
+List<Artist> values = query.list(record -> {
+    Artist dto = new Artist();
+    dto.setId(record.getInteger(1));
+    dto.setName(record.getString(2));
+    dto.setGender(record.get(3, EGender.class));
+    return dto;
 });
 ```
 
 The order for which we get the values from the `ResultSet` depends of the order
 for which columns were added to the query, starting at the position 1.
 
-#### Result Processor example
+#### Processor example
 
 If we want just to process the result lines as they arrive.
 
@@ -840,14 +836,8 @@ Query query = db.query(TArtist.T_ARTIST)
 		.column(TArtist.C_NAME);
 
 // your editor will not like this form
-query.run(new IProcessor(){
-	public void process(Long id, String name)
-		System.out.println("id:" + id + ", name:" + name);
-	}
-});
+query.run(record -> System.out.println("id:" + record.getInteger(1) + ", name:" + record.getString(2)) );
 ```
-
-`IProcessor` does not have any declared method. It is weird, but works for me.
 
 #### Bean Results
 

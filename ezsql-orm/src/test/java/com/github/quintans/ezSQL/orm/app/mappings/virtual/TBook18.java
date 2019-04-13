@@ -12,7 +12,7 @@ public class TBook18 {
 	// this association should never be used??
 	// public final static Association A_BOOK = new Association(
 	// "book",
-	// C_LANG.matches(param("languague")),
+	// C_LANG.matches(param("language")),
 	// new Relation(C_ID, TBook.C_ID)
 	// );
 }

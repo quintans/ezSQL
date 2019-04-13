@@ -39,8 +39,8 @@ Essentially:
 * browse to <https://oss.sonatype.org/#stagingRepositories>
 * on the left panel click on **Staging Repositories**
 * in the list search for **comgithubquintans-***** and select
-* click on **Close**
+* click on **Close** (at the top, near the tabs)
 * (select the **Activity** tab to verify the progress of requirements validation)
-* click on **Release**
+* click on **Release** (may need a refresh by clicking in the refresh button)
 * wait for 2 Hours :)
 * check if it is mirrored in <https://repo.maven.apache.org/maven2/com/github/quintans/>
