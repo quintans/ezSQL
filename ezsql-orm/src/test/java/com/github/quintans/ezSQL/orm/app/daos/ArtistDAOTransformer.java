@@ -6,13 +6,13 @@ import com.github.quintans.ezSQL.orm.app.domain.Painting;
 import com.github.quintans.ezSQL.orm.app.mappings.TArtist;
 import com.github.quintans.ezSQL.transformers.MapColumn;
 import com.github.quintans.ezSQL.transformers.QueryMapper;
+import com.github.quintans.ezSQL.transformers.Record;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
-import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
 import java.util.LinkedHashSet;
 import java.util.List;
 
-public class ArtistDAOTransformer implements QueryMapper {
+public class ArtistDAOTransformer implements QueryMapper<Artist> {
     private Driver driver;
     private QueryMapper paintingMapper;
 
@@ -56,7 +56,7 @@ public class ArtistDAOTransformer implements QueryMapper {
     }
 
     @Override
-    public boolean map(ResultSetWrapper rsw, Object instance, List<MapColumn> mapColumns) {
+    public boolean map(Record record, Object instance, List<MapColumn> mapColumns) {
         try {
             boolean touched = false;
 
@@ -64,25 +64,25 @@ public class ArtistDAOTransformer implements QueryMapper {
                 Artist entity = (Artist) instance;
 
                 for (MapColumn mapColumn : mapColumns) {
-                    int idx = mapColumn.getColumnIndex();
+                    int idx = mapColumn.getIndex();
                     String alias = mapColumn.getAlias();
 
                     if (TArtist.C_ID.getAlias().equals(alias)) {
-                        Long value = driver.fromDb(rsw, idx, Long.class);
+                        Long value = record.get(idx, Long.class);
                         entity.setId(value);
                         touched |= value != null;
                     } else if (TArtist.C_VERSION.getAlias().equals(alias)) {
-                        Integer value = driver.fromDb(rsw, idx, Integer.class);
+                        Integer value = record.get(idx, Integer.class);
                         entity.setVersion(value);
                         touched |= value != null;
                     } else if (TArtist.C_NAME.getAlias().equals(alias)) {
-                        String value = driver.fromDb(rsw, idx, String.class);
-                        entity.setName(value);
+                        String value = record.get(idx, String.class);
+                        //entity.setName(value);
                         touched |= value != null;
                     }
                 }
             } else if (instance instanceof Painting) {
-                touched = getPaintingMapper().map(rsw, instance, mapColumns);
+                touched = getPaintingMapper().map(record, instance, mapColumns);
             }
             return touched;
 

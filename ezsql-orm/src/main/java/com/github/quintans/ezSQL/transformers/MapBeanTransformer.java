@@ -1,9 +1,7 @@
 package com.github.quintans.ezSQL.transformers;
 
-import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.ezSQL.toolkit.utils.Misc;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
-import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
@@ -11,13 +9,11 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-public class MapBeanTransformer<T> implements QueryMapper {
+public class MapBeanTransformer<T> implements QueryMapper<T> {
     private Class<T> clazz;
-    private Driver driver;
 
-    public MapBeanTransformer(Class<T> clazz, Driver driver) {
+    public MapBeanTransformer(Class<T> clazz) {
         this.clazz = clazz;
-        this.driver = driver;
     }
 
     @Override
@@ -67,6 +63,7 @@ public class MapBeanTransformer<T> implements QueryMapper {
                         setter.invoke(instance, collection);
                     }
                     collection.add(value);
+                    setter.invoke(instance, collection);
                 } else {
                     setter.invoke(instance, value);
                 }
@@ -77,7 +74,7 @@ public class MapBeanTransformer<T> implements QueryMapper {
     }
 
     @Override
-    public boolean map(ResultSetWrapper rsw, Object instance, List<MapColumn> mapColumns) {
+    public boolean map(Record record, Object instance, List<MapColumn> mapColumns) {
         try {
             boolean touched = false;
             for (MapColumn mapColumn : mapColumns) {
@@ -86,7 +83,7 @@ public class MapBeanTransformer<T> implements QueryMapper {
                 if (pd != null) {
                     Class<?> type = pd.getPropertyType();
 
-                    Object value = driver.fromDb(rsw, mapColumn.getColumnIndex(), type);
+                    Object value = record.get(mapColumn.getIndex(), type);
                     pd.getWriteMethod().invoke(instance, value);
                     touched |= value != null;
                 }

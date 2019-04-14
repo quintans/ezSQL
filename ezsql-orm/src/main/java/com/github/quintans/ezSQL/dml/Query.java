@@ -30,7 +30,7 @@ public class Query extends DmlBase {
     private String alias;
     private Query subquery;
     private boolean distinct;
-    private List<Function> columns = new ArrayList<Function>();
+    private List<Function> columns = new ArrayList<>();
     private List<Order> orders;
     private List<Union> unions;
     // saves position of columnHolder
@@ -77,11 +77,11 @@ public class Query extends DmlBase {
         this.tableAlias = other.getTableAlias();
 
         if (other.getJoins() != null)
-            this.joins = new ArrayList<Join>(other.getJoins());
+            this.joins = new ArrayList<>(other.getJoins());
         if (other.getCondition() != null)
             this.condition = (Condition) other.getCondition().clone();
         if (this.parameters != null)
-            this.parameters = new LinkedHashMap<String, Object>(other.getParameters());
+            this.parameters = new LinkedHashMap<>(other.getParameters());
 
         if (other.getSubquery() != null) {
             Query q = other.getSubquery();
@@ -91,11 +91,11 @@ public class Query extends DmlBase {
 
         this.distinct = other.isDistinct();
         if (other.getColumns() != null)
-            this.columns = new ArrayList<Function>(other.getColumns());
+            this.columns = new ArrayList<>(other.getColumns());
         if (other.getOrders() != null)
-            this.orders = new ArrayList<Order>(other.getOrders());
+            this.orders = new ArrayList<>(other.getOrders());
         if (other.getUnions() != null)
-            this.unions = new ArrayList<Union>(other.getUnions());
+            this.unions = new ArrayList<>(other.getUnions());
         // saves position of columnHolder
         if (other.getGroupBy() != null)
             this.groupBy = other.getGroupBy().clone();
@@ -234,7 +234,7 @@ public class Query extends DmlBase {
     // ORDER ===
     private Query order(ColumnHolder columnHolder) {
         if (this.orders == null)
-            this.orders = new ArrayList<Order>();
+            this.orders = new ArrayList<>();
 
         this.lastOrder = new Order(columnHolder, true);
         this.orders.add(this.lastOrder);
@@ -248,8 +248,8 @@ public class Query extends DmlBase {
      * Order by a column belonging to the driving table<br>
      * If you want to order by a column from the table targeted by the last association, use orderBy
      *
-     * @param column
-     * @return
+     * @param column the column
+     * @return the query
      */
     public Query order(Column<?> column) {
         return order(column, this.tableAlias);
@@ -292,7 +292,7 @@ public class Query extends DmlBase {
      * @return devolve a query
      */
     public Query order(Column<?> column, Association... associations) {
-        List<PathElement> pathElements = new ArrayList<PathElement>();
+        List<PathElement> pathElements = new ArrayList<>();
         for (Association association : associations)
             pathElements.add(new PathElement(association, null));
 
@@ -313,14 +313,14 @@ public class Query extends DmlBase {
      * definida, <br>
      * ou se não houver nenhuma associação, a coluna pertencente à tabela
      *
-     * @param column
-     * @return
+     * @param column the column
+     * @return current query
      */
     public Query orderBy(Column<?> column) {
         if (this.path != null) {
             PathElement last = this.path.get(this.path.size() - 1);
             if (last.getOrders() == null) {
-                last.setOrders(new ArrayList<Order>());
+                last.setOrders(new ArrayList<>());
             }
             // delay adding order
             this.lastOrder = new Order(new ColumnHolder(column));
@@ -342,7 +342,7 @@ public class Query extends DmlBase {
 
     public Query order(String column) {
         if (this.orders == null)
-            this.orders = new ArrayList<Order>();
+            this.orders = new ArrayList<>();
 
         this.lastOrder = new Order(column, true);
         this.orders.add(this.lastOrder);
@@ -421,9 +421,9 @@ public class Query extends DmlBase {
         }
 
         if (this.path == null)
-            this.path = new ArrayList<PathElement>();
+            this.path = new ArrayList<>();
 
-        Table lastTable = null;
+        Table lastTable;
         if (path.size() > 0) {
             lastTable = path.get(path.size() - 1).getBase().getTableTo();
         } else {
@@ -518,7 +518,7 @@ public class Query extends DmlBase {
 
     private void _join(boolean fetch) {
         if (this.path != null) {
-            List<Function> tokens = new ArrayList<Function>();
+            List<Function> tokens = new ArrayList<>();
             for (PathElement pe : this.path) {
                 List<Function> funs = pe.getColumns();
                 if (funs != null) {
@@ -622,7 +622,7 @@ public class Query extends DmlBase {
             }
             List<Function> toks = lastPath.getColumns();
             if (toks == null) {
-                toks = new ArrayList<Function>();
+                toks = new ArrayList<>();
                 lastPath.setColumns(toks);
             }
             for (Object c : columns) {
@@ -645,7 +645,7 @@ public class Query extends DmlBase {
                 throw new PersistenceException("null or empty values was passed");
             }
             Set<Column<?>> cols = this.path.get(lenPath - 1).getBase().getTableTo().getColumns();
-            LinkedHashSet<Column<?>> remain = new LinkedHashSet<Column<?>>(cols);
+            LinkedHashSet<Column<?>> remain = new LinkedHashSet<>(cols);
             for (Column<?> c : columns) {
                 remain.remove(c);
             }
@@ -713,7 +713,7 @@ public class Query extends DmlBase {
     // UNIONS ===
     public Query union(Query query) {
         if (this.unions == null)
-            this.unions = new ArrayList<Union>();
+            this.unions = new ArrayList<>();
         this.unions.add(new Union(query, false));
 
         this.rawSql = null;
@@ -723,7 +723,7 @@ public class Query extends DmlBase {
 
     public Query unionAll(Query query) {
         if (this.unions == null)
-            this.unions = new ArrayList<Union>();
+            this.unions = new ArrayList<>();
         this.unions.add(new Union(query, true));
 
         this.rawSql = null;
@@ -766,7 +766,7 @@ public class Query extends DmlBase {
         List<Group> groups = null;
         int length = this.groupBy == null ? 0 : groupBy.length;
         if (length > 0) {
-            groups = new ArrayList<Group>(length);
+            groups = new ArrayList<>(length);
             for (int k = 0; k < length; k++) {
                 int idx = groupBy[k] - 1;
                 groups.add(new Group(idx, columns.get(idx)));
@@ -799,7 +799,7 @@ public class Query extends DmlBase {
             pos++;
 
             if (this.groupBy[i] == 0)
-                throw new PersistenceException(String.format("Column alias '%' was not found", cols[i]));
+                throw new PersistenceException(String.format("Column alias '%s' was not found", cols[i]));
         }
 
         return this;
@@ -826,7 +826,7 @@ public class Query extends DmlBase {
             pos++;
 
             if (this.groupBy[i] == 0)
-                throw new PersistenceException(String.format("Column alias '%' was not found", aliases[i]));
+                throw new PersistenceException(String.format("Column alias '%s' was not found", aliases[i]));
         }
 
         return this;
@@ -859,7 +859,7 @@ public class Query extends DmlBase {
      */
     private void replaceAlias(Function token) {
         Function[] members = token.getMembers();
-        if (token.getOperator() == EFunction.ALIAS) {
+        if (EFunction.ALIAS.equals(token.getOperator())) {
             String alias = (String) token.getValue();
             for (Function v : columns) {
                 // full copies the matching
@@ -872,7 +872,6 @@ public class Query extends DmlBase {
                     break;
                 }
             }
-            return;
         } else {
             if (members != null) {
                 for (Function t : members) {
@@ -928,7 +927,7 @@ public class Query extends DmlBase {
             throw new PersistenceException("Classes must be defined!");
         }
 
-        final int offset = driver().paginationColumnOffset(this);
+        final int offset = paginationColumnOffset();
 
         return new SimpleAbstractDbRowTransformer<Object[]>() {
             @Override
@@ -947,7 +946,7 @@ public class Query extends DmlBase {
             cnt = columnTypes.length;
         Object objs[] = new Object[cnt];
         for (int i = 0; i < cnt; i++) {
-            objs[i] = driver().fromDb(rsw, i + 1 + offset, cnt > 0 ? clazzes[i] : null);
+            objs[i] = driver().fromDb(rsw, i + 1 + offset, clazzes[i]);
         }
         return objs;
     }
@@ -972,7 +971,7 @@ public class Query extends DmlBase {
     }
 
     public <T> T uniqueRaw(final Class<T> clazz) {
-        final int offset = driver().paginationColumnOffset(this);
+        final int offset = paginationColumnOffset();
 
         return fetchUnique(new SimpleAbstractDbRowTransformer<T>() {
             @Override
@@ -983,7 +982,7 @@ public class Query extends DmlBase {
     }
 
     public Boolean uniqueBoolean() {
-        final int offset = driver().paginationColumnOffset(this);
+        final int offset = paginationColumnOffset();
 
         return fetchUnique(new SimpleAbstractDbRowTransformer<Boolean>() {
             @Override
@@ -994,7 +993,7 @@ public class Query extends DmlBase {
     }
 
     public Integer uniqueInteger() {
-        final int offset = driver().paginationColumnOffset(this);
+        final int offset = paginationColumnOffset();
 
         return fetchUnique(new SimpleAbstractRowTransformer<Integer>() {
             @Override
@@ -1005,7 +1004,7 @@ public class Query extends DmlBase {
     }
 
     public Long uniqueLong() {
-        final int offset = driver().paginationColumnOffset(this);
+        final int offset = paginationColumnOffset();
 
         return fetchUnique(new SimpleAbstractRowTransformer<Long>() {
             @Override
@@ -1016,7 +1015,7 @@ public class Query extends DmlBase {
     }
 
     public Float uniqueFloat() {
-        final int offset = driver().paginationColumnOffset(this);
+        final int offset = paginationColumnOffset();
 
         return fetchUnique(new SimpleAbstractRowTransformer<Float>() {
             @Override
@@ -1027,7 +1026,7 @@ public class Query extends DmlBase {
     }
 
     public Double uniqueDouble() {
-        final int offset = driver().paginationColumnOffset(this);
+        final int offset = paginationColumnOffset();
 
         return fetchUnique(new SimpleAbstractRowTransformer<Double>() {
             @Override
@@ -1038,7 +1037,7 @@ public class Query extends DmlBase {
     }
 
     public String uniqueString() {
-        final int offset = driver().paginationColumnOffset(this);
+        final int offset = paginationColumnOffset();
         return fetchUnique(new SimpleAbstractRowTransformer<String>() {
             @Override
             public String transform(ResultSetWrapper rsw) throws SQLException {
@@ -1048,7 +1047,7 @@ public class Query extends DmlBase {
     }
 
     public BigDecimal uniqueBigDecimal() {
-        final int offset = driver().paginationColumnOffset(this);
+        final int offset = paginationColumnOffset();
         return fetchUnique(new SimpleAbstractRowTransformer<BigDecimal>() {
             @Override
             public BigDecimal transform(ResultSetWrapper rsw) throws SQLException {
@@ -1078,7 +1077,11 @@ public class Query extends DmlBase {
      * @return A collection of beans
      */
     public <T> List<T> list(Class<T> klass, boolean reuse) {
-        return list(new MapTransformer<>(this, reuse, new MapBeanTransformer<>(klass, this.getDb().getDriver())));
+        return list(new MapBeanTransformer<>(klass), reuse);
+    }
+    
+    public <T> List<T> list(QueryMapper<T> mapper, boolean reuse) {
+        return list(new MapTransformer<>(this, reuse, mapper));
     }
 
 
@@ -1093,6 +1096,10 @@ public class Query extends DmlBase {
      */
     public <T> List<T> list(Class<T> klass) {
         return list(klass, true);
+    }
+    
+    public <T> List<T> list(QueryMapper<T> mapper) {
+        return list(mapper, true);
     }
 
     private <T> IRowTransformer<T> toRowTransformer(final IRecordTransformer<T> recordTransformer) {
@@ -1134,7 +1141,7 @@ public class Query extends DmlBase {
         Map<String, Object> pars = db.transformParameters(this.parameters);
 
         long now = System.nanoTime();
-        List<T> list = null;
+        List<T> list;
         if (driver().useSQLPagination()) {
             // defining skip and limit as zero, will default to use SQL paginagion (intead of JDBC pagination).
             list = getSimpleJdbc().queryRange(rsql.getSql(), rowMapper, 0, 0, rsql.buildValues(pars));
@@ -1177,32 +1184,41 @@ public class Query extends DmlBase {
     // ======== SELECT (ONE RESULT) ================
 
     public <T> T unique(Class<T> klass) {
+        return unique(new MapBeanTransformer<>(klass));
+    }
+    
+    public <T> T unique(QueryMapper<T> mapper) {
         if (useTree) {
-            return select(klass);
+            return select(mapper);
         } else {
-            return unique(new MapTransformer<>(this, false, new MapBeanTransformer<>(klass, this.getDb().getDriver())));
+            return unique(new MapTransformer<>(this, false, mapper));
         }
     }
 
     public <T> T select(Class<T> klass) {
         return select(klass, true);
     }
+    
+    public <T> T select(QueryMapper<T> mapper) {
+        return select(mapper, true);
+    }
 
     public <T> T select(Class<T> klass, boolean reuse) {
+        return select(new MapBeanTransformer<>(klass), reuse);
+    }
+    
+    public <T> T select(QueryMapper<T> mapper, boolean reuse) {
         if (useTree) {
             if (reuse) {
-                List<T> list = list(new MapTransformer<>(this, true, new MapBeanTransformer<>(klass, this.getDb().getDriver())));
+                List<T> list = list(new MapTransformer<>(this, true, mapper));
 
                 if (list.size() == 0)
                     return null;
                 else
                     return list.get(0); // first one
-            } else {
-                return select(new MapTransformer<>(this, false, new MapBeanTransformer<>(klass, this.getDb().getDriver())));
             }
-        } else {
-            return select(new MapTransformer<>(this, false, new MapBeanTransformer<>(klass, this.getDb().getDriver())));
         }
+        return select(new MapTransformer<>(this, false, mapper));
     }
 
     public <T> T select(final IRecordTransformer<T> recordTransformer) {
@@ -1245,6 +1261,6 @@ public class Query extends DmlBase {
     }
 
     public int paginationColumnOffset() {
-        return driver().paginationColumnOffset(this);
+        return this.getDb().getDriver().paginationColumnOffset(this);
     }
 }

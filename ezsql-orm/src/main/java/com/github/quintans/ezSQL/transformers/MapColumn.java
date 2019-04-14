@@ -11,7 +11,7 @@ public class MapColumn {
         this.key = key;
     }
 
-    public int getColumnIndex() {
+    public int getIndex() {
         return columnIndex;
     }
 

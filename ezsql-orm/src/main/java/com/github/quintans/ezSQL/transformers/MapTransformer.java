@@ -29,7 +29,7 @@ public class MapTransformer<T> implements IRowTransformer<T> {
 
     @Override
     public Collection<T> beforeAll(ResultSetWrapper rsw) {
-        this.offset = query.getDb().getDriver().paginationColumnOffset(query);
+        this.offset = query.paginationColumnOffset();
         if (!this.query.isFlat() && reuse) {
             domainCache = new HashMap<>();
         }
@@ -115,7 +115,7 @@ public class MapTransformer<T> implements IRowTransformer<T> {
             }
 
             if (tableAlias.equals(pseudoAlias)) {
-                mapTable.addColumnNode(new MapColumn(offset + index, column.getAlias(), isKey));
+                mapTable.addColumnNode(new MapColumn(index, column.getAlias(), isKey));
             }
         }
 
@@ -133,7 +133,7 @@ public class MapTransformer<T> implements IRowTransformer<T> {
         if (domainCache == null) {
             rootNode.reset();
         }
-        rootNode.process(rsw, domainCache, offset, null, this.mapper);
+        rootNode.process(new Record(query, rsw), domainCache, null, this.mapper);
 
         return (T) rootNode.getInstance();
     }

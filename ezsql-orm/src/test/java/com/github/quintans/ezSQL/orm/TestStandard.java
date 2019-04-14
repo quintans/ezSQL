@@ -526,7 +526,7 @@ public class TestStandard extends TestBootstrap {
                     .list(ArtistValueDTO.class, false);
             dumpCollection(values);
 
-            assertEquals("Wrong size for outer join. Expected 4, got " + values.size(), 4, values.size());
+            assertEquals("Wrong size for outer join.", 4, values.size());
             for (ArtistValueDTO val : values) {
                 assertNotNull("Invalid Name", val.getName());
                 assertNotNull("Invalid Value", val.getValue());

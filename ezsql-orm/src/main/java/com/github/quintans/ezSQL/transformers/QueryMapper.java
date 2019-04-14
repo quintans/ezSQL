@@ -1,10 +1,11 @@
 package com.github.quintans.ezSQL.transformers;
 
+import com.github.quintans.ezSQL.dml.Query;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
 import java.util.List;
 
-public interface QueryMapper {
+public interface QueryMapper<T> {
     /**
      * Method called to get domain instance when calling the <code>property()</code> method.
      * This method is only called when there is a need to create a new instance.
@@ -33,10 +34,10 @@ public interface QueryMapper {
      * collecting the data from the database and put in the domain instance.
      * The value from a column is always put in an domain instance.
      *
-     * @param rsw resultset wrapper
+     * @param record record
      * @param instance domain instance to return
      * @param mapColumns column mapping info
      * @return true if the instance was populated with data
      */
-    boolean map(ResultSetWrapper rsw, Object instance, List<MapColumn> mapColumns);
+    boolean map(Record record, Object instance, List<MapColumn> mapColumns);
 }

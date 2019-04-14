@@ -1,10 +1,5 @@
 package com.github.quintans.ezSQL.transformers;
 
-import com.github.quintans.jdbc.exceptions.PersistenceException;
-import com.github.quintans.jdbc.transformers.ResultSetWrapper;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -102,27 +97,27 @@ public class MapTable {
         return sb.toString();
     }
 
-    private boolean create(ResultSetWrapper rsw, Object parentInstance, QueryMapper mapper) {
+    private boolean create(Record record, Object parentInstance, QueryMapper mapper) {
         // collect all values from the columns
         instance = mapper.createFrom(parentInstance, associationAlias);
         boolean finalize = false;
-        if (mapper.map(rsw, instance, mapColumns)) {
+        if (mapper.map(record, instance, mapColumns)) {
             finalize = true;
         }
         return finalize;
     }
 
-    public void process(ResultSetWrapper rsw, Map<List<Object>, Object> domainCache, int offset, Object parentInstance, QueryMapper mapper) {
-        List<Object> keyValues = null;
+    public void process(Record record, Map<List<Object>, Object> domainCache, Object parentInstance, QueryMapper mapper) {
+        List<Object> keyValues;
         boolean finalize = false;
         if (domainCache != null) {
-            keyValues = grabKeyValues(rsw, offset);
+            keyValues = grabKeyValues(record);
             if (!keyValues.isEmpty() && !keys.equals(keyValues)) {
                 reset();
 
                 instance = domainCache.get(keyValues);
                 if (instance == null) {
-                    finalize = create(rsw, parentInstance, mapper);
+                    finalize = create(record, parentInstance, mapper);
                 } else {
                     finalize = true;
                 }
@@ -135,7 +130,7 @@ public class MapTable {
 
             }
         } else {
-            finalize = create(rsw, parentInstance, mapper);
+            finalize = create(record, parentInstance, mapper);
         }
 
         if (finalize) {
@@ -146,24 +141,19 @@ public class MapTable {
 
         if (instance != null) {
             for (MapTable mapTable : mapTables) {
-                mapTable.process(rsw, domainCache, offset, instance, mapper);
+                mapTable.process(record, domainCache, instance, mapper);
             }
         }
     }
 
-    private List<Object> grabKeyValues(ResultSetWrapper rsw, int offset) {
+    private List<Object> grabKeyValues(Record record) {
         List<Object> keyValues = new ArrayList<>();
         keyValues.add(tableAlias);
-        for (MapColumn cn : mapColumns) {
-            if (cn.isKey()) {
-                try {
-                    ResultSet rs = rsw.getResultSet();
-                    Object value = rs.getObject(cn.getColumnIndex() + offset);
-                    if (!rs.wasNull()) {
-                        keyValues.add(value);
-                    }
-                } catch (SQLException e) {
-                    throw new PersistenceException(e);
+        for (MapColumn mc : mapColumns) {
+            if (mc.isKey()) {
+                Object value = record.getObject(mc.getIndex());
+                if (value != null) {
+                    keyValues.add(value);
                 }
             }
         }
