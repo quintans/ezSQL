@@ -1,27 +1,22 @@
 package com.github.quintans.ezSQL.dml;
 
-import java.beans.PropertyDescriptor;
+import com.github.quintans.ezSQL.AbstractDb;
+import com.github.quintans.ezSQL.common.api.PostInserter;
+import com.github.quintans.ezSQL.common.api.PreInserter;
+import com.github.quintans.ezSQL.common.api.Updatable;
+import com.github.quintans.ezSQL.db.*;
+import com.github.quintans.ezSQL.driver.Driver;
+import com.github.quintans.ezSQL.toolkit.reflection.FieldUtils;
+import com.github.quintans.ezSQL.toolkit.reflection.TypedField;
+import com.github.quintans.jdbc.RawSql;
+import com.github.quintans.jdbc.exceptions.PersistenceException;
+import org.apache.log4j.Logger;
+
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import com.github.quintans.ezSQL.toolkit.utils.Misc;
-import org.apache.log4j.Logger;
-
-import com.github.quintans.ezSQL.AbstractDb;
-import com.github.quintans.ezSQL.common.api.PostInserter;
-import com.github.quintans.ezSQL.common.api.PreInserter;
-import com.github.quintans.ezSQL.common.api.Updatable;
-import com.github.quintans.ezSQL.db.Column;
-import com.github.quintans.ezSQL.db.Discriminator;
-import com.github.quintans.ezSQL.db.NullSql;
-import com.github.quintans.ezSQL.db.PreInsertTrigger;
-import com.github.quintans.ezSQL.db.Table;
-import com.github.quintans.ezSQL.driver.Driver;
-import com.github.quintans.jdbc.RawSql;
-import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 public class Insert extends DmlCore<Insert> {
     private static final Logger LOG = Logger.getLogger(Insert.class);
@@ -51,21 +46,21 @@ public class Insert extends DmlCore<Insert> {
     public Insert set(Column<?> col, Function value) {
         return _set(col, value);
     }
-    
+
     public <C> Insert set(Column<C> col, C value) {
         return _set(col, value);
     }
-    
-    public <C> Insert with(Column<C> c, C value){
+
+    public <C> Insert with(Column<C> c, C value) {
         setParameter(c, value);
         return this;
     }
-    
-    public Insert with(String name, Object value){
+
+    public Insert with(String name, Object value) {
         setParameter(name, value);
         return this;
-    }    
-    
+    }
+
     @Override
     protected Insert _set(Column<?> col, Object value) {
         super._set(col, value);
@@ -74,33 +69,32 @@ public class Insert extends DmlCore<Insert> {
         }
         return this;
     }
-    
+
     private boolean hasAllKeyValues() {
-        if(table.getSingleKeyColumn() != null) {
+        if (table.getSingleKeyColumn() != null) {
             return hasKeyValue;
         } else {
-            for(Column<?> col : table.getKeyColumns()){
+            for (Column<?> col : table.getKeyColumns()) {
                 Function val = values.get(col);
-                if(val == null || val.getValue() instanceof NullSql) {
+                if (val == null || val.getValue() instanceof NullSql) {
                     return false;
                 }
             }
-            
+
             return true;
         }
     }
 
     /**
      * Loads sets all the columns of the table to matching bean property
-     * 
-     * @param bean
-     *            The bean to match
+     *
+     * @param bean The bean to match
      * @return this
      */
     public Insert set(Object bean) {
         mapBean(bean, false);
 
-        if(bean instanceof Updatable) {
+        if (bean instanceof Updatable) {
             ((Updatable) bean).clear();
         }
 
@@ -119,12 +113,12 @@ public class Insert extends DmlCore<Insert> {
     @SuppressWarnings("unchecked")
     public Map<Column<?>, Object> execute() {
         PreInsertTrigger pre = getTable().getPreInsertTrigger();
-        if(pre != null) {
+        if (pre != null) {
             pre.trigger(this);
         }
-        
+
         boolean hasAllKeyValues = hasAllKeyValues();
-        if(previousHasAllKeyValues != hasAllKeyValues) {
+        if (previousHasAllKeyValues != hasAllKeyValues) {
             this.rawSql = null;
         }
         previousHasAllKeyValues = hasAllKeyValues;
@@ -208,29 +202,29 @@ public class Insert extends DmlCore<Insert> {
 
         return kmap;
     }
-    
-    public int[] batch(){
+
+    public int[] batch() {
         PreInsertTrigger pre = getTable().getPreInsertTrigger();
-        if(pre != null) {
+        if (pre != null) {
             pre.trigger(this);
         }
         return batch(LOG, FQCN, this.parameters);
     }
 
-    public int[] flushBatch(){
+    public int[] flushBatch() {
         return flushBatch(LOG, FQCN);
     }
-    
-    public void endBatch(){
+
+    public void endBatch() {
         endBatch(LOG, FQCN);
-    }    
+    }
 
     /**
      * Insert a table row associated with the supplied bean.<br>
      * This method takes in consideration the <u>version</u> column type, if
      * exists.<b> This is a fast way of creating an Insert but for multiple
      * inserts it is not as efficient as values().execute().</b>
-     * 
+     *
      * @param bean
      * @return
      */
@@ -257,10 +251,10 @@ public class Insert extends DmlCore<Insert> {
                 Column<?> col = entry.getKey();
                 Object val = entry.getValue();
                 // update bean key properties
-                PropertyDescriptor pd = Misc.getPropertyDescriptor(bean.getClass(), col.getAlias());
-                if (pd != null) {
+                TypedField tf = FieldUtils.getBeanTypedField(bean.getClass(), col.getAlias());
+                if (tf != null) {
                     try {
-                        Class<?> clazz = pd.getPropertyType();
+                        Class<?> clazz = tf.getPropertyType();
                         if (val instanceof Number) {
                             if (Long.class.isAssignableFrom(clazz)) {
                                 val = ((Number) val).longValue();
@@ -269,9 +263,9 @@ public class Insert extends DmlCore<Insert> {
                             }
                         }
 
-                        pd.getWriteMethod().invoke(bean, val);
+                        tf.set(bean, val);
                     } catch (Exception e) {
-                        throw new PersistenceException("Unable to write to " + bean.getClass().getSimpleName() + "." + pd.getWriteMethod().getName(), e);
+                        throw new PersistenceException("Unable to write to " + bean.getClass().getSimpleName() + "." + col.getAlias(), e);
                     }
                 }
             }
@@ -281,57 +275,57 @@ public class Insert extends DmlCore<Insert> {
             ((PostInserter) bean).postInsert();
         }
 
-        if(bean instanceof Updatable) {
+        if (bean instanceof Updatable) {
             ((Updatable) bean).clear();
         }
-        
+
         return keys;
     }
 
     private void mapBean(Object bean, boolean versioned) {
         this.parameters = new LinkedHashMap<>();
         this.values = new LinkedHashMap<>();
-        
+
         if (bean.getClass() != this.lastBeanClass) {
             this.lastBeanClass = bean.getClass();
             this.rawSql = null;
         }
 
         Set<String> changed = null;
-        if(bean instanceof Updatable) {
+        if (bean instanceof Updatable) {
             changed = ((Updatable) bean).changed();
         }
-        
+
         boolean ignoreNullKeys = db.getDriver().ignoreNullKeys();
         for (Column<?> column : table.getColumns()) {
             String alias = column.getAlias();
-            PropertyDescriptor pd = null;
-            if(changed == null || column.isKey() || column.isVersion() || changed.contains(alias)){
-                pd = Misc.getPropertyDescriptor(bean.getClass(), alias);
+            TypedField tf = null;
+            if (changed == null || column.isKey() || column.isVersion() || changed.contains(alias)) {
+                tf = FieldUtils.getBeanTypedField(bean.getClass(), alias);
             }
-            if (pd != null) {
+            if (tf != null) {
                 Object o;
                 try {
-                    o = pd.getReadMethod().invoke(bean);
+                    o = tf.get(bean);
                 } catch (Exception e) {
-                    throw new PersistenceException("Unable to read from " + bean.getClass().getSimpleName() + "." + pd.getReadMethod().getName(), e);
+                    throw new PersistenceException("Unable to read from " + bean.getClass().getSimpleName() + "." + alias, e);
                 }
 
-                if(column.isKey()){
-                    if(ignoreNullKeys) {
-                        
+                if (column.isKey()) {
+                    if (ignoreNullKeys) {
+
                     }
                 } else if (versioned && column.isVersion() && o == null) {
                     try {
-                        if (Long.class.isAssignableFrom(pd.getPropertyType())) {
+                        if (Long.class.isAssignableFrom(tf.getPropertyType())) {
                             o = 1L;
                         } else {
                             o = 1;
                         }
 
-                        pd.getWriteMethod().invoke(bean, o);
+                        tf.set(bean, o);
                     } catch (Exception e) {
-                        throw new PersistenceException("Unable to write to " + bean.getClass().getSimpleName() + "." + pd.getWriteMethod().getName(), e);
+                        throw new PersistenceException("Unable to write to " + bean.getClass().getSimpleName() + "." + alias, e);
                     }
                 }
                 this._set(column, o);

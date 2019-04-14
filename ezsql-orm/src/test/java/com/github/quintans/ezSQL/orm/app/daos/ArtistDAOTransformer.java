@@ -40,7 +40,7 @@ public class ArtistDAOTransformer implements QueryMapper<Artist> {
     }
 
     @Override
-    public void apply(Object instance, String name, Object value) {
+    public void link(Object instance, String name, Object value) {
         if (instance instanceof Artist) {
             Artist entity = (Artist) instance;
 
@@ -51,7 +51,7 @@ public class ArtistDAOTransformer implements QueryMapper<Artist> {
                 entity.getPaintings().add((Painting) value);
             }
         } else if (instance instanceof Painting) {
-            getPaintingMapper().apply(instance, name, value);
+            getPaintingMapper().link(instance, name, value);
         }
     }
 

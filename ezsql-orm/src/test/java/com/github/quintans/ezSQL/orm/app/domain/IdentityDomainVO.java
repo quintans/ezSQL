@@ -1,36 +1,33 @@
 package com.github.quintans.ezSQL.orm.app.domain;
 
+import com.github.quintans.ezSQL.common.api.Updatable;
+import com.github.quintans.ezSQL.toolkit.utils.HashCodeUtil;
+
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import com.github.quintans.ezSQL.common.api.Updatable;
-import com.github.quintans.ezSQL.toolkit.utils.HashCodeUtil;
-
-public class IdentityDomain<T extends Serializable> implements Updatable {
+public abstract class IdentityDomainVO<T extends Serializable> implements Updatable {
     private Set<String> _changed = new HashSet<String>();
 
 	protected T id;
 
 	private int _forHash = 0;
 
-	public IdentityDomain() {
+	public IdentityDomainVO(T id) {
+		this.id = id;
 	}
 
 	public T getId() {
 		return this.id;
 	}
 
-	public void setId(T id) {
-		this.id = id;
-	}
-
 	public void copy(Object o) {
-		if (o instanceof IdentityDomain) {
+		if (o instanceof IdentityDomainVO) {
 			@SuppressWarnings("unchecked")
-            IdentityDomain<T> entity = (IdentityDomain<T>) o;
+            IdentityDomainVO<T> entity = (IdentityDomainVO<T>) o;
 
 			this.id = entity.id;
 		}
@@ -43,7 +40,7 @@ public class IdentityDomain<T extends Serializable> implements Updatable {
 			return true;
 
 		if (o != null && this.getClass().equals(o.getClass())) {
-			IdentityDomain<T> be = (IdentityDomain<T>) o;
+			IdentityDomainVO<T> be = (IdentityDomainVO<T>) o;
 			return this.id != null && this.id.equals(be.id);
 		} else
 			return false;
@@ -91,5 +88,5 @@ public class IdentityDomain<T extends Serializable> implements Updatable {
     protected void dirty(String name){
         _changed.add(name);
     }
-    
+
 }

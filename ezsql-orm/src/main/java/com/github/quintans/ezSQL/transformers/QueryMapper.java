@@ -12,7 +12,7 @@ public interface QueryMapper<T> {
      * If the parent instance is null, it means we are asking for the root object to be instantiated.
      * Otherwise we are asking an instance of the type defined by the property defined in 'name' in the parent instance.
      * Override this method to provide your own implementation for a different domain object.
-     * For example we might want to return Map<String, Object>. We could even return a builder instance.
+     * For example we might want to return a protobuf DynamicMessage.
      *
      * @param parentInstance parent instance
      * @param name           name of the parent property that we want to instantiate for
@@ -28,7 +28,7 @@ public interface QueryMapper<T> {
      * @param name name of the parent property that we want to set for
      * @param value the instance
      */
-    void apply(Object parentInstance, String name, Object value);
+    void link(Object parentInstance, String name, Object value);
 
     /**
      * collecting the data from the database and put in the domain instance.

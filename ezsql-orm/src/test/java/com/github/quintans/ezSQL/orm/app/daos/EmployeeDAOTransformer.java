@@ -24,7 +24,7 @@ public class EmployeeDAOTransformer implements QueryMapper<Employee> {
     }
 
     @Override
-    public void apply(Object instance, String name, Object value) {
+    public void link(Object instance, String name, Object value) {
 
     }
 

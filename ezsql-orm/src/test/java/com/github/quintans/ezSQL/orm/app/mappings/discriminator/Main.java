@@ -9,6 +9,9 @@ public class Main {
     private Be be;
     private Ce ce;
 
+    public Main() {
+    }
+
     public Long getId() {
         return id;
     }

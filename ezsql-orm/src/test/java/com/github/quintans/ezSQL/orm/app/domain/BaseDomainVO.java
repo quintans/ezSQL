@@ -3,11 +3,13 @@ package com.github.quintans.ezSQL.orm.app.domain;
 import java.io.Serializable;
 
 
-public abstract class BaseDomain<T extends Serializable> extends IdentityDomain<T> {
+public abstract class BaseDomainVO<T extends Serializable> extends IdentityDomainVO<T> {
 
 	protected Integer version;
 
-	public BaseDomain() {
+	public BaseDomainVO(T id, Integer version) {
+		super(id);
+		this.version = version;
 	}
 
 	public boolean persited() {
@@ -18,15 +20,11 @@ public abstract class BaseDomain<T extends Serializable> extends IdentityDomain<
 		return this.version;
 	}
 
-	public void setVersion(Integer version) {
-		this.version = version;
-	}
-
 	@SuppressWarnings("unchecked")
     public void copy(Object o) {
 	    super.copy(o);
-		if (o instanceof BaseDomain) {
-			BaseDomain<T> entity = (BaseDomain<T>) o;
+		if (o instanceof BaseDomainVO) {
+			BaseDomainVO<T> entity = (BaseDomainVO<T>) o;
 			this.version = entity.version;
 		}
 	}

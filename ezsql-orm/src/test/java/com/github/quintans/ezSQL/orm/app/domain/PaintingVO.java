@@ -1,107 +1,89 @@
 package com.github.quintans.ezSQL.orm.app.domain;
 
-import java.util.Set;
+public class PaintingVO extends BaseDomainVO<Long> {
+    private String name;
+    private Double price;
 
-public class Painting extends BaseDomain<Long> {	
-	private String name;
-	private Double price;
-
-	private Artist artist;
-	private Long artistId;
-	private Image image;
-	private Long imageFk;
-	
-	private Set<Gallery> galleries;
-	
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public Double getPrice() {
-		return price;
-	}
-
-	public void setPrice(Double price) {
-		this.price = price;
-	}
-
-	public Artist getArtist() {
-		return artist;
-	}
-
-	public void setArtist(Artist artist) {
-		this.artist = artist;
-		if(artist != null)
-			artistId = artist.getId();
-		else
-			artistId = null;
-	}
-
-	public Long getArtistId() {
-        return artistId;
+    public PaintingVO(Long id, Integer version, String name, Double price) {
+        super(id, version);
+        this.name = name;
+        this.price = price;
     }
 
-    public void setArtistId(Long artistId) {
-        this.artistId = artistId;
+    private PaintingVO(Builder builder) {
+        super(builder.id, builder.version);
+        name = builder.name;
+        price = builder.price;
     }
 
-    public Set<Gallery> getGalleries() {
-		return galleries;
-	}
-
-	public void setGalleries(Set<Gallery> galleries) {
-		this.galleries = galleries;
-	}
-
-	public Image getImage() {
-        return image;
+    public static Builder newBuilder() {
+        return new Builder();
     }
 
-    public void setImage(Image image) {
-        this.image = image;
-        if(image != null)
-            imageFk = image.getId();
-        else
-            imageFk = null;    }
+    public Builder toBuilder() {
+        Builder builder = new Builder();
+        builder.id = getId();
+        builder.version = getVersion();
+        builder.name = getName();
+        builder.price = getPrice();
+        return builder;
+    }
 
-    public Long getImageFk() {
-		return imageFk;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public void setImageFk(Long imageFk) {
-		this.imageFk = imageFk;
-	}
+    public Double getPrice() {
+        return price;
+    }
 
-	@Override
-	public String toString() {
-		final int maxLen = 10;
-		StringBuilder builder = new StringBuilder();
-		builder.append("Painting [id=");
-		builder.append(id);
-		builder.append(", version=");
-		builder.append(version);
-		builder.append(", name=");
-		builder.append(name);
-		builder.append(", price=");
-		builder.append(price);
-		builder.append(", artist=");
-		builder.append(artist);
-		builder.append(", artistId=");
-		builder.append(artistId);
-		builder.append(", imageFk=");
-		builder.append(imageFk);
-        builder.append(", image=");
-        builder.append(image);
-		builder.append(", galleries=");
-		builder.append(galleries != null ? toString(galleries, maxLen) : null);
-		builder.append("]");
-		return builder.toString();
-	}
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("PaintingVO [id=");
+        builder.append(id);
+        builder.append(", version=");
+        builder.append(version);
+        builder.append(", name=");
+        builder.append(name);
+        builder.append(", price=");
+        builder.append(price);
+        builder.append("]");
+        return builder.toString();
+    }
 
 
+    public static final class Builder {
+        private Long id;
+        private Integer version;
+        private String name;
+        private Double price;
 
+        private Builder() {
+        }
+
+        public Builder id(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder version(Integer version) {
+            this.version = version;
+            return this;
+        }
+
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder price(Double price) {
+            this.price = price;
+            return this;
+        }
+
+        public PaintingVO build() {
+            return new PaintingVO(this);
+        }
+    }
 }

@@ -8,7 +8,6 @@ import com.github.quintans.ezSQL.transformers.MapColumn;
 import com.github.quintans.ezSQL.transformers.QueryMapper;
 import com.github.quintans.ezSQL.transformers.Record;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
-import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
 import java.util.List;
 
@@ -39,7 +38,7 @@ public class PaintingDAOTransformer implements QueryMapper<Painting> {
     }
 
     @Override
-    public void apply(Object instance, String name, Object value) {
+    public void link(Object instance, String name, Object value) {
         if (instance instanceof Painting) {
             Painting entity = (Painting) instance;
 
@@ -47,7 +46,7 @@ public class PaintingDAOTransformer implements QueryMapper<Painting> {
                 entity.setArtist((Artist) value);
             }
         } else if (instance instanceof Painting) {
-            getArtistMapper().apply(instance, name, value);
+            getArtistMapper().link(instance, name, value);
         }
     }
 

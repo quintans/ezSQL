@@ -6,7 +6,7 @@ import com.github.quintans.ezSQL.common.type.MyDate;
 import com.github.quintans.ezSQL.common.type.MyDateTime;
 import com.github.quintans.ezSQL.common.type.MyTime;
 
-public class Temporal extends IdentityDomain {
+public class Temporal extends IdentityDomain<Long> {
     private MyTime clock;
     private MyDate today;
     private MyDateTime now;

@@ -7,10 +7,10 @@ import com.github.quintans.ezSQL.dml.Function;
 import com.github.quintans.ezSQL.dml.Query;
 import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.ezSQL.exceptions.OptimisticLockException;
-import com.github.quintans.ezSQL.toolkit.utils.Misc;
+import com.github.quintans.ezSQL.toolkit.reflection.FieldUtils;
+import com.github.quintans.ezSQL.toolkit.reflection.TypedField;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 
-import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.util.ArrayList;
@@ -49,17 +49,17 @@ public class TypedDb extends com.github.quintans.ezSQL.Db {
     public <T> T save(TypedTable<T, ?> table, T entity) {
 
         String alias = table.getVersionColumn().getAlias();
-        PropertyDescriptor pd = Misc.getPropertyDescriptor(entity.getClass(), alias);
-        if (pd != null) {
+        TypedField tf = FieldUtils.getBeanTypedField(entity.getClass(), alias);
+        if (tf != null) {
             Object version;
             try {
-                version = pd.getReadMethod().invoke(entity);
+                version = tf.get(entity);
             } catch (IllegalAccessException | InvocationTargetException e) {
                 throw new PersistenceException("Unable to get version for " + entity.getClass().getCanonicalName(), e);
             }
             if (version == null) {
                 try {
-                    pd.getWriteMethod().invoke(entity, 1);
+                    tf.set(entity, 1);
                 } catch (IllegalAccessException | InvocationTargetException e) {
                     throw new PersistenceException("Unable to set version for " + entity.getClass().getCanonicalName(), e);
                 }

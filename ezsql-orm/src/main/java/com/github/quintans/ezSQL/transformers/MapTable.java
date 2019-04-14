@@ -135,7 +135,7 @@ public class MapTable {
 
         if (finalize) {
             if (parentInstance != null) {
-                mapper.apply(parentInstance, associationAlias, instance);
+                mapper.link(parentInstance, associationAlias, instance);
             }
         }
 

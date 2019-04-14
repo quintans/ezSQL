@@ -1,10 +1,12 @@
 package com.github.quintans.ezSQL.transformers;
 
-import com.github.quintans.ezSQL.toolkit.utils.Misc;
+import com.github.quintans.ezSQL.toolkit.reflection.FieldUtils;
+import com.github.quintans.ezSQL.toolkit.reflection.TypedField;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 
-import java.beans.PropertyDescriptor;
-import java.lang.reflect.Method;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -21,51 +23,55 @@ public class MapBeanTransformer<T> implements QueryMapper<T> {
         try {
             // handling root table
             if (parentInstance == null) {
-                return clazz.newInstance();
+                return create(clazz);
             }
 
-            PropertyDescriptor pd = Misc.getPropertyDescriptor(parentInstance.getClass(), name);
-            if (pd != null) {
-                Class<?> type = pd.getPropertyType();
+            TypedField tf = FieldUtils.getBeanTypedField(parentInstance.getClass(), name);
+            if (tf != null) {
+                Class<?> type = tf.getPropertyType();
 
-                Method setter = pd.getWriteMethod();
                 // if it is a collection we create an instance of the subtype and add it to the collection
                 // we return the subtype and not the collection
                 if (Collection.class.isAssignableFrom(type)) {
-                    type = Misc.genericClass(setter.getGenericParameterTypes()[0]);
-
-                    return type.newInstance();
-                } else {
-                    return type.newInstance();
+                    type = FieldUtils.getTypeGenericClass(tf.getType());
                 }
+                return create(type);
             } else {
                 throw new PersistenceException(parentInstance.getClass() + " does not have setter for " + name);
             }
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | NoSuchMethodException | InvocationTargetException e) {
             throw new PersistenceException(e);
         }
     }
 
-    @Override
-    public void apply(Object instance, String name, Object value) {
-        try {
-            PropertyDescriptor pd = Misc.getPropertyDescriptor(instance.getClass(), name);
-            if (pd != null) {
-                Class<?> type = pd.getPropertyType();
+    protected Object create(Class<?> type) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+        Constructor<?> constructor = type.getDeclaredConstructor();
+        if(constructor == null) {
+            throw new PersistenceException(type.getCanonicalName() + " does not have an empty constructor.");
+        }
+        constructor.setAccessible(true);
+        return constructor.newInstance();
+    }
 
-                Method setter = pd.getWriteMethod();
+    @Override
+    public void link(Object parentInstance, String name, Object value) {
+        try {
+            TypedField tf = FieldUtils.getBeanTypedField(parentInstance.getClass(), name);
+            if (tf != null) {
+                Class<?> type = tf.getPropertyType();
+
                 // if it is a collection we create an instance of the subtype and add it to the collection
                 // we return the subtype and not the collection
                 if (Collection.class.isAssignableFrom(type)) {
-                    Collection collection = (Collection) pd.getReadMethod().invoke(instance);
+                    Collection collection = (Collection) tf.get(parentInstance);
                     if (collection == null) {
                         collection = new LinkedHashSet<>();
-                        setter.invoke(instance, collection);
+                        tf.set(parentInstance, collection);
                     }
                     collection.add(value);
-                    setter.invoke(instance, collection);
+                    tf.set(parentInstance, collection);
                 } else {
-                    setter.invoke(instance, value);
+                    tf.set(parentInstance, value);
                 }
             }
         } catch (Exception e) {
@@ -79,18 +85,18 @@ public class MapBeanTransformer<T> implements QueryMapper<T> {
             boolean touched = false;
             for (MapColumn mapColumn : mapColumns) {
 
-                PropertyDescriptor pd = Misc.getPropertyDescriptor(instance.getClass(), mapColumn.getAlias());
-                if (pd != null) {
-                    Class<?> type = pd.getPropertyType();
+                TypedField tf = FieldUtils.getBeanTypedField(instance.getClass(), mapColumn.getAlias());
+                if (tf != null) {
+                    Class<?> type = tf.getPropertyType();
 
                     Object value = record.get(mapColumn.getIndex(), type);
-                    pd.getWriteMethod().invoke(instance, value);
+                    tf.set(instance, value);
                     touched |= value != null;
                 }
             }
 
             return touched;
-        } catch (Exception e) {
+        } catch (IllegalAccessException | SQLException | InvocationTargetException e) {
             throw new PersistenceException(e);
         }
     }

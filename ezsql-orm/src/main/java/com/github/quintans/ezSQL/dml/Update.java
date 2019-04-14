@@ -9,12 +9,12 @@ import com.github.quintans.ezSQL.db.Discriminator;
 import com.github.quintans.ezSQL.db.PreUpdateTrigger;
 import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.exceptions.OptimisticLockException;
-import com.github.quintans.ezSQL.toolkit.utils.Misc;
+import com.github.quintans.ezSQL.toolkit.reflection.FieldUtils;
+import com.github.quintans.ezSQL.toolkit.reflection.TypedField;
 import com.github.quintans.jdbc.RawSql;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 import org.apache.log4j.Logger;
 
-import java.beans.PropertyDescriptor;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -192,7 +192,7 @@ public class Update extends Dml<Update> {
         if (idVer.versionBeanProperty != null) {
             if (result > 0) {
                 try {
-                    idVer.versionBeanProperty.getWriteMethod().invoke(bean, idVer.versionValue);
+                    idVer.versionBeanProperty.set(bean, idVer.versionValue);
                 } catch (Exception e) {
                     throw new PersistenceException(VERSION_SET_MSG, e);
                 }
@@ -224,13 +224,13 @@ public class Update extends Dml<Update> {
         for (Column<?> column : table.getColumns()) {
             String alias = column.getAlias();
             if (changed == null || column.isKey() || column.isVersion() || changed.contains(alias)) {
-                PropertyDescriptor pd = Misc.getPropertyDescriptor(bean.getClass(), alias);
-                if (pd != null) {
+                TypedField ft = FieldUtils.getBeanTypedField(bean.getClass(), alias);
+                if (ft != null) {
                     Object o;
                     try {
-                        o = pd.getReadMethod().invoke(bean);
+                        o = ft.get(bean);
                     } catch (Exception e) {
-                        throw new PersistenceException("Unable to read from " + bean.getClass().getSimpleName() + "." + pd.getReadMethod().getName(), e);
+                        throw new PersistenceException("Unable to read from " + bean.getClass().getSimpleName() + "." + alias, e);
                     }
 
                     if (column.isKey()) {
@@ -247,7 +247,7 @@ public class Update extends Dml<Update> {
                         // if version is null ignores it
                         if (o != null) {
                             // version increment
-                            if (Long.class.isAssignableFrom(pd.getPropertyType())) {
+                            if (Long.class.isAssignableFrom(ft.getPropertyType())) {
                                 idVer.versionValue = (Long) o + 1L;
                             } else {
                                 idVer.versionValue = (Integer) o + 1;
@@ -261,7 +261,7 @@ public class Update extends Dml<Update> {
 
                             this._set(column, idVer.versionValue);
 
-                            idVer.versionBeanProperty = pd;
+                            idVer.versionBeanProperty = ft;
                         }
                     } else {
                         this._set(column, o);
@@ -279,7 +279,7 @@ public class Update extends Dml<Update> {
 
     private static class IdVer {
         boolean noId = true;
-        PropertyDescriptor versionBeanProperty = null;
+        TypedField versionBeanProperty = null;
         Object versionValue = null;
     }
 }
