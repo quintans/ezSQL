@@ -28,7 +28,7 @@ gpg --list-secret-keys --keyid-format LONG
 ```
 
 ```bash
-gpg2 --keyserver hkp://keyserver.ubuntu.com --send-keys 0F33B0BE4C444D2E
+gpg2 --keyserver hkp://keyserver.ubuntu.com --send-keys (put here value after rsa3072/### in the sec line )
 ```
 
 after deploy to staging we need to release the deployments.
