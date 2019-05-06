@@ -11,7 +11,7 @@ import com.github.quintans.ezSQL.toolkit.io.BinStore;
 import com.github.quintans.ezSQL.toolkit.io.TextStore;
 import com.github.quintans.ezSQL.toolkit.reflection.FieldUtils;
 import com.github.quintans.ezSQL.toolkit.reflection.TypedField;
-import com.github.quintans.ezSQL.toolkit.utils.Misc;
+import com.github.quintans.ezSQL.transformers.*;
 import com.github.quintans.jdbc.JdbcSession;
 import com.github.quintans.jdbc.SimpleJdbc;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 public abstract class AbstractDb {
     private static Logger LOGGER = Logger.getLogger(AbstractDb.class);
@@ -31,9 +32,22 @@ public abstract class AbstractDb {
     private Driver driver;
     private JdbcSession jdbcSession;
 
+    private Collection<QueryMapper> queryMappers;
+    private Collection<InsertMapper> insertMappers;
+    private Collection<DeleteMapper> deleteMappers;
+    private Collection<UpdateMapper> updateMappers;
+
     public AbstractDb(Driver driver) {
         this.driver = driver;
         this.jdbcSession = new DbJdbcSession(this, driver.isPmdKnownBroken());
+        this.queryMappers = new ConcurrentLinkedDeque<>();
+        this.queryMappers.add(new QueryMapperBean());
+        this.insertMappers  = new ConcurrentLinkedDeque<>();
+        this.insertMappers.add(new InsertMapperBean());
+        this.deleteMappers = new ConcurrentLinkedDeque<>();
+        this.deleteMappers.add(new DeleteMapperBean());
+        this.updateMappers = new ConcurrentLinkedDeque<>();
+        this.updateMappers.add(new UpdateMapperBean());
     }
 
     /**
@@ -252,4 +266,61 @@ public abstract class AbstractDb {
         return val;
     }
 
+    @SafeVarargs
+    public final void registerQueryMappers(Class<? extends QueryMapper>... mappers) {
+        registerMappers(this.queryMappers, mappers);
+    }
+
+    public QueryMapper findQueryMapper(Class<?> klass) {
+        return findMapper(queryMappers, klass, QueryMapper.class.getSimpleName());
+    }
+
+    @SafeVarargs
+    public final void registerInsertMappers(Class<? extends InsertMapper>... mappers) {
+        registerMappers(this.insertMappers, mappers);
+    }
+
+    public InsertMapper findInsertMapper(Class<?> klass) {
+        return findMapper(insertMappers, klass, InsertMapper.class.getSimpleName());
+    }
+
+    @SafeVarargs
+    public final void registerDeleteMappers(Class<? extends DeleteMapper>... mappers) {
+        registerMappers(this.deleteMappers, mappers);
+    }
+
+    public DeleteMapper findDeleteMapper(Class<?> klass) {
+        return findMapper(deleteMappers, klass, DeleteMapper.class.getSimpleName());
+    }
+
+    @SafeVarargs
+    public final void registerUpdateMappers(Class<? extends UpdateMapper>... mappers) {
+        registerMappers(this.updateMappers, mappers);
+    }
+
+    public UpdateMapper findUpdateMapper(Class<?> klass) {
+        return findMapper(updateMappers, klass, UpdateMapper.class.getSimpleName());
+    }
+
+    @SuppressWarnings("unchecked")
+    @SafeVarargs
+    private final <T extends MapperSupporter> void registerMappers(Collection<T> mappers, Class<? extends MapperSupporter>... mapperClasses) {
+        mappers.clear();
+        for (Class<? extends MapperSupporter> qm : mapperClasses) {
+            try {
+                mappers.add((T) qm.newInstance());
+            } catch (InstantiationException | IllegalAccessException e) {
+                throw new IllegalArgumentException("Cannot instantiate " + qm.getCanonicalName(), e);
+            }
+        }
+    }
+
+    private <T extends MapperSupporter> T findMapper(Collection<T> supporters, Class<?> klass, String notFoundMsg) {
+        return supporters.stream()
+                .filter(qm -> qm.support(klass))
+                .findFirst()
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Unable to find a " + notFoundMsg + " for " + klass.getCanonicalName())
+                );
+    }
 }

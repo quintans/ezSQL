@@ -97,9 +97,13 @@ public class MapTable {
         return sb.toString();
     }
 
-    private boolean create(Record record, Object parentInstance, QueryMapper mapper) {
+    private boolean create(Record record, Class<?> rootClass, Object parentInstance, QueryMapper mapper) {
         // collect all values from the columns
-        instance = mapper.createFrom(parentInstance, associationAlias);
+        if (parentInstance == null) {
+            instance = mapper.createRoot(rootClass);
+        } else {
+            instance = mapper.createFrom(parentInstance, associationAlias);
+        }
         boolean finalize = false;
         if (mapper.map(record, instance, mapColumns)) {
             finalize = true;
@@ -107,7 +111,7 @@ public class MapTable {
         return finalize;
     }
 
-    public void process(Record record, Map<List<Object>, Object> domainCache, Object parentInstance, QueryMapper mapper) {
+    public void process(Record record, Map<List<Object>, Object> domainCache, Class<?> rootClass, Object parentInstance, QueryMapper mapper) {
         List<Object> keyValues;
         boolean finalize = false;
         if (domainCache != null) {
@@ -117,7 +121,7 @@ public class MapTable {
 
                 instance = domainCache.get(keyValues);
                 if (instance == null) {
-                    finalize = create(record, parentInstance, mapper);
+                    finalize = create(record, rootClass, parentInstance, mapper);
                 } else {
                     finalize = true;
                 }
@@ -130,7 +134,7 @@ public class MapTable {
 
             }
         } else {
-            finalize = create(record, parentInstance, mapper);
+            finalize = create(record, rootClass, parentInstance, mapper);
         }
 
         if (finalize) {
@@ -141,7 +145,7 @@ public class MapTable {
 
         if (instance != null) {
             for (MapTable mapTable : mapTables) {
-                mapTable.process(record, domainCache, instance, mapper);
+                mapTable.process(record, domainCache, rootClass, instance, mapper);
             }
         }
     }

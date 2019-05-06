@@ -1,21 +1,35 @@
 package com.github.quintans.ezSQL.orm.mapper;
 
-import com.github.quintans.ezSQL.transformers.MapBeanTransformer;
+import com.github.quintans.ezSQL.transformers.QueryMapperBean;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
-public class BuilderMapper<T> extends MapBeanTransformer<T> {
+public class BuilderMapper extends QueryMapperBean {
 
-    public BuilderMapper(Class<T> clazz) {
-        super(clazz);
+    private static final String NEW_BUILDER = "newBuilder";
+
+    @Override
+    public boolean support(Class<?> rootClass) {
+        try {
+            Method m = rootClass.getDeclaredMethod(NEW_BUILDER);
+            int mod = m.getModifiers();
+            return Modifier.isStatic(mod) && Modifier.isPublic(mod);
+        } catch (NoSuchMethodException e) {
+            return false;
+        }
     }
 
     @Override
-    protected Object create(Class<?> type) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        Object builder = call(type, null,"newBuilder"); // static method
-        return call(builder.getClass(), builder,"build");
+    protected Object create(Class<?> type) {
+        try {
+            Object builder = call(type, null, NEW_BUILDER); // static method
+            return call(builder.getClass(), builder, "build");
+        } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            throw new PersistenceException(e);
+        }
     }
 
     private Object call(Class<?> type, Object instance, String name) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {

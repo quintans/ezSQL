@@ -87,6 +87,7 @@ create table employee (
     name varchar(100) not null,
 	sex boolean,
     PAY_GRADE INTEGER,
+    EYE_COLOR VARCHAR(1000),
     CREATION timestamp
 );
 

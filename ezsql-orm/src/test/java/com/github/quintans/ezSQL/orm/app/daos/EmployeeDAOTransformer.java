@@ -1,6 +1,5 @@
 package com.github.quintans.ezSQL.orm.app.daos;
 
-import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.ezSQL.orm.app.domain.Employee;
 import com.github.quintans.ezSQL.orm.app.mappings.TEmployee;
 import com.github.quintans.ezSQL.transformers.MapColumn;
@@ -11,16 +10,22 @@ import com.github.quintans.jdbc.exceptions.PersistenceException;
 import java.util.Date;
 import java.util.List;
 
-public class EmployeeDAOTransformer implements QueryMapper<Employee> {
-    private Driver driver;
+public class EmployeeDAOTransformer implements QueryMapper {
 
-    public EmployeeDAOTransformer(Driver driver) {
-        this.driver = driver;
+    @Override
+    public boolean support(Class<?> rootClass) {
+        return Employee.class.equals(rootClass);
+    }
+
+    @Override
+    public Object createRoot(Class<?> rootClass) {
+        return new Employee();
     }
 
     @Override
     public Object createFrom(Object instance, String name) {
-        return new Employee();
+        throw new IllegalArgumentException("Unknown mapping for alias " +
+                instance.getClass().getCanonicalName() + "#" + name);
     }
 
     @Override

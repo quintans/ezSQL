@@ -1204,6 +1204,7 @@ GMuoqWq1U1HTQsYmBMcSqTuvoMTw2HpMqEtaAY4DilK//9k=]]></value>
     <column>NAME</column>
     <column>SEX</column>
     <column>PAY_GRADE</column>
+    <column>EYE_COLOR</column>
     <column>CREATION</column>
-  </table>  
+  </table>
 </dataset>

@@ -17,19 +17,19 @@ public class MapTransformer<T> implements IRowTransformer<T> {
     private Map<List<Object>, Object> domainCache;
 
     private Query query;
-    private int offset;
     private boolean reuse;
+    private Class<T> rootClass;
     private QueryMapper mapper;
 
-    public MapTransformer(Query query, boolean reuse, QueryMapper mapper) {
+    public MapTransformer(Query query, boolean reuse, Class<T> rootClass, QueryMapper mapper) {
         this.query = query;
         this.reuse = reuse;
+        this.rootClass = rootClass;
         this.mapper = mapper;
     }
 
     @Override
     public Collection<T> beforeAll(ResultSetWrapper rsw) {
-        this.offset = query.paginationColumnOffset();
         if (!this.query.isFlat() && reuse) {
             domainCache = new HashMap<>();
         }
@@ -133,7 +133,7 @@ public class MapTransformer<T> implements IRowTransformer<T> {
         if (domainCache == null) {
             rootNode.reset();
         }
-        rootNode.process(new Record(query, rsw), domainCache, null, this.mapper);
+        rootNode.process(new Record(query, rsw), domainCache, rootClass, null, this.mapper);
 
         return (T) rootNode.getInstance();
     }

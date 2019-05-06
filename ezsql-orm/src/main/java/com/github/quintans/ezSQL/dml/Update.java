@@ -9,8 +9,9 @@ import com.github.quintans.ezSQL.db.Discriminator;
 import com.github.quintans.ezSQL.db.PreUpdateTrigger;
 import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.exceptions.OptimisticLockException;
-import com.github.quintans.ezSQL.toolkit.reflection.FieldUtils;
-import com.github.quintans.ezSQL.toolkit.reflection.TypedField;
+import com.github.quintans.ezSQL.toolkit.utils.Result;
+import com.github.quintans.ezSQL.transformers.UpdateMapper;
+import com.github.quintans.ezSQL.transformers.UpdateValue;
 import com.github.quintans.jdbc.RawSql;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 import org.apache.log4j.Logger;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import static com.github.quintans.ezSQL.dml.Definition.param;
 
@@ -46,6 +48,11 @@ public class Update extends Dml<Update> {
 
     public <C> Update set(Column<C> col, Column<C> value) {
         return _set(col, value);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <C> C get(Column<C> col) {
+        return (C) _get(col);
     }
 
     public <C> Update with(Column<C> c, C value) {
@@ -189,13 +196,9 @@ public class Update extends Dml<Update> {
         }
 
         int result = this.execute();
-        if (idVer.versionBeanProperty != null) {
+        if (idVer.versionValue != null) {
             if (result > 0) {
-                try {
-                    idVer.versionBeanProperty.set(bean, idVer.versionValue);
-                } catch (Exception e) {
-                    throw new PersistenceException(VERSION_SET_MSG, e);
-                }
+                idVer.setter.accept(idVer.versionValue);
             }
         }
 
@@ -224,15 +227,11 @@ public class Update extends Dml<Update> {
         for (Column<?> column : table.getColumns()) {
             String alias = column.getAlias();
             if (changed == null || column.isKey() || column.isVersion() || changed.contains(alias)) {
-                TypedField ft = FieldUtils.getBeanTypedField(bean.getClass(), alias);
-                if (ft != null) {
-                    Object o;
-                    try {
-                        o = ft.get(bean);
-                    } catch (Exception e) {
-                        throw new PersistenceException("Unable to read from " + bean.getClass().getSimpleName() + "." + alias, e);
-                    }
-
+                UpdateMapper mapper = db.findUpdateMapper(bean.getClass());
+                Result<UpdateValue> result = mapper.map(column, bean);
+                if (result.isSuccess()) {
+                    UpdateValue updateValue = result.get();
+                    Object o = updateValue.getCurrent();
                     if (column.isKey()) {
                         if (o == null)
                             throw new PersistenceException(String.format("Value for key property '%s' cannot be null.", alias));
@@ -246,13 +245,8 @@ public class Update extends Dml<Update> {
                     } else if (versioned && column.isVersion()) {
                         // if version is null ignores it
                         if (o != null) {
-                            // version increment
-                            if (Long.class.isAssignableFrom(ft.getPropertyType())) {
-                                idVer.versionValue = (Long) o + 1L;
-                            } else {
-                                idVer.versionValue = (Integer) o + 1;
-                            }
-
+                            idVer.versionValue = mapper.newVersion(o);
+                            idVer.setter = updateValue.getSetter();
                             String as = "_" + alias + "_";
                             if (conditions != null) {
                                 conditions.add(column.is(param(as)));
@@ -260,8 +254,6 @@ public class Update extends Dml<Update> {
                             this.setParameter(as, o);
 
                             this._set(column, idVer.versionValue);
-
-                            idVer.versionBeanProperty = ft;
                         }
                     } else {
                         this._set(column, o);
@@ -279,7 +271,7 @@ public class Update extends Dml<Update> {
 
     private static class IdVer {
         boolean noId = true;
-        TypedField versionBeanProperty = null;
+        Consumer<Object> setter = null;
         Object versionValue = null;
     }
 }

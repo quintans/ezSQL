@@ -30,7 +30,9 @@ public class TArtist {
     	T_ARTIST.setPreInsertTrigger(new PreInsertTrigger() {
 			@Override
 			public void trigger(Insert ins) {
-	            ins.set(C_VERSION, 1);
+				if(ins.get(C_VERSION) == null) {
+					ins.set(C_VERSION, 1);
+				}
 	            ins.set(C_CREATION, new java.util.Date());				
 			}
 		});

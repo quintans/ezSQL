@@ -5,7 +5,10 @@ import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
 import java.util.List;
 
-public interface QueryMapper<T> {
+public interface QueryMapper extends MapperSupporter {
+
+    Object createRoot(Class<?> rootClass);
+
     /**
      * Method called to get domain instance when calling the <code>property()</code> method.
      * This method is only called when there is a need to create a new instance.

@@ -11,17 +11,20 @@ import java.util.Map;
 
 /**
  * Very naive implementation of a mapper
- *
- * @param <T>
  */
-public class MapMapper<T> implements QueryMapper<T> {
+public class MapMapper implements QueryMapper {
+    @Override
+    public boolean support(Class<?> rootClass) {
+        return Map.class.isAssignableFrom(rootClass);
+    }
+
+    @Override
+    public Object createRoot(Class<?> rootClass) {
+        return new HashMap<String, Object>();
+    }
+
     @Override
     public Object createFrom(Object parentInstance, String name) {
-        // handling root table
-        if (parentInstance == null) {
-            return new HashMap<String, Object>();
-        }
-
         throw new PersistenceException("This mapper does not support children");
     }
 

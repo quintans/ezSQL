@@ -1,6 +1,5 @@
 package com.github.quintans.ezSQL.orm.app.daos;
 
-import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.ezSQL.orm.app.domain.Artist;
 import com.github.quintans.ezSQL.orm.app.domain.Painting;
 import com.github.quintans.ezSQL.orm.app.mappings.TPainting;
@@ -11,30 +10,37 @@ import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 import java.util.List;
 
-public class PaintingDAOTransformer implements QueryMapper<Painting> {
-    private Driver driver;
+public class PaintingDAOTransformer implements QueryMapper {
     private QueryMapper artistMapper;
-
-    public PaintingDAOTransformer(Driver driver) {
-        this.driver = driver;
-    }
 
     private QueryMapper getArtistMapper() {
         if (artistMapper == null) {
-            artistMapper = new ArtistDAOTransformer(driver);
+            artistMapper = new ArtistDAOTransformer();
         }
         return artistMapper;
     }
 
     @Override
+    public boolean support(Class<?> rootClass) {
+        return Painting.class.equals(rootClass);
+    }
+
+    @Override
+    public Object createRoot(Class<?> rootClass) {
+        return new Painting();
+    }
+
+    @Override
     public Object createFrom(Object parentInstance, String name) {
-        if (parentInstance instanceof Artist) {
+        if (parentInstance instanceof Painting) {
             if (TPainting.A_ARTIST.getAlias().equals(name)) {
-                return getArtistMapper().createFrom(parentInstance, name);
+                return getArtistMapper().createRoot(Artist.class);
             }
         }
 
-        return new Painting();
+        throw new IllegalArgumentException("Unknown mapping for alias " +
+                parentInstance.getClass().getCanonicalName() + "#" + name);
+
     }
 
     @Override

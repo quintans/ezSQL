@@ -51,7 +51,7 @@ public class GenericInsertBuilder implements InsertBuilder {
                 Column<?> column = entry.getKey();
                 Function token = entry.getValue();
                 // only includes null keys if IgnoreNullKeys is false
-                if (column.isKey() && driver().ignoreNullKeys() && EFunction.PARAM == token.getOperator()) {
+                if (column.isKey() && driver().ignoreNullKeys() && EFunction.PARAM.equals(token.getOperator())) {
                     // ignore null keys
                     Object param = parameters.get(token.getValue());
                     if (param == null || param instanceof NullSql) {

@@ -1,5 +1,8 @@
 package com.github.quintans.ezSQL.orm.app.domain;
 
+import com.github.quintans.ezSQL.transformers.Convert;
+
+import java.awt.*;
 import java.util.Date;
 
 public class Employee extends BaseDomain<Long> {
@@ -8,6 +11,9 @@ public class Employee extends BaseDomain<Long> {
 	private Boolean sex;
 	private EPayGrade payGrade;
 	private Date creation;
+
+	@Convert(ColorConverter.class)
+	private Color eyeColor;
 
 	public String getName() {
 		return this.name;
@@ -32,7 +38,8 @@ public class Employee extends BaseDomain<Long> {
     }
 
     public void setPayGrade(EPayGrade payGrade) {
-        this.payGrade = payGrade;
+		dirty("payGrade");
+		this.payGrade = payGrade;
     }
 
     public Date getCreation() {
@@ -44,7 +51,16 @@ public class Employee extends BaseDomain<Long> {
         this.creation = creation;
     }
 
-    @Override
+	public Color getEyeColor() {
+		return eyeColor;
+	}
+
+	public void setEyeColor(Color eyeColor) {
+		dirty("eyeColor");
+		this.eyeColor = eyeColor;
+	}
+
+	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("Artist [id=");

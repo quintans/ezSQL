@@ -885,13 +885,6 @@ public class Query extends DmlBase {
 
     // ======== RETRIVE ==============
 
-    /**
-     * Every row will be processed by the only method of the supplied object.<br>
-     * The Object type for each column is obtained from the types of the method parameters.<br>
-     * The processed rows are not collected, so any returning object is discarded.
-     *
-     * @param processor A processor object that must have one declared method and this method must at least one parameter.
-     */
     public void run(final Consumer<Record> processor) {
         list(createTransformer(processor));
     }
@@ -1077,11 +1070,7 @@ public class Query extends DmlBase {
      * @return A collection of beans
      */
     public <T> List<T> list(Class<T> klass, boolean reuse) {
-        return list(new MapBeanTransformer<>(klass), reuse);
-    }
-    
-    public <T> List<T> list(QueryMapper<T> mapper, boolean reuse) {
-        return list(new MapTransformer<>(this, reuse, mapper));
+        return list(new MapTransformer<>(this, reuse, klass, db.findQueryMapper(klass)));
     }
 
 
@@ -1096,10 +1085,6 @@ public class Query extends DmlBase {
      */
     public <T> List<T> list(Class<T> klass) {
         return list(klass, true);
-    }
-    
-    public <T> List<T> list(QueryMapper<T> mapper) {
-        return list(mapper, true);
     }
 
     private <T> IRowTransformer<T> toRowTransformer(final IRecordTransformer<T> recordTransformer) {
@@ -1184,33 +1169,23 @@ public class Query extends DmlBase {
     // ======== SELECT (ONE RESULT) ================
 
     public <T> T unique(Class<T> klass) {
-        return unique(new MapBeanTransformer<>(klass));
-    }
-    
-    public <T> T unique(QueryMapper<T> mapper) {
+        QueryMapper mapper = db.findQueryMapper(klass);
         if (useTree) {
-            return select(mapper);
+            return select(klass);
         } else {
-            return unique(new MapTransformer<>(this, false, mapper));
+            return unique(new MapTransformer<>(this, false, klass, mapper));
         }
     }
 
     public <T> T select(Class<T> klass) {
         return select(klass, true);
     }
-    
-    public <T> T select(QueryMapper<T> mapper) {
-        return select(mapper, true);
-    }
 
     public <T> T select(Class<T> klass, boolean reuse) {
-        return select(new MapBeanTransformer<>(klass), reuse);
-    }
-    
-    public <T> T select(QueryMapper<T> mapper, boolean reuse) {
+        QueryMapper mapper = db.findQueryMapper(klass);
         if (useTree) {
             if (reuse) {
-                List<T> list = list(new MapTransformer<>(this, true, mapper));
+                List<T> list = list(new MapTransformer<>(this, true, klass, mapper));
 
                 if (list.size() == 0)
                     return null;
@@ -1218,7 +1193,7 @@ public class Query extends DmlBase {
                     return list.get(0); // first one
             }
         }
-        return select(new MapTransformer<>(this, false, mapper));
+        return select(new MapTransformer<>(this, false, klass, mapper));
     }
 
     public <T> T select(final IRecordTransformer<T> recordTransformer) {

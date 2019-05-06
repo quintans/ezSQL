@@ -8,8 +8,7 @@ import com.github.quintans.ezSQL.db.Discriminator;
 import com.github.quintans.ezSQL.db.PreDeleteTrigger;
 import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.exceptions.OptimisticLockException;
-import com.github.quintans.ezSQL.toolkit.reflection.FieldUtils;
-import com.github.quintans.ezSQL.toolkit.reflection.TypedField;
+import com.github.quintans.ezSQL.toolkit.utils.Result;
 import com.github.quintans.jdbc.RawSql;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 import org.apache.log4j.Logger;
@@ -151,16 +150,10 @@ public class Delete extends Dml<Delete> {
 
         for (Column<?> column : table.getColumns()) {
             if (column.isKey() || versioned && column.isVersion()) {
-                String alias = column.getAlias();
-                TypedField tf = FieldUtils.getBeanTypedField(bean.getClass(), alias);
-                if (tf != null) {
-                    Object o;
-                    try {
-                        o = tf.get(bean);
-                    } catch (Exception e) {
-                        throw new PersistenceException("Unable to read from " + bean.getClass().getSimpleName() + "." + alias, e);
-                    }
-
+                Result<Object> result = db.findDeleteMapper(bean.getClass()).map(column, bean);
+                if(result.isSuccess()) {
+                    Object o = result.get();
+                    String alias = column.getAlias();
                     if (column.isKey()) {
                         if (o == null)
                             throw new PersistenceException(String.format("Value for key property '%s' cannot be null.", alias));

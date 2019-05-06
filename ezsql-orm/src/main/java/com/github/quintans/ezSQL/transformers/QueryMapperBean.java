@@ -11,21 +11,21 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-public class MapBeanTransformer<T> implements QueryMapper<T> {
-    private Class<T> clazz;
+public class QueryMapperBean implements QueryMapper {
 
-    public MapBeanTransformer(Class<T> clazz) {
-        this.clazz = clazz;
+    @Override
+    public boolean support(Class<?> rootClass) {
+        return true;
+    }
+
+    @Override
+    public Object createRoot(Class<?> rootClass) {
+        return create(rootClass);
     }
 
     @Override
     public Object createFrom(Object parentInstance, String name) {
         try {
-            // handling root table
-            if (parentInstance == null) {
-                return create(clazz);
-            }
-
             TypedField tf = FieldUtils.getBeanTypedField(parentInstance.getClass(), name);
             if (tf != null) {
                 Class<?> type = tf.getPropertyType();
@@ -39,18 +39,22 @@ public class MapBeanTransformer<T> implements QueryMapper<T> {
             } else {
                 throw new PersistenceException(parentInstance.getClass() + " does not have setter for " + name);
             }
-        } catch (InstantiationException | IllegalAccessException | ClassNotFoundException | NoSuchMethodException | InvocationTargetException e) {
+        } catch (ClassNotFoundException e) {
             throw new PersistenceException(e);
         }
     }
 
-    protected Object create(Class<?> type) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        Constructor<?> constructor = type.getDeclaredConstructor();
-        if(constructor == null) {
-            throw new PersistenceException(type.getCanonicalName() + " does not have an empty constructor.");
+    protected Object create(Class<?> type) {
+        try {
+            Constructor<?> constructor = type.getDeclaredConstructor();
+            if (constructor == null) {
+                throw new PersistenceException(type.getCanonicalName() + " does not have an empty constructor.");
+            }
+            constructor.setAccessible(true);
+            return constructor.newInstance();
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            throw new PersistenceException(e);
         }
-        constructor.setAccessible(true);
-        return constructor.newInstance();
     }
 
     @Override
@@ -79,6 +83,7 @@ public class MapBeanTransformer<T> implements QueryMapper<T> {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public boolean map(Record record, Object instance, List<MapColumn> mapColumns) {
         try {
@@ -87,16 +92,23 @@ public class MapBeanTransformer<T> implements QueryMapper<T> {
 
                 TypedField tf = FieldUtils.getBeanTypedField(instance.getClass(), mapColumn.getAlias());
                 if (tf != null) {
-                    Class<?> type = tf.getPropertyType();
 
-                    Object value = record.get(mapColumn.getIndex(), type);
+                    Convert convert = tf.getField().getAnnotation(Convert.class);
+                    Object value;
+                    if(convert != null) {
+                        value = record.get(mapColumn.getIndex(), null);
+                        value = convert.value().newInstance().fromDb(value);
+                    } else {
+                        Class<?> type = tf.getPropertyType();
+                        value = record.get(mapColumn.getIndex(), type);
+                    }
                     tf.set(instance, value);
                     touched |= value != null;
                 }
             }
 
             return touched;
-        } catch (IllegalAccessException | SQLException | InvocationTargetException e) {
+        } catch (IllegalAccessException | SQLException | InvocationTargetException | InstantiationException e) {
             throw new PersistenceException(e);
         }
     }

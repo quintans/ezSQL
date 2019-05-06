@@ -13,6 +13,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.sql.Connection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -46,7 +47,14 @@ public class TestMapper {
 
             Driver driver = new H2DriverExt();
             tm = new TransactionManager<>(
-                    () -> new Db(driver, cp.getConnection())
+                    () -> {
+                        Db db = new Db(driver, cp.getConnection());
+                        db.registerQueryMappers(
+                                BuilderMapper.class,
+                                MapMapper.class
+                        );
+                        return db;
+                    }
             );
 
             tm.transactionNoResult(db -> {
@@ -78,7 +86,7 @@ public class TestMapper {
     public void givenMapperWhenQueryThenReturnArtistVO() {
         tm.transactionNoResult(db -> {
             List<ArtistVO> result = db.query(TArtist.T_ARTIST).column(TArtist.C_ID, TArtist.C_NAME)
-                    .list(new BuilderMapper<>(ArtistVO.class), false);
+                    .list(ArtistVO.class, false);
 
             System.out.println(result);
             assertEquals("Name of Artist was null.", "Unknown", result.get(0).getName());
@@ -88,8 +96,8 @@ public class TestMapper {
     @Test
     public void givenMapMapperWhenQueryThenReturnMap() {
         tm.transactionNoResult(db -> {
-            List<Map<String, Object>> result = db.query(TArtist.T_ARTIST).column(TArtist.C_ID, TArtist.C_NAME)
-                    .list(new MapMapper<>(), false);
+            List<HashMap> result = db.query(TArtist.T_ARTIST).column(TArtist.C_ID, TArtist.C_NAME)
+                    .list(HashMap.class, false);
 
             System.out.println(result);
             assertEquals("Name of Artist was null.", "Unknown", result.get(0).get("name"));
@@ -104,7 +112,7 @@ public class TestMapper {
                     .outer(TArtist.A_PAINTINGS)
                     .include(TPainting.C_ID, TPainting.C_NAME, TPainting.C_PRICE)
                     .join()
-                    .list(new BuilderMapper<>(ArtistVO.class), false);
+                    .list(ArtistVO.class, false);
 
             assertEquals("Name of Artist was null.", "Unknown", result.get(0).getName());
         });

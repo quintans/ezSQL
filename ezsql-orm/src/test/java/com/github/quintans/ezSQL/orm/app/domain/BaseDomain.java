@@ -5,13 +5,13 @@ import java.io.Serializable;
 
 public abstract class BaseDomain<T extends Serializable> extends IdentityDomain<T> {
 
-	protected Integer version;
+	protected Integer version = 0;
 
 	public BaseDomain() {
 	}
 
-	public boolean persited() {
-		return version != null;
+	public boolean persisted() {
+		return version != null && !version.equals(0);
 	}
 
 	public Integer getVersion() {

@@ -8,6 +8,7 @@ import com.github.quintans.ezSQL.db.*;
 import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.ezSQL.toolkit.reflection.FieldUtils;
 import com.github.quintans.ezSQL.toolkit.reflection.TypedField;
+import com.github.quintans.ezSQL.transformers.InsertMapper;
 import com.github.quintans.jdbc.RawSql;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 import org.apache.log4j.Logger;
@@ -51,6 +52,11 @@ public class Insert extends DmlCore<Insert> {
         return _set(col, value);
     }
 
+    @SuppressWarnings("unchecked")
+    public <C> C get(Column<C> col) {
+        return (C) _get(col);
+    }
+
     public <C> Insert with(Column<C> c, C value) {
         setParameter(c, value);
         return this;
@@ -92,7 +98,7 @@ public class Insert extends DmlCore<Insert> {
      * @return this
      */
     public Insert set(Object bean) {
-        mapBean(bean, false);
+        mapObject(bean, false);
 
         if (bean instanceof Updatable) {
             ((Updatable) bean).clear();
@@ -132,7 +138,7 @@ public class Insert extends DmlCore<Insert> {
         long now;
         Map<Column<?>, Object> kmap = null;
         if (this.returnKey && !hasAllKeyValues) {
-            kmap = new LinkedHashMap<Column<?>, Object>();
+            kmap = new LinkedHashMap<>();
         }
 
         switch (strategy) {
@@ -236,7 +242,7 @@ public class Insert extends DmlCore<Insert> {
             ((PreInserter) bean).preInsert();
         }
 
-        mapBean(bean, true);
+        mapObject(bean, true);
 
         // table discriminators have higher priority - the is no way to override these values
         if (table.getDiscriminators() != null) {
@@ -282,54 +288,34 @@ public class Insert extends DmlCore<Insert> {
         return keys;
     }
 
-    private void mapBean(Object bean, boolean versioned) {
+    private void mapObject(Object object, boolean versioned) {
         this.parameters = new LinkedHashMap<>();
         this.values = new LinkedHashMap<>();
 
-        if (bean.getClass() != this.lastBeanClass) {
-            this.lastBeanClass = bean.getClass();
+        if (object.getClass() != this.lastBeanClass) {
+            this.lastBeanClass = object.getClass();
             this.rawSql = null;
         }
 
         Set<String> changed = null;
-        if (bean instanceof Updatable) {
-            changed = ((Updatable) bean).changed();
+        if (object instanceof Updatable) {
+            changed = ((Updatable) object).changed();
         }
 
-        boolean ignoreNullKeys = db.getDriver().ignoreNullKeys();
+        InsertMapper insertMapper = db.findInsertMapper(object.getClass());
         for (Column<?> column : table.getColumns()) {
             String alias = column.getAlias();
-            TypedField tf = null;
             if (changed == null || column.isKey() || column.isVersion() || changed.contains(alias)) {
-                tf = FieldUtils.getBeanTypedField(bean.getClass(), alias);
-            }
-            if (tf != null) {
-                Object o;
-                try {
-                    o = tf.get(bean);
-                } catch (Exception e) {
-                    throw new PersistenceException("Unable to read from " + bean.getClass().getSimpleName() + "." + alias, e);
-                }
-
-                if (column.isKey()) {
-                    if (ignoreNullKeys) {
-
-                    }
-                } else if (versioned && column.isVersion() && o == null) {
-                    try {
-                        if (Long.class.isAssignableFrom(tf.getPropertyType())) {
-                            o = 1L;
-                        } else {
-                            o = 1;
-                        }
-
-                        tf.set(bean, o);
-                    } catch (Exception e) {
-                        throw new PersistenceException("Unable to write to " + bean.getClass().getSimpleName() + "." + alias, e);
-                    }
-                }
-                this._set(column, o);
+                insertMapper.map(column, object, versioned)
+                        .onSuccess(o -> {
+                            if (versioned && column.isVersion() && o == null) {
+                                throw new PersistenceException("Undefined version for " +
+                                        object.getClass().getSimpleName() + "." + alias);
+                            }
+                            this._set(column, o);
+                        });
             }
         }
     }
+
 }

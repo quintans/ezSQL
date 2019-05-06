@@ -195,12 +195,12 @@ public class TestPerformance extends TestBootstrap {
             // warm up
             for (int i = 0; i < WARM_UP; i++) {
                 query = db.query(TEmployee.T_EMPLOYEE).all();
-                query.list(new MapTransformer<>(query, false, new EmployeeDAOTransformer(driver)));
+                query.list(new MapTransformer<>(query, false, Employee.class, new EmployeeDAOTransformer()));
             }
             // READ - ORM transformer
             query = db.query(TEmployee.T_EMPLOYEE).all();
             sw.reset().start();
-            query.list(new MapTransformer<>(query, false, new EmployeeDAOTransformer(driver)));
+            query.list(new MapTransformer<>(query, false, Employee.class, new EmployeeDAOTransformer()));
             sw.stop().showTotal("query.list(EmployeeDAOTransformer)");
 
             // warm up
