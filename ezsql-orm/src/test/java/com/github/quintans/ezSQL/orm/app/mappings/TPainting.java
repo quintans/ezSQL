@@ -8,7 +8,7 @@ public class TPainting {
     public static final Table T_PAINTING = new Table("PAINTING");
 
     public static final Column<Long> C_ID = T_PAINTING
-    		.BIGINT("ID").key();
+    		.BIGINT("ID").key(Long.class);
     public static final Column<Integer> C_VERSION = T_PAINTING
     		.INTEGER("VERSION").version();
     public static final Column<String> C_NAME = T_PAINTING

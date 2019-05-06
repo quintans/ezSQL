@@ -26,7 +26,7 @@ public class TestMapper {
     public static void testSetup() throws Exception {
         try {
             JdbcConnectionPool cp = JdbcConnectionPool.create(
-                    "jdbc:h2:mem:test", "sa", "");
+                    "jdbc:h2:mem:mapper", "sa", "");
 
             Connection conn = cp.getConnection();
             conn.createStatement().execute("CREATE TABLE ARTIST (\n" +

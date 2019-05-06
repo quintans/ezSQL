@@ -167,7 +167,7 @@ public class TArtist {
     public static final Table T_ARTIST = new Table("ARTIST");
 
     public static final Column<Long> C_ID = T_ARTIST
-    		.BIGINT("ID").key();
+    		.BIGINT("ID").key(Long.class);
     public static final Column<Integer> C_VERSION = T_ARTIST
     		.INTEGER("VERSION").version();
     public static final Column<String> C_NAME = T_ARTIST
@@ -224,7 +224,7 @@ public class TPainting {
     public static final Table T_PAINTING = new Table("PAINTING");
 
     public static final Column<Long> C_ID = T_PAINTING
-    		.BIGINT("ID").key();
+    		.BIGINT("ID").key(Long.class);
     public static final Column<Integer> C_VERSION = T_PAINTING
     		.INTEGER("VERSION").version();
     public static final Column<String> C_NAME = T_PAINTING
@@ -269,7 +269,7 @@ public class TImage {
     public static final Table T_IMAGE = new Table("IMAGE");
 
     public static final Column<Long> C_ID = T_IMAGE
-    		.BIGINT("ID").key();
+    		.BIGINT("ID").key(Long.class);
     public static final Column<Integer> C_VERSION = T_IMAGE
     		.INTEGER("VERSION").version();
     public static final Column<BinStore> C_CONTENT = T_IMAGE
@@ -293,7 +293,7 @@ public class TGallery {
     public static final Table T_GALLERY = new Table("GALLERY");
 
     public static final Column<Long> C_ID = T_GALLERY
-    		.BIGINT("ID").key();
+    		.BIGINT("ID").key(Long.class);
     public static final Column<Integer> C_VERSION = T_GALLERY
     		.INTEGER("VERSION").version();
     public static final Column<String> C_NAME = T_GALLERY
@@ -305,9 +305,9 @@ public class TGallery {
     public static class GalleryPainting {
         public static final Table T_GALLERY_PAINTING = new Table("GALLERY_PAINTING");
         public static final Column<Long> C_PAINTING = T_GALLERY_PAINTING
-        		.BIGINT("PAINTING").key();
+        		.BIGINT("PAINTING").key(Long.class);
         public static final Column<Long> C_GALLERY = T_GALLERY_PAINTING
-        		.BIGINT("GALLERY").key();
+        		.BIGINT("GALLERY").key(Long.class);
     }
 
     // many to many
@@ -1150,7 +1150,7 @@ This is the table that has as column that will act as a foreign key.
 public class TMain {
     public static final Table T_MAIN = new Table("TA");
 
-    public static final Column<Long> C_ID = T_MAIN.BIGINT("ID").AS("id").key();
+    public static final Column<Long> C_ID = T_MAIN.BIGINT("ID").AS("id").key(Long.class);
     public static final Column<String> C_TYPE = T_MAIN.VARCHAR("TIPO").AS("tipo");
     public static final Column<Long> C_FK = T_MAIN.BIGINT("FK").AS("fk");
 
@@ -1179,7 +1179,7 @@ The remainder mappings are
 public class TBe {
 	public static final Table T_BE = new Table("TB").AS("be");
 
-	public static final Column<Long> C_ID = T_BE.BIGINT("ID").AS("id").key();
+	public static final Column<Long> C_ID = T_BE.BIGINT("ID").AS("id").key(Long.class);
 	public static final Column<String> C_DSC = T_BE.VARCHAR("DSC").AS("dsc");
 
 	public final static Association A_MAIN = T_BE
@@ -1190,7 +1190,7 @@ public class TBe {
 public class TCe {
 	public static final Table meta = new Table("TC").AS("ce");
 
-	public static final Column<Long> C_ID = meta.BIGINT("ID").key();
+	public static final Column<Long> C_ID = meta.BIGINT("ID").key(Long.class);
 	public static final Column<String> C_DSC = meta.VARCHAR("DSC");
 
 	public final static Association A_MAIN = meta
@@ -1238,7 +1238,7 @@ public class TAuthor extends Table {
 	    super("AUTHOR");
 	}
 
-	public final Column<Long> C_ID = BIGINT("ID").key();
+	public final Column<Long> C_ID = BIGINT("ID").key(Long.class);
 	public final Column<Integer> C_VERSION = INTEGER("VERSION").version();
 	public final Column<String> C_NAME = VARCHAR("NAME");
 
@@ -1254,7 +1254,7 @@ public class TBook {
 	public static final Table T_BOOK = new Table("BOOK");
 
 	public static final Column<Long> C_ID = T_BOOK
-		.BIGINT("ID").key();
+		.BIGINT("ID").key(Long.class);
 	public static final Column<Integer> C_VERSION = T_BOOK
 		.INTEGER("VERSION").version();
 	public static final Column<Long> C_AUTHOR = T_BOOK
@@ -1280,8 +1280,8 @@ Table with the book names, in different languages.
 public class TBook18 {
 	public static final Table T_BOOK18 = new Table("BOOK_I18N").AS("book18");
 
-	public static final Column<Long> C_ID = T_BOOK18.BIGINT("ID").key();
-	public static final Column<String> C_LANG = T_BOOK18.VARCHAR("LANG").key();
+	public static final Column<Long> C_ID = T_BOOK18.BIGINT("ID").key(Long.class);
+	public static final Column<String> C_LANG = T_BOOK18.VARCHAR("LANG").key(Long.class);
 	public static final Column<String> C_NAME = T_BOOK18.VARCHAR("NAME");
 }
 ```
@@ -1327,7 +1327,7 @@ public class TGender {
 	public static final Table T_GENDER = new Table("CATALOG").AS("gender");
 
 	public static final Column<Long> C_ID = T_GENDER
-		.BIGINT("ID").key();
+		.BIGINT("ID").key(Long.class);
 	/*
 	 * Discriminators: enable us to give different meanings to the same table.
 	 * ex: eye color, gender, ...

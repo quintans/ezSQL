@@ -20,10 +20,12 @@ import com.github.quintans.ezSQL.dml.Update;
 import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.ezSQL.driver.Oracle5Driver;
 import com.github.quintans.ezSQL.orm.app.mappings.TTimer;
+import org.junit.Ignore;
 
 /**
  * Unit test for simple App.
  */
+@Ignore
 public class OracleTestTime extends TestCase {
 	private IDatabaseTester databaseTester;
 

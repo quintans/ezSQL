@@ -12,7 +12,7 @@
 	</appender>
 	
 	<logger name="com.github.quintans">
-		<level value="debug" />
+		<level value="info" />
 	</logger>
 	
 	<!-- Root Logger -->

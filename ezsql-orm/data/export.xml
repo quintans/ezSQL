@@ -1047,33 +1047,32 @@ GMuoqWq1U1HTQsYmBMcSqTuvoMTw2HpMqEtaAY4DilK//9k=]]></value>
   <table name="TA">
     <column>ID</column>
     <column>TIPO</column>
-    <column>FK</column>
     <row>
       <value>1</value>
       <value><![CDATA[B]]></value>
-      <value>1</value>
     </row>
     <row>
       <value>2</value>
       <value><![CDATA[B]]></value>
-      <value>2</value>
     </row>
     <row>
       <value>3</value>
       <value><![CDATA[C]]></value>
-      <value>1</value>
     </row>
   </table>
   <table name="TB">
     <column>ID</column>
     <column>DSC</column>
+    <column>FK</column>
     <row>
       <value>1</value>
       <value><![CDATA[Tequila]]></value>
+      <value>1</value>
     </row>
     <row>
       <value>2</value>
       <value><![CDATA[Gin]]></value>
+      <value>2</value>
     </row>
     <row>
       <value>3</value>
@@ -1083,13 +1082,16 @@ GMuoqWq1U1HTQsYmBMcSqTuvoMTw2HpMqEtaAY4DilK//9k=]]></value>
   <table name="TC">
     <column>ID</column>
     <column>DSC</column>
+    <column>FK</column>
     <row>
       <value>1</value>
       <value><![CDATA[Green]]></value>
+      <value>1</value>
     </row>
     <row>
       <value>2</value>
       <value><![CDATA[Blue]]></value>
+      <value>3</value>
     </row>
   </table>
   <table name="AUTHOR">

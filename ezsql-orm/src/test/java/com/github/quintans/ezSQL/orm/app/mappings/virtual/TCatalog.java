@@ -10,7 +10,7 @@ public class TCatalog extends Table {
 	    super("CATALOG");
 	}
 	
-	public final Column<Long> C_ID = BIGINT("ID").key();
+	public final Column<Long> C_ID = BIGINT("ID").key(Long.class);
 
 	public final Column<String> C_TYPE = VARCHAR("KIND");
 	public final Column<String> C_KEY = VARCHAR("TOKEN");

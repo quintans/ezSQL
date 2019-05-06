@@ -213,7 +213,7 @@ public class Table {
      */
     public <T> Table WITH(Column<T> column, T... values) {
         if (this.discriminators == null) {
-            this.discriminators = new ArrayList<Discriminator>();
+            this.discriminators = new ArrayList<>();
         }
         for(Object value : values) {
             this.discriminators.add(new Discriminator(column, value));

@@ -355,7 +355,7 @@ public class SimpleJdbc {
      * @param params     os dados do registo
      * @return as chaves
      */
-    public Object[] insert(String sql, String[] keyColumns, Object... params) {
+    public Object[] insert(String sql, ColumnType[] keyColumnTypes, Object... params) {
         PreparedStatement stmt = null;
         Object[] keys = null;
 
@@ -365,23 +365,28 @@ public class SimpleJdbc {
             /*
              * poor performance. this will ask the db for the meta data
              */
-            // boolean retriveGenKeys = keyColumns != null && conn.getMetaData().supportsGetGeneratedKeys();
+            // boolean retrieveGenKeys = keyColumns != null && conn.getMetaData().supportsGetGeneratedKeys();
 
-            boolean retriveGenKeys = keyColumns != null;
-            if (retriveGenKeys)
+            boolean retrieveGenKeys = keyColumnTypes != null;
+            if (retrieveGenKeys) {
+                String[] keyColumns = new String[keyColumnTypes.length];
+                for (int i = 0; i < keyColumnTypes.length; i++) {
+                    keyColumns[i] = keyColumnTypes[i].getColumn();
+                }
                 stmt = conn.prepareStatement(sql, keyColumns);
-            else
+            } else {
                 stmt = conn.prepareStatement(sql);
+            }
 
             fillStatement(stmt, params);
             stmt.executeUpdate();
 
-            if (retriveGenKeys) {
-                keys = new Object[keyColumns.length];
+            if (retrieveGenKeys) {
+                keys = new Object[keyColumnTypes.length];
                 ResultSet rs = stmt.getGeneratedKeys();
                 if (rs.next()) {
-                    for (int i = 0; i < keyColumns.length; i++) {
-                        keys[i] = rs.getObject(i + 1);
+                    for (int i = 0; i < keyColumnTypes.length; i++) {
+                        keys[i] = rs.getObject(i + 1, keyColumnTypes[i].getType());
                     }
                 }
             }
@@ -573,9 +578,9 @@ public class SimpleJdbc {
         }
         StringBuffer msg = new StringBuffer(causeMessage);
 
-        msg.append(" Query: ");
+        msg.append("\nQuery: ");
         msg.append(sql);
-        msg.append(" Parameters: ");
+        msg.append("\nParameters: ");
 
         if (params == null) {
             msg.append("[]");

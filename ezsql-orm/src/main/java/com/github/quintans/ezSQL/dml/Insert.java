@@ -9,6 +9,7 @@ import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.ezSQL.toolkit.reflection.FieldUtils;
 import com.github.quintans.ezSQL.toolkit.reflection.TypedField;
 import com.github.quintans.ezSQL.transformers.InsertMapper;
+import com.github.quintans.jdbc.ColumnType;
 import com.github.quintans.jdbc.RawSql;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 import org.apache.log4j.Logger;
@@ -158,17 +159,17 @@ public class Insert extends DmlCore<Insert> {
 
             case RETURNING:
                 Column<?>[] columns = null;
-                String[] keyColumns = null;
+                ColumnType[] keyColumns = null;
                 Set<Column<?>> kcs = null;
                 if (kmap != null) {
                     // nome das colunas chave, para obtensão das chaves geradas
                     kcs = getTable().getKeyColumns();
                     columns = new Column[kcs.size()];
-                    keyColumns = new String[kcs.size()];
+                    keyColumns = new ColumnType[kcs.size()];
                     int i = 0;
                     for (Column<?> c : kcs) {
                         columns[i] = c;
-                        keyColumns[i++] = driver.columnName(c);
+                        keyColumns[i++] = new ColumnType(driver.columnName(c), c.getKeyType());
                     }
                 }
 

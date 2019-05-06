@@ -13,14 +13,14 @@ import com.github.quintans.jdbc.SimpleJdbc;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 import com.github.quintans.jdbc.transformers.SimpleAbstractRowTransformer;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.Random;
 
-/**
- * Unit test for simple App.
- */
+@RunWith(Parameterized.class)
 public class TestPerformance extends TestBootstrap {
 
     // private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -32,6 +32,10 @@ public class TestPerformance extends TestBootstrap {
     private static final int WARM_UP = 100;
     private static final int LOOP = 10000;
     private static final int BATCH = 1000;
+
+    public TestPerformance(String environment, String script) {
+        super(environment, script);
+    }
 
     @Test
     public void testInsertDirectOrByReflectian() throws Exception {

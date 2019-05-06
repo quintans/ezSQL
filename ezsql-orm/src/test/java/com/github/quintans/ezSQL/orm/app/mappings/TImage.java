@@ -9,7 +9,7 @@ public class TImage {
     public static final Table T_IMAGE = new Table("IMAGE");
 
     public static final Column<Long> C_ID = T_IMAGE
-    		.BIGINT("ID").key();
+    		.BIGINT("ID").key(Long.class);
     public static final Column<Integer> C_VERSION = T_IMAGE
     		.INTEGER("VERSION").version();
     public static final Column<BinStore> C_CONTENT = T_IMAGE

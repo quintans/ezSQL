@@ -1,5 +1,6 @@
 package com.github.quintans.ezSQL.transformers;
 
+import com.github.quintans.ezSQL.common.api.Convert;
 import com.github.quintans.ezSQL.toolkit.reflection.FieldUtils;
 import com.github.quintans.ezSQL.toolkit.reflection.TypedField;
 import com.github.quintans.jdbc.exceptions.PersistenceException;

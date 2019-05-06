@@ -606,7 +606,12 @@ public abstract class GenericDriver implements Driver {
 
     @Override
     public String columnAlias(Function function, int position) {
-        return function.getAlias();
+		String tableAlias = function.getPseudoTableAlias();
+		if(tableAlias != null) {
+			return tableAlias + "_" + function.getAlias();
+		} else {
+			return function.getAlias();
+		}
     }
 	
 	public String columnName(EDml dmlType, Function function) {
@@ -655,7 +660,7 @@ public abstract class GenericDriver implements Driver {
 			return String.format("(%1$s IS NULL AND %2$s IS NULL OR %1$s IS NULL AND %2$s <= %3$s OR %2$s IS NULL AND %1$s >= %3$s OR %1$s >= %3$s AND %2$s <= %3$s)",
 				top, bottom, value);
 		else
-			throw new PersistenceException("Função ValueRange Invalida");
+			throw new PersistenceException("Invalid ValueRange Function");
 	}
 
 	public String boundedValueRange(EDml dmlType, Function function) {
@@ -669,7 +674,7 @@ public abstract class GenericDriver implements Driver {
 		if (value != null)
 			return String.format("(%1$s >= %3$s AND %2$s <= %3$s)", top, bottom, value);
 		else
-			throw new PersistenceException("Função BoundedRange Invalida");
+			throw new PersistenceException("Invalid BoundedRange Function");
 	}
 
 	public String in(EDml dmlType, Function function) {

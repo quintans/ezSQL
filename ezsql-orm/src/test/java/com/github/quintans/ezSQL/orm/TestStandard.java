@@ -19,6 +19,8 @@ import com.github.quintans.ezSQL.orm.extended.FunctionExt;
 import com.github.quintans.ezSQL.toolkit.io.BinStore;
 import com.github.quintans.ezSQL.transformers.MapTransformer;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -28,11 +30,13 @@ import java.util.Map.Entry;
 import static com.github.quintans.ezSQL.dml.Definition.*;
 import static org.junit.Assert.*;
 
-/**
- * Unit test for simple App.
- */
+@RunWith(Parameterized.class)
 public class TestStandard extends TestBootstrap {
     private static final long YEAR = 365L * 24L * 3600000L;
+
+    public TestStandard(String environment, String script) {
+        super(environment, script);
+    }
 
     @Test
     public void testEmptyTable() {
@@ -245,6 +249,7 @@ public class TestStandard extends TestBootstrap {
         tm.transactionNoResult(db -> {
             Query query = db.query(TArtist.T_ARTIST)
                     .column(TArtist.C_NAME)
+                    .orderBy(TArtist.C_NAME)
                     .outer(TArtist.A_PAINTINGS).include(sum(TPainting.C_PRICE)).as("value").join()
                     .groupBy(1);
             List<ArtistValueDTO> values = query.list(ArtistValueDTO.class, false);
@@ -252,11 +257,11 @@ public class TestStandard extends TestBootstrap {
 
             assertEquals("Wrong size for artist list.", 3, values.size());
             ArtistValueDTO dto = values.get(0);
-            assertTrue("Invalid GroupBy.", dto.getName() != null && dto.getValue() != null);
+            assertTrue("Invalid GroupBy.", dto.getName() != null && dto.getValue() == null);
             dto = values.get(1);
             assertTrue("Invalid GroupBy.", dto.getName() != null && dto.getValue() != null);
             dto = values.get(2);
-            assertTrue("Invalid GroupBy.", dto.getName() != null && dto.getValue() == null);
+            assertTrue("Invalid GroupBy.", dto.getName() != null && dto.getValue() != null);
         });
     }
 
@@ -265,6 +270,7 @@ public class TestStandard extends TestBootstrap {
         tm.transactionNoResult(db -> {
             Query query = db.query(TArtist.T_ARTIST).as("a")
                     .column(TArtist.C_NAME).as("name")
+                    .orderBy(TArtist.C_NAME)
                     .outer(TArtist.A_PAINTINGS).include(sum(TPainting.C_PRICE)).as("value").join()
                     .groupBy(1);
 
@@ -278,11 +284,11 @@ public class TestStandard extends TestBootstrap {
 
             assertEquals("Wrong size for artist list.", 3, values.size());
             ArtistValueDTO dto = values.get(0);
-            assertTrue("Invalid GroupBy.", dto.getName() != null && dto.getValue() != null);
+            assertTrue("Invalid GroupBy.", dto.getName() != null && dto.getValue() == null);
             dto = values.get(1);
             assertTrue("Invalid GroupBy.", dto.getName() != null && dto.getValue() != null);
             dto = values.get(2);
-            assertTrue("Invalid GroupBy.", dto.getName() != null && dto.getValue() == null);
+            assertTrue("Invalid GroupBy.", dto.getName() != null && dto.getValue() != null);
 
         });
     }

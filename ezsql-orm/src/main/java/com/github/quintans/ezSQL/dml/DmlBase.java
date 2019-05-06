@@ -608,8 +608,17 @@ public abstract class DmlBase {
     protected void replaceRaw(Function token) {
         Function[] members = token.getMembers();
 	    if (EFunction.RAW.equals(token.getOperator())) {
-	        this.rawIndex++;
-	        String parameter = this.tableAlias + "_R" + this.rawIndex;
+	        String alias = token.getAlias();
+			String parameter = "";
+			if(this.tableAlias != null) {
+				parameter = tableAlias + "_";
+			}
+			this.rawIndex++;
+			if(alias != null) {
+				parameter += alias + this.rawIndex;
+			} else {
+				parameter += "R" + this.rawIndex;
+			}
 	        setParameter(parameter, token.getValue());
 	        token.setOperator(EFunction.PARAM);
 	        token.setValue(parameter);

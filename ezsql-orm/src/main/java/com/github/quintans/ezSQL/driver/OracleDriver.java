@@ -112,11 +112,15 @@ public class OracleDriver extends GenericDriver {
 			if (function instanceof ColumnHolder) {
 				ColumnHolder ch = (ColumnHolder) function;
 				alias = ch.getTableAlias() + "_" + ch.getColumn().getName();
-				if (alias.length() > NAME_MAX_LEN) {
-					alias = alias.substring(0, NAME_MAX_LEN - 3) + position; // use of position to avoid name collisions
-				}
-			} else if (!EFunction.ALIAS.equals(function.getOperator()))
-				alias = "COL_" + position;
+			} else if (!EFunction.ALIAS.equals(function.getOperator())) {
+				alias = function.getOperator() + "_" + position;
+			}
+		} else {
+			alias = super.columnAlias(function, position);
+		}
+
+		if (alias.length() > NAME_MAX_LEN) {
+			alias = alias.substring(0, NAME_MAX_LEN - 3) + position; // use of position to avoid name collisions
 		}
 
 		return alias;

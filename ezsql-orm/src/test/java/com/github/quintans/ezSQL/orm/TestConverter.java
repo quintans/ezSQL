@@ -4,14 +4,21 @@ import com.github.quintans.ezSQL.AbstractDb;
 import com.github.quintans.ezSQL.orm.app.domain.Employee;
 import com.github.quintans.ezSQL.orm.app.mappings.TEmployee;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.awt.*;
 
 import static org.junit.Assert.assertEquals;
 
+@RunWith(Parameterized.class)
 public class TestConverter extends TestBootstrap {
 
     private final Color BEIGE = new Color(102, 102, 0);
+
+    public TestConverter(String environment, String script) {
+        super(environment, script);
+    }
 
     @Test
     public void testInsert() {

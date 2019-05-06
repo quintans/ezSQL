@@ -37,26 +37,31 @@ public class Column<T> extends Base<T> {
 	private boolean mandatory = false;
 	private boolean version = false;
 	private boolean deletion = false;
+	private Class<T> keyType;
 
 	protected Column() {
 	}
 
 	/**
 	 * Creates a column of a table
-	 * 
+	 *
 	 * @param column
 	 *            The name of the column
-	 * @param type column type           
+	 * @param type column type
 	 */
 	public Column(String column, NullSql type) {
 		this.name = column;
 		this.alias = Strings.toCamelCase(column);
 		this.type = type;
 	}
-	
+
     public NullSql getType() {
         return type;
     }
+
+	public Class<T> getKeyType() {
+		return keyType;
+	}
 
     /**
 	 * @param alias
@@ -79,7 +84,8 @@ public class Column<T> extends Base<T> {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-    public Column<T> key() {
+    public Column<T> key(Class<T> keyType) {
+		this.keyType = keyType;
 		this.key = true;
 		this.table.addKey(this);
 		return this;

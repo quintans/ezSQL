@@ -1,6 +1,6 @@
 package com.github.quintans.ezSQL.orm.app.domain;
 
-import com.github.quintans.ezSQL.transformers.Converter;
+import com.github.quintans.ezSQL.common.api.Converter;
 
 import java.awt.*;
 

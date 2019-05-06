@@ -52,7 +52,9 @@ public class H2Driver extends GenericDriver {
 				ColumnHolder ch = (ColumnHolder) function;
 				alias = ch.getTableAlias() + "_" + ch.getColumn().getName();
 			} else if (!EFunction.ALIAS.equals(function.getOperator()))
-				alias = "COL_" + position;
+				alias = function.getOperator() + "_" + position;
+		} else {
+			alias = super.columnAlias(function, position);
 		}
 
 		return alias;

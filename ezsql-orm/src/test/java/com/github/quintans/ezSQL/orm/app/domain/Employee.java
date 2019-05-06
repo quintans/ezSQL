@@ -1,6 +1,6 @@
 package com.github.quintans.ezSQL.orm.app.domain;
 
-import com.github.quintans.ezSQL.transformers.Convert;
+import com.github.quintans.ezSQL.common.api.Convert;
 
 import java.awt.*;
 import java.util.Date;

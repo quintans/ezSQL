@@ -161,7 +161,6 @@ public class Query extends DmlBase {
             for (Object col : cols) {
                 this.lastFunction = Function.converteOne(col);
                 replaceRaw(lastFunction);
-
                 this.lastFunction.setTableAlias(this.tableAlias);
                 this.columns.add(this.lastFunction);
             }

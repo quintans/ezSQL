@@ -21,11 +21,15 @@ import com.github.quintans.ezSQL.orm.app.mappings.discriminator.TThing;
 import com.github.quintans.ezSQL.orm.app.mappings.discriminator.Thing;
 import com.github.quintans.ezSQL.orm.app.mappings.virtual.Catalog;
 import com.github.quintans.ezSQL.orm.app.mappings.virtual.TGender;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
-/**
- * Unit test for simple App.
- */
+@RunWith(Parameterized.class)
 public class TestDiscriminator extends TestBootstrap {
+
+	public TestDiscriminator(String environment, String script) {
+		super(environment, script);
+	}
 
 	@Test
 	public void testDiscriminatorAssociation() {

@@ -1,4 +1,4 @@
-package com.github.quintans.ezSQL.transformers;
+package com.github.quintans.ezSQL.common.api;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

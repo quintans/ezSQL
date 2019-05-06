@@ -11,13 +11,17 @@ import java.util.Map;
 import org.junit.Test;
 
 import com.github.quintans.ezSQL.sp.SqlProcedure;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
-/**
- * Unit test for simple App.
- */
+@RunWith(Parameterized.class)
 public class TestProcedures extends TestBootstrap {
 
-    @Test
+	public TestProcedures(String environment, String script) {
+		super(environment, script);
+	}
+
+	@Test
 	public void testProcedure() throws Exception {
 		// calls the function SYSDATE
 		tm.transactionNoResult(db -> {

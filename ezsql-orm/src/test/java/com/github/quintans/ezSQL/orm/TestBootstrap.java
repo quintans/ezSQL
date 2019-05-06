@@ -2,19 +2,24 @@ package com.github.quintans.ezSQL.orm;
 
 import com.github.quintans.ezSQL.TransactionManager;
 import com.github.quintans.ezSQL.driver.Driver;
+import org.apache.ibatis.jdbc.ScriptRunner;
 import org.apache.log4j.Logger;
 import org.dbunit.IDatabaseTester;
 import org.dbunit.JdbcDatabaseTester;
 import org.dbunit.dataset.IDataSet;
 import org.dbunit.dataset.xml.XmlDataSet;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.sql.Connection;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Properties;
 
@@ -27,20 +32,29 @@ public class TestBootstrap {
     private static IDatabaseTester databaseTester;
     protected static TransactionManager<Db> tm;
     protected static Driver driver;
+    private static String environment;
 
-    @BeforeClass
-    public static void testSetup() throws Exception {
-        try {
-            final String env = System.getProperty("env", "h2");
+    @Parameterized.Parameters(name = "{index}: {0}")
+    public static Iterable<Object[]> connections() {
+        return Arrays.asList(new Object[][]{
+                {"h2", "db_h2.sql"}
+        });
+    }
+
+    public TestBootstrap(String environment, String script) {
+        if(environment.equals(this.environment)) {
+            return;
+        }
+
+        this.environment = environment;
+        try (InputStream is = getClass().getClassLoader().getResourceAsStream(environment + ".properties")) {
             Properties systemProps = new Properties();
-            systemProps.load(new FileReader(new File("src/test/resources/" + env + ".properties")));
+            systemProps.load(is);
             String dbDriver = systemProps.getProperty("db.driver");
             String dbUrl = systemProps.getProperty("db.url");
-            String dbUser = systemProps.getProperty("db.user");
-            String dbPassword = systemProps.getProperty("db.password");
             String ormDriver = systemProps.getProperty("db.orm.driver");
 
-            databaseTester = new JdbcDatabaseTester(dbDriver, dbUrl, dbUser, dbPassword);
+            databaseTester = new JdbcDatabaseTester(dbDriver, dbUrl);
 
             //databaseTester = new JdbcDatabaseTester("org.h2.Driver", "jdbc:h2:tcp://localhost:9092/test", "sa", "");
             //databaseTester = new JdbcDatabaseTester("org.mariadb.jdbc.Driver", "jdbc:mariadb://localhost:3306/ezsql", "quintans", "quintans");
@@ -57,6 +71,13 @@ public class TestBootstrap {
             driver = (Driver) clazz.newInstance();
 
             Connection conn = databaseTester.getConnection().getConnection();
+            ScriptRunner scriptExecutor = new ScriptRunner(conn);
+            scriptExecutor.setAutoCommit(false);
+            scriptExecutor.setStopOnError(true);
+            InputStream scriptIs = getClass().getClassLoader().getResourceAsStream("sql/" + script);
+            Reader reader = new InputStreamReader(scriptIs);
+            scriptExecutor.runScript(reader);
+
             tm = new TransactionManager<Db>(
                     () -> new Db(driver, conn)
             ) {
@@ -65,10 +86,8 @@ public class TestBootstrap {
                     // no-op for tests
                 }
             };
-
         } catch (Exception e) {
             e.printStackTrace();
-            throw e;
         }
     }
 
@@ -90,6 +109,11 @@ public class TestBootstrap {
     @After
     public void tearDown() throws Exception {
         databaseTester.onTearDown();
+    }
+
+    @AfterClass
+    public static void shutDown() {
+        environment = null;
     }
 
 	/*
@@ -140,7 +164,7 @@ public class TestBootstrap {
     */
 
     public void dumpCollection(Collection<?> collection) {
-        if(!LOGGER.isDebugEnabled()) {
+        if (!LOGGER.isDebugEnabled()) {
             return;
         }
 
@@ -154,7 +178,7 @@ public class TestBootstrap {
     }
 
     public void dump(Object o) {
-        if(!LOGGER.isDebugEnabled()) {
+        if (!LOGGER.isDebugEnabled()) {
             return;
         }
 
@@ -162,7 +186,7 @@ public class TestBootstrap {
     }
 
     public void dumpRaw(Collection<Object[]> collection) {
-        if(!LOGGER.isDebugEnabled()) {
+        if (!LOGGER.isDebugEnabled()) {
             return;
         }
 
@@ -185,7 +209,7 @@ public class TestBootstrap {
     }
 
     public void dumpRaw(Object[] objs, int[] sizes) {
-        if(!LOGGER.isDebugEnabled()) {
+        if (!LOGGER.isDebugEnabled()) {
             return;
         }
 

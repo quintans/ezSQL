@@ -1,4 +1,4 @@
-package com.github.quintans.ezSQL.transformers;
+package com.github.quintans.ezSQL.common.api;
 
 public interface Converter<T, S> {
     S toDb(T beanValue);

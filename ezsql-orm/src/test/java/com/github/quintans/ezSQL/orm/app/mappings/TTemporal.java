@@ -9,7 +9,7 @@ import com.github.quintans.ezSQL.db.*;
 public class TTemporal {
 	public static final Table T_TEMPORAL = new Table("TEMPORAL");
 
-	public static final Column<Long> C_ID = T_TEMPORAL.BIGINT("ID").key();
+	public static final Column<Long> C_ID = T_TEMPORAL.BIGINT("ID").key(Long.class);
 
     public static final Column<MyTime> C_CLOCK = T_TEMPORAL.TIME("CLOCK");
 	public static final Column<MyDate> C_TODAY = T_TEMPORAL.DATE("CALENDAR").AS("today");

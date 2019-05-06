@@ -11,11 +11,15 @@ import com.github.quintans.ezSQL.orm.app.mappings.virtual.Author;
 import com.github.quintans.ezSQL.orm.app.mappings.virtual.Book;
 import com.github.quintans.ezSQL.orm.app.mappings.virtual.TBook;
 import com.github.quintans.ezSQL.orm.app.mappings.virtual.TBook18;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
-/**
- * Unit test for simple App.
- */
+@RunWith(Parameterized.class)
 public class TestI18n extends TestBootstrap {
+
+    public TestI18n(String environment, String script) {
+        super(environment, script);
+    }
 
     @Test
     public void testI18n() {

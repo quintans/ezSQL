@@ -11,7 +11,7 @@ import com.github.quintans.ezSQL.orm.Db;
 public class TBook {
 	public static final Table T_BOOK = new Table("BOOK");
 
-	public static final Column<Long> C_ID = T_BOOK.BIGINT("ID").key();
+	public static final Column<Long> C_ID = T_BOOK.BIGINT("ID").key(Long.class);
 	public static final Column<Integer> C_VERSION = T_BOOK.INTEGER("VERSION").version();
 	public static final Column<Long> C_AUTHOR = T_BOOK.BIGINT("AUTHOR_ID").AS("authorFk");
 	public static final Column<Double> C_PRICE = T_BOOK.DECIMAL("PRICE");

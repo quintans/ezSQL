@@ -21,7 +21,8 @@ public class ColumnHolder extends Function {
         this.tableAlias = tableAlias;
         return this;
     }
-    
+
+    @Override
     public String getAlias() {
         return this.alias != null ? this.alias : column.getAlias();
     }

@@ -201,8 +201,14 @@ public class Function extends Base<Object> {
 
     public static Function[] converteAll(Object[] values) {
         Function[] tokens = new Function[values.length];
+        String lastAlias = null;
         for (int k = 0; k < values.length; k++) {
             tokens[k] = converteOne(values[k]);
+            // propagate alias to RAWs
+            if(lastAlias != null && EFunction.RAW.equals(tokens[k].getOperator())) {
+            	tokens[k].as(lastAlias);
+			}
+            lastAlias = tokens[k].getAlias();
         }
         return tokens;
     }

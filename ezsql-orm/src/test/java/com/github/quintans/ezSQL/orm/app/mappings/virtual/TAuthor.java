@@ -9,7 +9,7 @@ public class TAuthor extends Table {
 	    super("AUTHOR");
 	}
 
-	public final Column<Long> C_ID = BIGINT("ID").key();
+	public final Column<Long> C_ID = BIGINT("ID").key(Long.class);
 	public final Column<Integer> C_VERSION = INTEGER("VERSION").version();
 	public final Column<String> C_NAME = VARCHAR("NAME");
 

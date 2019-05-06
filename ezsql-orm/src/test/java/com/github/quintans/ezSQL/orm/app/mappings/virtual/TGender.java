@@ -12,7 +12,7 @@ import com.github.quintans.ezSQL.db.Table;
 public class TGender {
 	public static final Table T_GENDER = new Table("CATALOG").AS("gender");
 
-	public static final Column<Long> C_ID = T_GENDER.BIGINT("ID").key();
+	public static final Column<Long> C_ID = T_GENDER.BIGINT("ID").key(Long.class);
 	/*
 	 * Discriminators: enable us to give different meanings to the same table. ex: eye color, gender, ...
 	 */
