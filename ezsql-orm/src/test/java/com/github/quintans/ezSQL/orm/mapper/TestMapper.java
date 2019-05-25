@@ -50,8 +50,8 @@ public class TestMapper {
                     () -> {
                         Db db = new Db(driver, cp.getConnection());
                         db.registerQueryMappers(
-                                BuilderMapper.class,
-                                MapMapper.class
+                                new BuilderMapper(),
+                                new MapMapper()
                         );
                         return db;
                     }

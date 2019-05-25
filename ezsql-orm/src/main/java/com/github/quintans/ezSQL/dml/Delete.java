@@ -150,7 +150,7 @@ public class Delete extends Dml<Delete> {
 
         for (Column<?> column : table.getColumns()) {
             if (column.isKey() || versioned && column.isVersion()) {
-                Result<Object> result = db.findDeleteMapper(bean.getClass()).map(column, bean);
+                Result<Object> result = db.findDeleteMapper(bean.getClass()).map(db, column, bean);
                 if(result.isSuccess()) {
                     Object o = result.get();
                     String alias = column.getAlias();

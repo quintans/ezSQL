@@ -1,5 +1,6 @@
 package com.github.quintans.ezSQL.transformers;
 
+import com.github.quintans.ezSQL.AbstractDb;
 import com.github.quintans.ezSQL.common.api.Convert;
 import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.toolkit.reflection.FieldUtils;
@@ -17,7 +18,7 @@ public class InsertMapperBean implements InsertMapper {
     }
 
     @Override
-    public Result<Object> map(Column<?> column, Object object, boolean versioned) {
+    public Result<Object> map(AbstractDb db, Column<?> column, Object object, boolean versioned) {
         String alias = column.getAlias();
         TypedField tf = FieldUtils.getBeanTypedField(object.getClass(), alias);
         if (tf != null) {
@@ -26,10 +27,10 @@ public class InsertMapperBean implements InsertMapper {
                 o = tf.get(object);
                 Convert convert = tf.getField().getAnnotation(Convert.class);
                 if(convert != null) {
-                    o = convert.value().newInstance().toDb(o);
+                    o = db.getConverter(convert.value()).toDb(o);
                 }
                 return Result.of(o);
-            } catch (IllegalAccessException | InvocationTargetException | InstantiationException e) {
+            } catch (IllegalAccessException | InvocationTargetException e) {
                 throw new PersistenceException("Unable to read from " + object.getClass().getSimpleName() + "." + alias, e);
             }
         }

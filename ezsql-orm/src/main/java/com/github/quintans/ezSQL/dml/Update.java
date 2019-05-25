@@ -228,7 +228,7 @@ public class Update extends Dml<Update> {
             String alias = column.getAlias();
             if (changed == null || column.isKey() || column.isVersion() || changed.contains(alias)) {
                 UpdateMapper mapper = db.findUpdateMapper(bean.getClass());
-                Result<UpdateValue> result = mapper.map(column, bean);
+                Result<UpdateValue> result = mapper.map(db, column, bean);
                 if (result.isSuccess()) {
                     UpdateValue updateValue = result.get();
                     Object o = updateValue.getCurrent();

@@ -307,7 +307,7 @@ public class Insert extends DmlCore<Insert> {
         for (Column<?> column : table.getColumns()) {
             String alias = column.getAlias();
             if (changed == null || column.isKey() || column.isVersion() || changed.contains(alias)) {
-                insertMapper.map(column, object, versioned)
+                insertMapper.map(db, column, object, versioned)
                         .onSuccess(o -> {
                             if (versioned && column.isVersion() && o == null) {
                                 throw new PersistenceException("Undefined version for " +

@@ -1,5 +1,7 @@
 package com.github.quintans.ezSQL;
 
+import com.github.quintans.ezSQL.common.api.Convert;
+import com.github.quintans.ezSQL.common.api.Converter;
 import com.github.quintans.ezSQL.common.api.Updatable;
 import com.github.quintans.ezSQL.common.type.MyDate;
 import com.github.quintans.ezSQL.common.type.MyDateTime;
@@ -24,6 +26,7 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public abstract class AbstractDb {
@@ -36,6 +39,7 @@ public abstract class AbstractDb {
     private Collection<InsertMapper> insertMappers;
     private Collection<DeleteMapper> deleteMappers;
     private Collection<UpdateMapper> updateMappers;
+    private ConcurrentHashMap<Class<? extends Converter>, Converter> converters;
 
     public AbstractDb(Driver driver) {
         this.driver = driver;
@@ -48,6 +52,7 @@ public abstract class AbstractDb {
         this.deleteMappers.add(new DeleteMapperBean());
         this.updateMappers = new ConcurrentLinkedDeque<>();
         this.updateMappers.add(new UpdateMapperBean());
+        this.converters = new ConcurrentHashMap<>();
     }
 
     /**
@@ -266,8 +271,7 @@ public abstract class AbstractDb {
         return val;
     }
 
-    @SafeVarargs
-    public final void registerQueryMappers(Class<? extends QueryMapper>... mappers) {
+    public final void registerQueryMappers(QueryMapper... mappers) {
         registerMappers(this.queryMappers, mappers);
     }
 
@@ -275,8 +279,7 @@ public abstract class AbstractDb {
         return findMapper(queryMappers, klass, QueryMapper.class.getSimpleName());
     }
 
-    @SafeVarargs
-    public final void registerInsertMappers(Class<? extends InsertMapper>... mappers) {
+    public final void registerInsertMappers(InsertMapper... mappers) {
         registerMappers(this.insertMappers, mappers);
     }
 
@@ -284,8 +287,7 @@ public abstract class AbstractDb {
         return findMapper(insertMappers, klass, InsertMapper.class.getSimpleName());
     }
 
-    @SafeVarargs
-    public final void registerDeleteMappers(Class<? extends DeleteMapper>... mappers) {
+    public final void registerDeleteMappers(DeleteMapper... mappers) {
         registerMappers(this.deleteMappers, mappers);
     }
 
@@ -293,8 +295,7 @@ public abstract class AbstractDb {
         return findMapper(deleteMappers, klass, DeleteMapper.class.getSimpleName());
     }
 
-    @SafeVarargs
-    public final void registerUpdateMappers(Class<? extends UpdateMapper>... mappers) {
+    public final void registerUpdateMappers(UpdateMapper... mappers) {
         registerMappers(this.updateMappers, mappers);
     }
 
@@ -302,16 +303,22 @@ public abstract class AbstractDb {
         return findMapper(updateMappers, klass, UpdateMapper.class.getSimpleName());
     }
 
+    public Converter getConverter(Class<? extends Converter> converter) {
+        return converters.computeIfAbsent(converter, aClass -> {
+            try {
+                return aClass.newInstance();
+            } catch (InstantiationException | IllegalAccessException e) {
+                throw new PersistenceException(e);
+            }
+        });
+    }
+
     @SuppressWarnings("unchecked")
     @SafeVarargs
-    private final <T extends MapperSupporter> void registerMappers(Collection<T> mappers, Class<? extends MapperSupporter>... mapperClasses) {
+    private final <T extends MapperSupporter> void registerMappers(Collection<T> mappers, T... newMappers) {
         mappers.clear();
-        for (Class<? extends MapperSupporter> qm : mapperClasses) {
-            try {
-                mappers.add((T) qm.newInstance());
-            } catch (InstantiationException | IllegalAccessException e) {
-                throw new IllegalArgumentException("Cannot instantiate " + qm.getCanonicalName(), e);
-            }
+        for (MapperSupporter qm : newMappers) {
+            mappers.add((T) qm);
         }
     }
 
