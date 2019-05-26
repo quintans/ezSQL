@@ -1,6 +1,5 @@
 package com.github.quintans.ezSQL;
 
-import com.github.quintans.ezSQL.common.api.Convert;
 import com.github.quintans.ezSQL.common.api.Converter;
 import com.github.quintans.ezSQL.common.api.Updatable;
 import com.github.quintans.ezSQL.common.type.MyDate;
@@ -185,12 +184,11 @@ public abstract class AbstractDb {
         return new Delete(this, table);
     }
 
-    // converte os valores
     public Map<String, Object> transformParameters(Map<String, Object> parameters) {
         Map<String, Object> pars = new LinkedHashMap<String, Object>();
         for (Map.Entry<String, Object> entry : parameters.entrySet()) {
             Object val = entry.getValue();
-            val = transformParameter(val);
+            val = driver.transformParameter(val);
             pars.put(entry.getKey(), val);
         }
 
@@ -204,71 +202,10 @@ public abstract class AbstractDb {
         Object[] vals = new Object[parameters.length];
         int i = 0;
         for (Object parameter : parameters) {
-            vals[i++] = transformParameter(parameter);
+            vals[i++] = driver.transformParameter(parameter);
         }
 
         return vals;
-    }
-
-    public Object transformParameter(Object parameter) {
-        Object val = parameter;
-        if (val instanceof NullSql) {
-            val = driver.fromNull((NullSql) val);
-        } else if (val instanceof Boolean) {
-            val = driver.fromBoolean((Boolean) val);
-        } else if (val instanceof Byte) {
-            val = driver.fromTiny((Byte) val);
-        } else if (val instanceof Short) {
-            val = driver.fromShort((Short) val);
-        } else if (val instanceof Integer) {
-            val = driver.fromInteger((Integer) val);
-        } else if (val instanceof Long) {
-            val = driver.fromLong((Long) val);
-        } else if (val instanceof Double) {
-            val = driver.fromDecimal((Double) val);
-        } else if (val instanceof BigDecimal) {
-            val = driver.fromBigDecimal((BigDecimal) val);
-        } else if (val instanceof String) {
-            val = driver.fromString((String) val);
-        } else if (val instanceof MyTime) {
-            val = driver.fromTime((Date) val);
-        } else if (val instanceof MyDate) {
-            val = driver.fromDate((Date) val);
-        } else if (val instanceof MyDateTime) {
-            val = driver.fromDateTime((Date) val);
-        } else if (val instanceof Date) {
-            val = driver.fromTimestamp((Date) val);
-        } else if (val instanceof TextStore) {
-            TextStore txt = (TextStore) val;
-            try {
-                val = driver.fromText(txt.getInputStream(), (int) txt.getSize());
-            } catch (IOException e) {
-                throw new PersistenceException("Unable to get input stream from TextCache!", e);
-            }
-        } else if (val instanceof BinStore) {
-            BinStore bin = (BinStore) val;
-            try {
-                val = driver.fromBin(bin.getInputStream(), (int) bin.getSize());
-            } catch (IOException e) {
-                throw new PersistenceException("Unable to get input stream from ByteCache!", e);
-            }
-        } else if (val instanceof char[]) {
-            String txt = new String((char[]) val);
-            InputStream is;
-            try {
-                is = IOUtils.toInputStream(txt, TextStore.DEFAULT_CHARSET);
-                val = driver.fromText(is, txt.length());
-            } catch (IOException e) {
-                throw new PersistenceException("Unable to get input stream from String!", e);
-            }
-        } else if (val instanceof byte[]) {
-            byte[] bin = (byte[]) val;
-            val = driver.fromBin(new ByteArrayInputStream(bin), bin.length);
-        } else {
-            val = driver.fromUnknown(val);
-        }
-
-        return val;
     }
 
     public final void registerQueryMappers(QueryMapper... mappers) {

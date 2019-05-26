@@ -2,6 +2,7 @@ package com.github.quintans.ezSQL.driver;
 
 import static com.github.quintans.ezSQL.toolkit.utils.Misc.length;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -73,6 +74,70 @@ public abstract class GenericDriver implements Driver {
 	public boolean isPmdKnownBroken() {
 		return false;
 	}
+
+	@Override
+	public Object transformParameter(Object parameter) {
+		Object val = parameter;
+		if (val instanceof NullSql) {
+			val = this.fromNull((NullSql) val);
+		} else if (val instanceof Boolean) {
+			val = this.fromBoolean((Boolean) val);
+		} else if (val instanceof Byte) {
+			val = this.fromTiny((Byte) val);
+		} else if (val instanceof Short) {
+			val = this.fromShort((Short) val);
+		} else if (val instanceof Integer) {
+			val = this.fromInteger((Integer) val);
+		} else if (val instanceof Long) {
+			val = this.fromLong((Long) val);
+		} else if (val instanceof Double) {
+			val = this.fromDecimal((Double) val);
+		} else if (val instanceof BigDecimal) {
+			val = this.fromBigDecimal((BigDecimal) val);
+		} else if (val instanceof String) {
+			val = this.fromString((String) val);
+		} else if (val instanceof MyTime) {
+			val = this.fromTime((Date) val);
+		} else if (val instanceof MyDate) {
+			val = this.fromDate((Date) val);
+		} else if (val instanceof MyDateTime) {
+			val = this.fromDateTime((Date) val);
+		} else if (val instanceof Date) {
+			val = this.fromTimestamp((Date) val);
+		} else if (val instanceof TextStore) {
+			TextStore txt = (TextStore) val;
+			try {
+				val = this.fromText(txt.getInputStream(), (int) txt.getSize());
+			} catch (IOException e) {
+				throw new PersistenceException("Unable to get input stream from TextCache!", e);
+			}
+		} else if (val instanceof BinStore) {
+			BinStore bin = (BinStore) val;
+			try {
+				val = this.fromBin(bin.getInputStream(), (int) bin.getSize());
+			} catch (IOException e) {
+				throw new PersistenceException("Unable to get input stream from ByteCache!", e);
+			}
+		} else if (val instanceof char[]) {
+			String txt = new String((char[]) val);
+			InputStream is;
+			try {
+				is = IOUtils.toInputStream(txt, TextStore.DEFAULT_CHARSET);
+				val = this.fromText(is, txt.length());
+			} catch (IOException e) {
+				throw new PersistenceException("Unable to get input stream from String!", e);
+			}
+		} else if (val instanceof byte[]) {
+			byte[] bin = (byte[]) val;
+			val = this.fromBin(new ByteArrayInputStream(bin), bin.length);
+		} else {
+			val = this.fromUnknown(val);
+		}
+
+		return val;
+	}
+
+
 
 	@Override
 	public Object toIdentity(ResultSetWrapper rsw, int columnIndex) throws SQLException {

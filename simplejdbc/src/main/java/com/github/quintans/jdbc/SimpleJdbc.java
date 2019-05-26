@@ -409,7 +409,7 @@ public class SimpleJdbc {
      *               value to pass in.
      * @throws SQLException if a database access error occurs
      */
-    public void fillStatement(PreparedStatement stmt, Object... params) throws SQLException {
+    private void fillStatement(PreparedStatement stmt, Object... params) throws SQLException {
         if (params == null) {
             return;
         }
@@ -444,12 +444,8 @@ public class SimpleJdbc {
                 // of the actual column type. Oddly, NULL and
                 // OTHER don't work with Oracle's drivers.
                 int sqlType = Types.VARCHAR;
-                if (!jdbcSession.isPmdKnownBroken()) {
+                if (!jdbcSession.isPmdKnownBroken() && pmd != null) {
                     try {
-                        /*
-                        pmd will not be null here if
-                        jdbcSession.getPmdKnownBroken() == false
-                         */
                         sqlType = pmd.getParameterType(i + 1);
                     } catch (SQLException e) {
                         jdbcSession.setPmdKnownBroken(true);
@@ -466,7 +462,7 @@ public class SimpleJdbc {
      * @param rs   ResultSet to close.
      * @param stmt Statement to close.
      */
-    public void closeQuietly(ResultSet rs, Statement stmt) {
+    private void closeQuietly(ResultSet rs, Statement stmt) {
         if (rs != null) {
             try {
                 rs.close();
@@ -572,7 +568,7 @@ public class SimpleJdbc {
      * @param params The query replacement parameters; <code>null</code> is a
      *               valid value to pass in.
      */
-    public void rethrow(SQLException cause, String sql, Object... params) {
+    private void rethrow(SQLException cause, String sql, Object... params) {
 
         String causeMessage = cause.getMessage();
         if (causeMessage == null) {

@@ -56,6 +56,8 @@ public interface Driver {
     
     boolean isPmdKnownBroken();
 
+    Object transformParameter(Object parameter);
+
     // == DB type to JAVA type
 
     Object toIdentity(ResultSetWrapper rsw, int columnIndex) throws SQLException;
