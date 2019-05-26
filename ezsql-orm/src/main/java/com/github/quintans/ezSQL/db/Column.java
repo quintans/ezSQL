@@ -1,10 +1,7 @@
 package com.github.quintans.ezSQL.db;
 
 import com.github.quintans.ezSQL.Base;
-import com.github.quintans.ezSQL.dml.ColumnHolder;
-import com.github.quintans.ezSQL.dml.Condition;
-import com.github.quintans.ezSQL.dml.Definition;
-import com.github.quintans.ezSQL.dml.Function;
+import com.github.quintans.ezSQL.dml.*;
 import com.github.quintans.ezSQL.toolkit.utils.Strings;
 
 /**
@@ -180,7 +177,15 @@ public class Column<T> extends Base<T> {
     public Function param() {
         return Definition.param(this);
     }
-    
+
+    public Sort asc() {
+		return Sort.asc(this);
+	}
+
+	public Sort desc() {
+		return Sort.desc(this);
+	}
+
 	/**
 	 * devolve a representação em String desta coluna.
 	 * 

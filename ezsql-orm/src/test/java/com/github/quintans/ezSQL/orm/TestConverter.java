@@ -16,8 +16,8 @@ public class TestConverter extends TestBootstrap {
 
     private final Color BEIGE = new Color(102, 102, 0);
 
-    public TestConverter(String environment, String script) {
-        super(environment, script);
+    public TestConverter(String environment) {
+        super(environment);
     }
 
     @Test

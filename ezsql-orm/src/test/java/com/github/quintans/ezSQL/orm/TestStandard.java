@@ -24,6 +24,7 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.time.*;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -34,8 +35,8 @@ import static org.junit.Assert.*;
 public class TestStandard extends TestBootstrap {
     private static final long YEAR = 365L * 24L * 3600000L;
 
-    public TestStandard(String environment, String script) {
-        super(environment, script);
+    public TestStandard(String environment) {
+        super(environment);
     }
 
     @Test
@@ -171,7 +172,7 @@ public class TestStandard extends TestBootstrap {
     @Test
     public void testSimpleBeanTransformer() {
         tm.transactionNoResult(db -> {
-            Query query = db.queryAll(TArtist.T_ARTIST).order(TArtist.C_NAME).desc();
+            Query query = db.queryAll(TArtist.T_ARTIST).orderBy(TArtist.C_NAME.desc());
             // List<Artist> values = db.select(new
             // BeanTransformer<Artist>(query, Artist.class)); // long version
             // query.setFirstResult(10);
@@ -249,7 +250,7 @@ public class TestStandard extends TestBootstrap {
         tm.transactionNoResult(db -> {
             Query query = db.query(TArtist.T_ARTIST)
                     .column(TArtist.C_NAME)
-                    .orderBy(TArtist.C_NAME)
+                    .orderOn(TArtist.C_NAME.asc())
                     .outer(TArtist.A_PAINTINGS).include(sum(TPainting.C_PRICE)).as("value").join()
                     .groupBy(1);
             List<ArtistValueDTO> values = query.list(ArtistValueDTO.class, false);
@@ -270,7 +271,7 @@ public class TestStandard extends TestBootstrap {
         tm.transactionNoResult(db -> {
             Query query = db.query(TArtist.T_ARTIST).as("a")
                     .column(TArtist.C_NAME).as("name")
-                    .orderBy(TArtist.C_NAME)
+                    .orderOn(TArtist.C_NAME.asc())
                     .outer(TArtist.A_PAINTINGS).include(sum(TPainting.C_PRICE)).as("value").join()
                     .groupBy(1);
 
@@ -300,6 +301,7 @@ public class TestStandard extends TestBootstrap {
                     .column(TArtist.C_ID).as("id")
                     .column(TArtist.C_NAME).as("name")
                     .outer(TArtist.A_PAINTINGS).include(sum(TPainting.C_PRICE)).as("value").join()
+                    .orderBy(TArtist.C_ID.asc())
                     .groupBy(1);
 
             List<ArtistValueDTO> values = query.list(ArtistValueDTO.class, false);
@@ -390,8 +392,8 @@ public class TestStandard extends TestBootstrap {
                     .outer(TArtist.A_PAINTINGS)
                     .on(TPainting.C_NAME.like("Blue%"))
                     .fetch()
-                    .order(TArtist.C_ID).asc()
-                    .orderBy(TPainting.C_NAME).asc();
+                    .orderBy(TArtist.C_ID.asc())
+                    .orderOn(TPainting.C_NAME.asc());
 
             List<Artist> artists = query.list(new MapTransformer<>(query, true, Artist.class, new ArtistDAOTransformer()));
             dumpCollection(artists);
@@ -424,7 +426,7 @@ public class TestStandard extends TestBootstrap {
         tm.transactionNoResult(db -> {
             List<Gallery> galleries = db.queryAll(TGallery.T_GALLERY)
                     .outerFetch(TGallery.A_PAINTINGS)
-                    .order(TGallery.C_ID).asc()
+                    .orderBy(TGallery.C_ID.asc())
                     .list(Gallery.class, true);
             dumpCollection(galleries);
 
@@ -441,7 +443,7 @@ public class TestStandard extends TestBootstrap {
         tm.transactionNoResult(db -> {
             Query query = db.queryAll(TPainting.T_PAINTING)
                     .outerFetch(TPainting.A_GALLERIES)
-                    .order(TArtist.C_ID).asc();
+                    .orderBy(TPainting.C_ID.asc());
 
             List<Painting> paintings = query.list(Painting.class, true);
             dumpCollection(paintings);
@@ -462,19 +464,26 @@ public class TestStandard extends TestBootstrap {
     public void testOuterFetchWithAll() {
         tm.transactionNoResult(db -> {
             Query query = db.queryAll(TArtist.T_ARTIST)
-                    .outerFetch(TArtist.A_PAINTINGS, TPainting.A_GALLERIES);
+                    .outer(TArtist.A_PAINTINGS)
+                    .outer(TPainting.A_GALLERIES)
+                    .fetch()
+                    .orderBy(TArtist.C_ID.asc())
+                    .orderBy(TPainting.C_ID.asc())
+                    .orderBy(TGallery.C_ID.asc());
             List<Artist> artists = query.list(Artist.class);
             dumpCollection(artists);
 
             assertEquals("Wrong size for artist List", 3, artists.size());
-            assertNotNull("artist[0].paintings is null.", artists.get(0).getPaintings());
+            assertEquals("artist[0].paintings.size", 2, artists.get(0).getPaintings().size());
+            assertEquals("artist[1].paintings.size", 2, artists.get(1).getPaintings().size());
+            assertNull("artist[2].paintings is not null", artists.get(2).getPaintings());
             for (Painting paint : artists.get(0).getPaintings()) {
                 assertNotNull("Gallery is null", paint.getGalleries());
             }
-            assertNotNull("artist[1].paintings is null.", artists.get(1).getPaintings());
             Iterator<Painting> it = artists.get(1).getPaintings().iterator();
             Painting paint = it.next();
             assertNotNull("Gallery is null", paint.getGalleries());
+
             paint = it.next();
             assertNull("Gallery is not null", paint.getGalleries());
             assertNull("artist[2].paintings is not null.", artists.get(2).getPaintings());
@@ -568,7 +577,7 @@ public class TestStandard extends TestBootstrap {
     public void testSimpleFetch() {
         tm.transactionNoResult(db -> {
             Query query = db.query(TArtist.T_ARTIST).all()
-                    .order(TArtist.C_NAME)
+                    .orderBy(TArtist.C_NAME.asc())
                     .outer(TArtist.A_PAINTINGS).fetch();
             List<Artist> artists = query.list(new MapTransformer<>(query, true, Artist.class, new ArtistDAOTransformer()));
 
@@ -604,10 +613,12 @@ public class TestStandard extends TestBootstrap {
             Insert insert = db.insert(TTemporal.T_TEMPORAL).retrieveKeys(false)
                     .sets(TTemporal.C_ID, TTemporal.C_CLOCK, TTemporal.C_TODAY, TTemporal.C_NOW, TTemporal.C_INSTANT);
 
-            MyTime myTime = new MyTime();
-            MyDate myDate = new MyDate();
-            MyDateTime myDateTime = new MyDateTime();
-            Date date = new Date();
+            OffsetDateTime dateTime = OffsetDateTime.of(LocalDateTime.of(2019, 05, 25, 20, 1, 0),
+                    ZoneOffset.ofHoursMinutes(0, 0));
+            Date date = Date.from(Instant.from(dateTime));
+            MyTime myTime = new MyTime(date.getTime());
+            MyDate myDate = new MyDate(date.getTime());
+            MyDateTime myDateTime = new MyDateTime(date.getTime());
             insert.values(1L, myTime, myDate, myDateTime, date).execute();
 
             Temporal temporal = db.query(TTemporal.T_TEMPORAL).all()
@@ -616,7 +627,6 @@ public class TestStandard extends TestBootstrap {
             dump(temporal);
 
             SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss.sssss");
-            System.out.println("Time ===> " + sdf.format(myTime) + " <=> " + sdf.format(temporal.getClock()));
             String expected = sdf.format(myTime);
             String actual = sdf.format(temporal.getClock());
             assertEquals("Clock is incorrect! Expected " + expected + ", got " + actual, myTime, temporal.getClock());
@@ -628,7 +638,6 @@ public class TestStandard extends TestBootstrap {
             assertEquals("Now is incorrect!", sdf.format(myDateTime), sdf.format(temporal.getNow()));
 
             //sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-            System.out.println("Timestamp ===> " + sdf.format(date) + " <=> " + sdf.format(temporal.getInstant()));
             assertEquals("Instant is incorrect!", sdf.format(date), sdf.format(temporal.getInstant()));
         });
     }
@@ -786,7 +795,7 @@ public class TestStandard extends TestBootstrap {
         tm.transactionNoResult(db -> {
             BinStore bc = new BinStore();
             //  if file is not found
-            bc.set(new File("./src/test/resources/StarryNight.jpg"));
+            bc.set(new File(RESOURCE_IMAGES + "/Starry_Night.jpg"));
 
             Insert insert = new Insert(db, TImage.T_IMAGE)
                     .set(TImage.C_VERSION, 1)
@@ -858,13 +867,9 @@ public class TestStandard extends TestBootstrap {
     @Test
     public void testInsertImageBytes() {
         tm.transactionNoResult(db -> {
-            BinStore bc = new BinStore();
-            //  if file is not found
-            bc.set(new File("./src/test/resources/StarryNight.jpg"));
-
             ImageDTO image = new ImageDTO();
             image.setVersion(1);
-            image.setContent(bc.get());
+            image.setContent(BinStore.ofFile(RESOURCE_IMAGES + "/Starry_Night.jpg").get());
             Map<Column<?>, Object> keys = db.insert(TImage.T_IMAGE).set(image).execute();
             dump(image);
 
@@ -885,7 +890,7 @@ public class TestStandard extends TestBootstrap {
             insert.values(2, "Maria", false, EPayGrade.HIGH, new Date()).execute();
 
             List<Employee> employees = db.query(TEmployee.T_EMPLOYEE).all()
-                    .order(TEmployee.C_ID)
+                    .orderBy(TEmployee.C_ID.asc())
                     .list(Employee.class);
 
             dumpCollection(employees);
@@ -947,7 +952,7 @@ public class TestStandard extends TestBootstrap {
                                     .end()
                     )
                     .as("category") // maps to field category
-                    .order(TPainting.C_PRICE).desc()
+                    .orderBy(TPainting.C_PRICE.desc())
                     .list(Classification.class);
 
             assertEquals("Wrong category value for Paintings!", "expensive", c.get(0).getCategory());

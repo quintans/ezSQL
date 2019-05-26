@@ -11,6 +11,10 @@ public class ColumnHolder extends Function {
 	// can be a Column, a Function or any constante
 	protected Column<?> column;
 
+	public static ColumnHolder of(Column<?> column) {
+		return new ColumnHolder(column);
+	}
+
 	public ColumnHolder(Column<?> column) {
 		this.operator = EFunction.COLUMN;
 		this.value = column;

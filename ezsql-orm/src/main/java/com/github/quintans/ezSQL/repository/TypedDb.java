@@ -144,8 +144,8 @@ public class TypedDb extends com.github.quintans.ezSQL.Db {
             List<Function> cols = cnt.getColumns();
             cols.clear();
             cols.add(count());
-            if (cnt.getOrders() != null)
-                cnt.getOrders().clear();
+            if (cnt.getSorts() != null)
+                cnt.getSorts().clear();
             long recs = cnt.uniqueLong();
             pageResults.setCount(recs);
         }

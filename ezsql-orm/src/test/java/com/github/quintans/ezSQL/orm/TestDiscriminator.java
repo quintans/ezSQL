@@ -3,7 +3,7 @@ package com.github.quintans.ezSQL.orm;
 import static com.github.quintans.ezSQL.orm.app.mappings.discriminator.TMain.T_MAIN;
 import static com.github.quintans.ezSQL.orm.app.mappings.discriminator.TThing.T_THING;
 import static com.github.quintans.ezSQL.orm.app.mappings.virtual.TEyeColor.T_EYE_COLOR;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.List;
 import java.util.Map;
@@ -27,15 +27,15 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class TestDiscriminator extends TestBootstrap {
 
-	public TestDiscriminator(String environment, String script) {
-		super(environment, script);
+	public TestDiscriminator(String environment) {
+		super(environment);
 	}
 
 	@Test
 	public void testDiscriminatorAssociation() {
 		tm.transactionNoResult(db -> {
 			List<Main> mains = db.query(T_MAIN).all()
-					.order(TMain.C_ID).asc()
+					.orderBy(TMain.C_ID.asc())
 					.outerFetch(TMain.A_BE)
 					.outerFetch(TMain.A_CE)
 					.list(Main.class);
@@ -51,7 +51,7 @@ public class TestDiscriminator extends TestBootstrap {
 			assertTrue("Wrong TMain childs", m.getBe() == null && m.getCe() != null);
 
 			List<Be> bes = db.query(TBe.T_BE).all()
-					.order(TBe.C_DSC).asc()
+					.orderBy(TBe.C_DSC.asc())
 					.outerFetch(TBe.A_MAIN)
 					.list(Be.class);
 			dumpCollection(bes);
@@ -70,7 +70,7 @@ public class TestDiscriminator extends TestBootstrap {
     public void testAssociationToTableDiscriminator() {
 		tm.transactionNoResult(db -> {
 			List<Thing> things = db.query(T_THING).all()
-					.order(TThing.C_ID).asc()
+					.orderBy(TThing.C_ID.asc())
 					.outer(TThing.A_TAA_B).fetch()
 					.where(TThing.C_ID.is(1L))
 					.list(Thing.class);
@@ -111,7 +111,7 @@ public class TestDiscriminator extends TestBootstrap {
 			Insert insert = db.insert(TGender.T_GENDER).sets(TGender.C_KEY, TGender.C_VALUE);
 			Map<Column<?>, Object> keys = insert.values("H", "Hermafrodite").execute();
 
-			assertTrue("Unable to insert with discriminator column", keys.get(TGender.C_ID) != null);
+			assertNotNull("Unable to insert with discriminator column", keys.get(TGender.C_ID));
 		});
 	}
 
@@ -121,7 +121,7 @@ public class TestDiscriminator extends TestBootstrap {
 			Update update = db.update(TGender.T_GENDER).sets(TGender.C_VALUE).where(TGender.C_KEY.is("U"));
 			int result = update.values("Undefined").execute();
 
-			assertTrue("Unable to update with discriminator column", result == 1);
+			assertEquals("Unable to update with discriminator column", 1, result);
 		});
 	}
 
@@ -131,7 +131,7 @@ public class TestDiscriminator extends TestBootstrap {
 			Update update = db.update(TGender.T_GENDER).sets(TGender.C_VALUE);
 			int result = update.values("Undefined").execute();
 
-			assertTrue("Unable to update with discriminator column", result == 3);
+			assertEquals("Unable to update with discriminator column", 3, result);
 		});
 	}
 
@@ -140,7 +140,7 @@ public class TestDiscriminator extends TestBootstrap {
 		tm.transactionNoResult(db -> {
 			int result = db.delete(T_EYE_COLOR).where(T_EYE_COLOR.C_KEY.like("B%")).execute();
 
-			assertTrue("Unable to update with discriminator column", result == 2);
+			assertEquals("Unable to update with discriminator column", 2, result);
 		});
 	}
 
@@ -150,7 +150,7 @@ public class TestDiscriminator extends TestBootstrap {
 		tm.transactionNoResult(db -> {
 			int result = db.delete(T_EYE_COLOR).execute();
 
-			assertTrue("Unable to update with discriminator column", result == 3);
+			assertEquals("Unable to update with discriminator column", 3, result);
 		});
 	}
 }

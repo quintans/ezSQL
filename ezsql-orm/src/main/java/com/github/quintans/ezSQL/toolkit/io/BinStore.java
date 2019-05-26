@@ -98,8 +98,24 @@ public class BinStore implements Serializable {
     public BinStore(byte[] data) {
         set(data);
     }
-    
-    public BinStore(int sizeThreshold, byte[] data) {
+
+    public static BinStore of(byte[] data) {
+		return new BinStore(data);
+	}
+
+	public static BinStore ofFile(String pathname) throws IOException {
+		BinStore bs = new BinStore();
+		bs.set(new File(pathname));
+		return bs;
+	}
+
+	public static BinStore ofInputStream(InputStream inputStream) throws IOException {
+		BinStore bs = new BinStore();
+		bs.set(inputStream);
+		return bs;
+	}
+
+	public BinStore(int sizeThreshold, byte[] data) {
         this(sizeThreshold);
         set(data);
     }

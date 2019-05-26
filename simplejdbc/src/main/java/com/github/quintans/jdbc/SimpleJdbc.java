@@ -350,9 +350,9 @@ public class SimpleJdbc {
      * Executa INSERT devolvendo uma array com as chaves geradas.
      * Se o driver não suportar a obtenção de chaves geradas, devolve null.
      *
-     * @param sql        instrução sql (INSERT) a executar
-     * @param keyColumns as colunas chaves a devolver
-     * @param params     os dados do registo
+     * @param sql            instrução sql (INSERT) a executar
+     * @param keyColumnTypes as colunas chaves a devolver
+     * @param params         os dados do registo
      * @return as chaves
      */
     public Object[] insert(String sql, ColumnType[] keyColumnTypes, Object... params) {
@@ -512,10 +512,12 @@ public class SimpleJdbc {
             for (SqlParameter parameter : parameters) {
                 pos++;
                 if (parameter.isDefined()) {
-                    if (parameter.getValue() != null)
+                    if (parameter.getValue() != null) {
                         stmt.setObject(pos, parameter.getValue(), parameter.getJdbcType());
-                    else
+                    }
+                    else {
                         stmt.setNull(pos, parameter.getJdbcType());
+                    }
                 }
             }
 

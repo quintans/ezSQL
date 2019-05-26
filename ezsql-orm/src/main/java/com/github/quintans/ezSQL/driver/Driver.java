@@ -51,6 +51,7 @@ public interface Driver {
     String tableName(Table table);
     String tableAlias(String alias);
     String columnName(Column<?> column);
+    String procedureName(SqlProcedure procedure);
     String columnAlias(Function function, int position);
     
     boolean isPmdKnownBroken();

@@ -33,8 +33,8 @@ public class TestPerformance extends TestBootstrap {
     private static final int LOOP = 10000;
     private static final int BATCH = 1000;
 
-    public TestPerformance(String environment, String script) {
-        super(environment, script);
+    public TestPerformance(String environment) {
+        super(environment);
     }
 
     @Test

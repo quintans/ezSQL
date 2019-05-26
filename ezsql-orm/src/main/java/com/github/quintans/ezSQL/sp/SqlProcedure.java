@@ -105,7 +105,7 @@ public class SqlProcedure {
 	 * @return map with the result. The result mapping was previously defined when constructing the <code>SqlProcedure</code>
 	 */
 	public Map<String, Object> call() {
-		return call(new HashMap<String, Object>());
+		return call(new HashMap<>());
 	}
 
 	public Map<String, Object> call(Map<String, Object> values) {

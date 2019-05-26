@@ -11,6 +11,7 @@ import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.dml.AutoKeyStrategy;
 import com.github.quintans.ezSQL.dml.Delete;
 import com.github.quintans.ezSQL.dml.Query;
+import com.github.quintans.ezSQL.sp.SqlProcedure;
 import com.github.quintans.jdbc.PreparedStatementCallback;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
@@ -79,6 +80,11 @@ public class MySQLDriver extends GenericDriver {
     @Override
 	public String columnName(Column<?> column) {
         return "`" + column.getName().toUpperCase() + "`";
+	}
+
+    @Override
+	public String procedureName(SqlProcedure procedure) {
+        return "`" + procedure.getName() + "`";
 	}
 
     @Override

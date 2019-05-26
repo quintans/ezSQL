@@ -15,7 +15,6 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import com.github.quintans.ezSQL.db.*;
-import com.github.quintans.ezSQL.toolkit.utils.Appender;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
@@ -337,7 +336,7 @@ public abstract class GenericDriver implements Driver {
 		sb.append("{");
 		if (procedure.isFunction())
 			sb.append(" ? =");
-		sb.append(" call ").append(procedure.getName()).append("(");
+		sb.append(" call ").append(procedureName(procedure)).append("(");
 
 		int start = procedure.isFunction() ? 1 : 0;
 		int len = procedure.getParameters().size();
@@ -460,7 +459,7 @@ public abstract class GenericDriver implements Driver {
             sel.append(proc.getUnionPart());
         }
         // ORDER
-        if (length(query.getOrders()) != 0) {
+        if (length(query.getSorts()) != 0) {
             sel.append(" ORDER BY ").append(proc.getOrderPart());
         }
 
@@ -603,6 +602,11 @@ public abstract class GenericDriver implements Driver {
     public String columnName(Column<?> column) {
         return column.getName();
     }
+
+	@Override
+	public String procedureName(SqlProcedure procedure) {
+		return procedure.getName();
+	}
 
     @Override
     public String columnAlias(Function function, int position) {

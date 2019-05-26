@@ -1,24 +1,23 @@
 package com.github.quintans.ezSQL.orm;
 
-import static com.github.quintans.jdbc.sp.SqlParameter.IN;
-import static com.github.quintans.jdbc.sp.SqlParameter.OUT;
+import com.github.quintans.ezSQL.sp.SqlProcedure;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.sql.Types;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Test;
-
-import com.github.quintans.ezSQL.sp.SqlProcedure;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import static com.github.quintans.jdbc.sp.SqlParameter.IN;
+import static com.github.quintans.jdbc.sp.SqlParameter.OUT;
+import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
 public class TestProcedures extends TestBootstrap {
 
-	public TestProcedures(String environment, String script) {
-		super(environment, script);
+	public TestProcedures(String environment) {
+		super(environment);
 	}
 
 	@Test
@@ -26,22 +25,22 @@ public class TestProcedures extends TestBootstrap {
 		// calls the function SYSDATE
 		tm.transactionNoResult(db -> {
 			MyFunctionsDao spDao = new MyFunctionsDao(db);
-			Date date = spDao.getSysdate();
-			System.out.println("date: " + date);
+			Integer five = spDao.hiFive();
+			assertEquals("failed getting hiFive", 5, five.intValue());
 		});
 	}
 
 	class MyFunctionsDao {
-		private SqlProcedure sysdate;
+		private SqlProcedure hiFive;
 		private SqlProcedure mockUpdate;
 		private SqlProcedure mockRead;
 
 		public MyFunctionsDao(Db db) {
 			// it's declared as a function because it has a parameter before the
 			// function name
-			this.sysdate = new SqlProcedure(db,
-				OUT("return", Types.DATE), // return parameter
-				"SYSDATE" // function name
+			this.hiFive = new SqlProcedure(db,
+				OUT("return", Types.INTEGER), // return parameter
+				"hiFive" // function name
 			);
 			// it's declared as a procedure because it has no parameters before
 			// the procedure name
@@ -59,9 +58,9 @@ public class TestProcedures extends TestBootstrap {
 			);
 		}
 
-		public Date getSysdate() {
-			Map<String, Object> results = this.sysdate.call();
-			return (Date) results.get("return");
+		public Integer hiFive() {
+			Map<String, Object> results = this.hiFive.call();
+			return (Integer) results.get("return");
 		}
 
 		public void mockUpdate(String codigo, String descricao) {

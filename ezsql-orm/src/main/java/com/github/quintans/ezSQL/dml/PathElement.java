@@ -10,7 +10,7 @@ public class PathElement {
 	private Association derived;
 	private Condition condition;
 	private List<Function> columns;
-	private List<Order> orders;
+	private List<Sort> orders;
 	private String preferredAlias; // user preferred alias
 
 	public PathElement(Association base, Boolean inner) {
@@ -58,11 +58,11 @@ public class PathElement {
         this.columns = columns;
     }
 
-    public List<Order> getOrders() {
+    public List<Sort> getOrders() {
         return orders;
     }
 
-    public void setOrders(List<Order> orders) {
+    public void setOrders(List<Sort> orders) {
         this.orders = orders;
     }
     

@@ -1,33 +1,29 @@
 package com.github.quintans.ezSQL.orm;
 
-import static com.github.quintans.ezSQL.dml.Definition.raw;
-
-import java.sql.Connection;
-import java.util.Collection;
-import java.util.Date;
-
 import com.github.quintans.ezSQL.TransactionManager;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
-
-import org.dbunit.IDatabaseTester;
-import org.dbunit.JdbcDatabaseTester;
-
 import com.github.quintans.ezSQL.common.type.MyDateTime;
 import com.github.quintans.ezSQL.dml.Query;
 import com.github.quintans.ezSQL.dml.Update;
 import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.ezSQL.driver.Oracle5Driver;
 import com.github.quintans.ezSQL.orm.app.mappings.TTimer;
+import junit.framework.Test;
+import junit.framework.TestCase;
+import junit.framework.TestSuite;
 import org.junit.Ignore;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.util.Collection;
+import java.util.Date;
+
+import static com.github.quintans.ezSQL.dml.Definition.raw;
 
 /**
  * Unit test for simple App.
  */
 @Ignore
 public class OracleTestTime extends TestCase {
-	private IDatabaseTester databaseTester;
 
 	private Driver driver;
 	private TransactionManager<Db> tm;
@@ -53,9 +49,11 @@ public class OracleTestTime extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 
-		this.databaseTester = new JdbcDatabaseTester("oracle.jdbc.driver.OracleDriver", "jdbc:oracle:thin:@vmdb:1521:XE", "LIXO", "LIXO");
+		// register driver
+		Class.forName("oracle.jdbc.driver.OracleDriver");
+		// get connection
+		Connection conn = DriverManager.getConnection("jdbc:tc:oracle:thin:@vmdb:1521:XE");
 
-		Connection conn = this.databaseTester.getConnection().getConnection();
 		Oracle5Driver drv = new Oracle5Driver();
 		drv.setTimeZoneId("GMT");
 		System.out.println("tz: " + drv.getCalendar().getTimeZone().getID());
@@ -69,11 +67,6 @@ public class OracleTestTime extends TestCase {
 				// no-op
 			}
 		};
-	}
-
-	@Override
-	protected void tearDown() throws Exception {
-		this.databaseTester.onTearDown();
 	}
 
 	public void testUpdate() {

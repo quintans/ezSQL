@@ -47,7 +47,7 @@ Simple ORM library for JAVA
 		* [Inner Fetch](#inner-fetch)
 		* [Exists](#exists)
 		* [Group By](#group-by)
-		* [Order By](#order-by)
+		* [Order By](#sort-by)
 		* [Union](#union)
 		* [Case Statement](#case-statement)
 		* [Pagination](#pagination)
@@ -1051,7 +1051,7 @@ The number in the group by indicates the position of the column that we want to 
 Ex: list all artists, ordering ascending by name
 
 ```java
-Query query = db.query(TArtist.T_ARTIST).order(TArtist.C_NAME).asc();
+Query query = db.query(TArtist.T_ARTIST).orderBy(TArtist.C_NAME.asc());
 Collection<Artist> values = query.select(Artist.class);
 ```
 
@@ -1119,7 +1119,7 @@ List<Classification> c = db.query(TPainting.T_PAINTING)
 		.end()
 	)
 	.as("category") // maps to field category
-	.order(TPainting.C_PRICE).desc()
+	.orderBy(TPainting.C_PRICE.desc())
 	.list(Classification.class);
 ```
 
@@ -1128,7 +1128,7 @@ List<Classification> c = db.query(TPainting.T_PAINTING)
 Ex: list all artists from the 10th to the 20th record, ordering ascending by name
 
 ```java
-Query query = db.query(TArtist.T_ARTIST).order(TArtist.C_NAME).asc();
+Query query = db.query(TArtist.T_ARTIST).orderBy(TArtist.C_NAME.asc());
 query.skip(9);
 query.limit(10);
 List<Artist> values = query.list(Artist.class);

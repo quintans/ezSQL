@@ -26,6 +26,16 @@ public class Misc {
         return data == null ? 0 : data.length;
     }
 
+
+    public static boolean empty(Collection<?> coll) {
+        return length(coll) == 0;
+    }
+
+    public static boolean empty(Object[] data) {
+        return length(data) == 0;
+    }
+
+
     public static void copy(InputStream in, BinStore bc) {
         if (in == null)
             return;

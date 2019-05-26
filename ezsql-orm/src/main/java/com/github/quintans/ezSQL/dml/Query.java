@@ -18,6 +18,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
 
+import static com.github.quintans.ezSQL.toolkit.utils.Misc.empty;
 import static com.github.quintans.ezSQL.toolkit.utils.Misc.length;
 
 public class Query extends DmlBase {
@@ -31,7 +32,7 @@ public class Query extends DmlBase {
     private Query subquery;
     private boolean distinct;
     private List<Function> columns = new ArrayList<>();
-    private List<Order> orders;
+    private List<Sort> sorts;
     private List<Union> unions;
     // saves position of columnHolder
     private int[] groupBy = null;
@@ -40,7 +41,7 @@ public class Query extends DmlBase {
     private int limit;
 
     private Function lastFunction = null;
-    private Order lastOrder = null;
+    private Sort lastSortOn = null;
 
     private Condition having;
 
@@ -92,8 +93,8 @@ public class Query extends DmlBase {
         this.distinct = other.isDistinct();
         if (other.getColumns() != null)
             this.columns = new ArrayList<>(other.getColumns());
-        if (other.getOrders() != null)
-            this.orders = new ArrayList<>(other.getOrders());
+        if (other.getSorts() != null)
+            this.sorts = new ArrayList<>(other.getSorts());
         if (other.getUnions() != null)
             this.unions = new ArrayList<>(other.getUnions());
         // saves position of columnHolder
@@ -231,12 +232,11 @@ public class Query extends DmlBase {
     // ===
 
     // ORDER ===
-    private Query order(ColumnHolder columnHolder) {
-        if (this.orders == null)
-            this.orders = new ArrayList<>();
+    private Query addOrder(Sort sort) {
+        if (this.sorts == null)
+            this.sorts = new ArrayList<>();
 
-        this.lastOrder = new Order(columnHolder, true);
-        this.orders.add(this.lastOrder);
+        this.sorts.add(sort);
 
         this.rawSql = null;
 
@@ -244,66 +244,77 @@ public class Query extends DmlBase {
     }
 
     /**
-     * Order by a column belonging to the driving table<br>
-     * If you want to order by a column from the table targeted by the last association, use orderBy
+     * Apply sorting.<br>
+     * If it is over an alias it will apply immediately without further check.<br>
+     * If it is over a column it will check against all the tables in the query, applying it to the first match.<br>
+     * If you want to addOrder by a column from the table targeted by the last association, use orderOn
      *
-     * @param column the column
+     * @param sorts the sorts
      * @return the query
      */
-    public Query order(Column<?> column) {
-        return order(column, this.tableAlias);
+    public Query orderBy(Sort... sorts) {
+        for (Sort sort : sorts) {
+            if (sort.getAlias() != null) {
+                return addOrder(sort);
+            }
+
+            Column<?> column = sort.getColumnHolder().getColumn();
+            String tableName = column.getTable().getName();
+            if (tableName.equals(getTable().getName())) {
+                return orderOn(sort, tableAlias);
+            }
+            // find first table matching the column
+            for (Join join : this.joins) {
+                for (PathElement pe : join.getPathElements()) {
+                    Association derived = pe.getDerived();
+                    if (derived.getTableTo().getName().equals(tableName)) {
+                        return orderOn(sort, derived.getAliasTo());
+                    }
+                }
+            }
+            throw new PersistenceException("Column " + column + " does belong to " + table + " table or any table in existing joins");
+        }
+        return this;
     }
 
-    public Query asc(Column<?> column) {
-        return order(column, this.tableAlias).asc();
-    }
-
-    public Query desc(Column<?> column) {
-        return order(column, this.tableAlias).desc();
-    }
-
-    public Query order(Column<?> column, String alias) {
-        ColumnHolder ch = new ColumnHolder(column);
+    public Query orderOn(Sort sort, String alias) {
+        Sort other = sort.toBuilder().build();
+        ColumnHolder ch = other.getColumnHolder();
         if (alias != null) {
             ch.setTableAlias(alias);
         } else {
             ch.setTableAlias(this.tableAlias);
         }
 
-        return order(ch);
-    }
-
-    public Query asc(Column<?> column, String alias) {
-        return order(column, this.tableAlias).asc();
-    }
-
-    public Query desc(Column<?> column, String alias) {
-        return order(column, alias).desc();
+        return addOrder(other);
     }
 
     /**
-     * Order by column belonging to another table.
-     * This might come in handy when the order cannot be declared in the same order as the joins.
+     * Sort by column belonging to another table.
+     * This might come in handy when the orderBy cannot be declared in the same orderBy as the joins.
      *
-     * @param column       a coluna de ordenação
+     * @param sort       a coluna de ordenação
      * @param associations associações para chegar à tabela que contem a coluna de
      *                     ordenação
      * @return devolve a query
      */
-    public Query order(Column<?> column, Association... associations) {
+    public Query orderOn(Sort sort, Association... associations) {
+        if(empty(associations)) {
+            throw new IllegalArgumentException("Associations cannot be empty");
+        }
         List<PathElement> pathElements = new ArrayList<>();
         for (Association association : associations)
             pathElements.add(new PathElement(association, null));
 
-        return order(column, pathElements);
+        return orderOn(sort, pathElements);
     }
 
-    private Query order(Column<?> column, List<PathElement> pathElements) {
+    private Query orderOn(Sort sort, List<PathElement> pathElements) {
         PathElement[] common = deepestCommonPath(this.cachedAssociation, pathElements);
         if (common.length == pathElements.size()) {
-            return order(column, pathElementAlias(common[common.length - 1]));
+            return orderOn(sort, pathElementAlias(common[common.length - 1]));
         } else
-            throw new PersistenceException("The path specified in the order is not valid");
+            throw new PersistenceException("The path specified in the orderBy is not valid");
 
     }
 
@@ -312,94 +323,27 @@ public class Query extends DmlBase {
      * definida, <br>
      * ou se não houver nenhuma associação, a coluna pertencente à tabela
      *
-     * @param column the column
+     * @param sort the sort
      * @return current query
      */
-    public Query orderBy(Column<?> column) {
+    public Query orderOn(Sort sort) {
         if (this.path != null) {
             PathElement last = this.path.get(this.path.size() - 1);
             if (last.getOrders() == null) {
                 last.setOrders(new ArrayList<>());
             }
-            // delay adding order
-            this.lastOrder = new Order(new ColumnHolder(column));
-            last.getOrders().add(this.lastOrder);
+            // delay adding orderBy
+            this.lastSortOn = sort;
+            last.getOrders().add(this.lastSortOn);
             return this;
         } else if (this.lastJoin != null)
-            return order(column, this.lastJoin.getPathElements());
+            return orderOn(sort, this.lastJoin.getPathElements());
         else
-            return order(column, this.lastFkAlias);
+            return orderOn(sort, this.lastFkAlias);
     }
 
-    public Query ascBy(Column<?> column) {
-        return orderBy(column).asc();
-    }
-
-    public Query descBy(Column<?> column) {
-        return orderBy(column).desc();
-    }
-
-    public Query order(String column) {
-        if (this.orders == null)
-            this.orders = new ArrayList<>();
-
-        this.lastOrder = new Order(column, true);
-        this.orders.add(this.lastOrder);
-
-        this.rawSql = null;
-
-        return this;
-    }
-
-    public Query asc(String column) {
-        return order(column).asc();
-    }
-
-    public Query desc(String column) {
-        return order(column).desc();
-    }
-
-    /**
-     * Define a direção ASCENDENTE da ordem a aplicar na ultima ordem definida
-     *
-     * @return this
-     */
-    public Query asc() {
-        asc(true);
-        return this;
-    }
-
-    /**
-     * Define a direção da ordem a aplicar na ultima ordem definida
-     *
-     * @param dir
-     * @return this
-     */
-    public Query asc(boolean dir) {
-        if (this.lastOrder != null) {
-            this.lastOrder.setAsc(dir);
-
-            this.rawSql = null;
-        }
-        return this;
-    }
-
-    /**
-     * Define a direção DESCENDENTE da ordem a aplicar na ultima ordem definida
-     *
-     * @return
-     */
-    public Query desc() {
-        if (this.lastOrder != null) {
-            this.lastOrder.setAsc(false);
-
-            this.rawSql = null;
-        }
-        return this;
-    }
-
-    public List<Order> getOrders() {
-        return this.orders;
+    public List<Sort> getSorts() {
+        return this.sorts;
     }
 
     // ===
@@ -536,13 +480,13 @@ public class Query extends DmlBase {
         // only after this the joins will have the proper join table alias
         super.joinTo(this.path, fetch);
 
-        // process pending orders
+        // process pending sorts
         if (this.path != null) {
             for (PathElement pe : this.path) {
                 if (pe.getOrders() != null) {
-                    for (Order o : pe.getOrders()) {
-                        o.getHolder().setTableAlias(pathElementAlias(pe));
-                        this.getOrders().add(o);
+                    for (Sort o : pe.getOrders()) {
+                        o.getColumnHolder().setTableAlias(pathElementAlias(pe));
+                        this.getSorts().add(o);
                     }
                 }
             }

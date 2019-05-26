@@ -1,35 +1,40 @@
 package com.github.quintans.ezSQL.orm;
 
+import com.github.quintans.ezSQL.AbstractDb;
 import com.github.quintans.ezSQL.TransactionManager;
+import com.github.quintans.ezSQL.dml.Insert;
 import com.github.quintans.ezSQL.driver.Driver;
-import org.apache.ibatis.jdbc.ScriptRunner;
+import com.github.quintans.ezSQL.orm.app.domain.EGender;
+import com.github.quintans.ezSQL.orm.app.mappings.*;
+import com.github.quintans.ezSQL.orm.app.mappings.discriminator.TBe;
+import com.github.quintans.ezSQL.orm.app.mappings.discriminator.TCe;
+import com.github.quintans.ezSQL.orm.app.mappings.discriminator.TMain;
+import com.github.quintans.ezSQL.orm.app.mappings.virtual.TBook;
+import com.github.quintans.ezSQL.orm.app.mappings.virtual.TBook18;
+import com.github.quintans.ezSQL.toolkit.io.BinStore;
 import org.apache.log4j.Logger;
-import org.dbunit.IDatabaseTester;
-import org.dbunit.JdbcDatabaseTester;
-import org.dbunit.dataset.IDataSet;
-import org.dbunit.dataset.xml.XmlDataSet;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Properties;
+
+import static com.github.quintans.ezSQL.orm.app.mappings.virtual.TAuthor.T_AUTHOR;
+import static com.github.quintans.ezSQL.orm.app.mappings.virtual.TCatalog.T_CATALOG;
 
 /**
  * Unit test for simple App.
  */
 public class TestBootstrap {
     private static Logger LOGGER = Logger.getLogger(TestBootstrap.class);
+    public static final String RESOURCE_IMAGES = "./src/test/resources/images";
 
-    private static IDatabaseTester databaseTester;
     protected static TransactionManager<Db> tm;
     protected static Driver driver;
     private static String environment;
@@ -37,12 +42,14 @@ public class TestBootstrap {
     @Parameterized.Parameters(name = "{index}: {0}")
     public static Iterable<Object[]> connections() {
         return Arrays.asList(new Object[][]{
-                {"h2", "db_h2.sql"}
+                {"h2"},
+                {"mysql"},
+                {"postgresql"}
         });
     }
 
-    public TestBootstrap(String environment, String script) {
-        if(environment.equals(this.environment)) {
+    public TestBootstrap(String environment) {
+        if (environment.equals(this.environment)) {
             return;
         }
 
@@ -54,29 +61,13 @@ public class TestBootstrap {
             String dbUrl = systemProps.getProperty("db.url");
             String ormDriver = systemProps.getProperty("db.orm.driver");
 
-            databaseTester = new JdbcDatabaseTester(dbDriver, dbUrl);
-
-            //databaseTester = new JdbcDatabaseTester("org.h2.Driver", "jdbc:h2:tcp://localhost:9092/test", "sa", "");
-            //databaseTester = new JdbcDatabaseTester("org.mariadb.jdbc.Driver", "jdbc:mariadb://localhost:3306/ezsql", "quintans", "quintans");
-            //databaseTester = new JdbcDatabaseTester("com.mysql.jdbc.Driver", "jdbc:mysql://localhost:3306/ezsql", "quintans", "quintans");
-            // databaseTester = new JdbcDatabaseTester("org.postgresql.Driver", "jdbc:postgresql://localhost:5432/ezsql", "quintans", "quintans");
-
-
-            //Driver driver = new MySQLDriverExt();
-            // Driver driver = new H2DriverExt();
-            //Driver driver = new Oracle8iDriver();
-            //Driver driver = new PostgreSQLDriverExt();
-
             Class<?> clazz = Class.forName(ormDriver);
             driver = (Driver) clazz.newInstance();
 
-            Connection conn = databaseTester.getConnection().getConnection();
-            ScriptRunner scriptExecutor = new ScriptRunner(conn);
-            scriptExecutor.setAutoCommit(false);
-            scriptExecutor.setStopOnError(true);
-            InputStream scriptIs = getClass().getClassLoader().getResourceAsStream("sql/" + script);
-            Reader reader = new InputStreamReader(scriptIs);
-            scriptExecutor.runScript(reader);
+            // register driver
+            Class.forName(dbDriver);
+            // get connection
+            Connection conn = DriverManager.getConnection(dbUrl);
 
             tm = new TransactionManager<Db>(
                     () -> new Db(driver, conn)
@@ -92,76 +83,108 @@ public class TestBootstrap {
     }
 
     @Before
-    public void setUp() throws Exception {
-        try {
-            // initialize your dataset here
-            IDataSet dataSet = new XmlDataSet(new FileInputStream("data/export.xml"));
-
-            databaseTester.setDataSet(dataSet);
-            // will call default setUpOperation
-            databaseTester.onSetup();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+    public void setUp() {
+        tm.transactionNoResult(this::populate);
     }
 
-    @After
-    public void tearDown() throws Exception {
-        databaseTester.onTearDown();
+    private void populate(AbstractDb db) throws IOException {
+        db.delete(TEmployee.T_EMPLOYEE).execute();
+        db.delete(TTemporal.T_TEMPORAL).execute();
+        db.delete(T_CATALOG).execute();
+        db.delete(TBook18.T_BOOK18).execute();
+        db.delete(TBook.T_BOOK).execute();
+        db.delete(T_AUTHOR).execute();
+        db.delete(TCe.T_CE).execute();
+        db.delete(TBe.T_BE).execute();
+        db.delete(TMain.T_MAIN).execute();
+        db.delete(TGallery.GalleryPainting.T_GALLERY_PAINTING).execute();
+        db.delete(TGallery.T_GALLERY).execute();
+        db.delete(TPainting.T_PAINTING).execute();
+        db.delete(TImage.T_IMAGE).execute();
+        db.delete(TArtist.T_ARTIST).execute();
+
+        Insert insert = db.insert(TArtist.T_ARTIST)
+                .sets(TArtist.C_ID, TArtist.C_VERSION, TArtist.C_NAME, TArtist.C_GENDER);
+        insert.values(1L, 1, "Pablo Picasso", EGender.MALE).execute();
+        insert.values(2L, 1, "Vincent van Gogh", EGender.MALE).execute();
+        insert.values(3L, 1, "Jane Doe", EGender.FEMALE).execute();
+
+        insert = db.insert(TImage.T_IMAGE)
+                .sets(TImage.C_ID, TImage.C_VERSION, TImage.C_CONTENT);
+        insert.values(1L, 1, BinStore.ofFile(RESOURCE_IMAGES + "/Blue_Nude.jpg")).execute();
+        insert.values(2L, 1, BinStore.ofFile(RESOURCE_IMAGES + "/Girl_Before_a_Mirror.jpg")).execute();
+        insert.values(3L, 1, BinStore.ofFile(RESOURCE_IMAGES + "/Starry_Night.jpg")).execute();
+        insert.values(4L, 1, BinStore.ofFile(RESOURCE_IMAGES + "/Wheat_Field_with_Cypresses.jpg")).execute();
+
+        insert = db.insert(TPainting.T_PAINTING)
+                .sets(TPainting.C_ID, TPainting.C_VERSION, TPainting.C_NAME, TPainting.C_PRICE, TPainting.C_ARTIST, TPainting.C_IMAGE);
+        insert.values(1L, 1, "Blue Nude", 23.45D, 1L, 1L).execute();
+        insert.values(2L, 1, "Girl Before a Mirror", 100.00D, 1L, 2L).execute();
+        insert.values(3L, 1, "The Starry Night", 356.78D, 2L, 3L).execute();
+        insert.values(4L, 1, "Wheat Field with Cypresses", 100.00D, 2L, 4L).execute();
+
+        insert = db.insert(TGallery.T_GALLERY)
+                .sets(TGallery.C_ID, TGallery.C_VERSION, TGallery.C_NAME, TGallery.C_ADRESS);
+        insert.values(1L, 1, "Galeria VERDE", "Rua das Alfaces 145, 1000 LISBOA").execute();
+        insert.values(2L, 1, "Galeria AZUL", "Rua dos Bimbos 69, 4000 PORTO").execute();
+
+        insert = db.insert(TGallery.GalleryPainting.T_GALLERY_PAINTING)
+                .sets(TGallery.GalleryPainting.C_GALLERY, TGallery.GalleryPainting.C_PAINTING);
+        insert.values(1L, 1L).execute();
+        insert.values(1L, 2L).execute();
+        insert.values(1L, 3L).execute();
+        insert.values(2L, 1L).execute();
+        insert.values(2L, 2L).execute();
+
+        insert = db.insert(TMain.T_MAIN)
+                .sets(TMain.C_ID, TMain.C_TYPE);
+        insert.values(1L, "B").execute();
+        insert.values(2L, "B").execute();
+        insert.values(3L, "C").execute();
+
+        insert = db.insert(TBe.T_BE)
+                .sets(TBe.C_ID, TBe.C_DSC, TBe.C_FK);
+        insert.values(1L, "Tequila", 1L).execute();
+        insert.values(2L, "Gin", 2L).execute();
+        insert.values(3L, "Vodka", null).execute();
+
+        insert = db.insert(TCe.T_CE)
+                .sets(TCe.C_ID, TCe.C_DSC, TCe.C_FK);
+        insert.values(1L, "Green", 1L).execute();
+        insert.values(2L, "Blue", 3L).execute();
+
+        insert = db.insert(T_AUTHOR)
+                .sets(T_AUTHOR.C_ID, T_AUTHOR.C_VERSION, T_AUTHOR.C_NAME);
+        insert.values(1L, 1, "Ambrósio").execute();
+        insert.values(2L, 1, "Kamon").execute();
+
+        insert = db.insert(TBook.T_BOOK)
+                .sets(TBook.C_ID, TBook.C_VERSION, TBook.C_AUTHOR, TBook.C_PRICE);
+        insert.values(1L, 1, 1, 10.00D).execute();
+        insert.values(2L, 1, 1, 15.00D).execute();
+
+        insert = db.insert(TBook18.T_BOOK18)
+                .sets(TBook18.C_ID, TBook18.C_LANG, TBook18.C_NAME);
+        insert.values(1L, "en", "SQL in Action").execute();
+        insert.values(1L, "pt", "SQL em Acção").execute();
+        insert.values(2L, "en", "Twilight").execute();
+        insert.values(2L, "pt", "Crepusculo").execute();
+
+        insert = db.insert(T_CATALOG)
+                .sets(T_CATALOG.C_ID, T_CATALOG.C_TYPE, T_CATALOG.C_KEY, T_CATALOG.C_VALUE);
+        insert.values(1L, "EYECOLOR", "BLUE", "Blue").execute();
+        insert.values(2L, "EYECOLOR", "GREEN", "Green").execute();
+        insert.values(3L, "EYECOLOR", "BROWN", "Brown").execute();
+        insert.values(4L, "GENDER", "M", "Male").execute();
+        insert.values(5L, "GENDER", "F", "Female").execute();
+        insert.values(6L, "GENDER", "U", "Unknown").execute();
+
     }
 
     @AfterClass
     public static void shutDown() {
         environment = null;
     }
-
-	/*
-    @BeforeClass
-    public static void testSetup() throws Exception {
-        try {
-            String dbms = System.getProperty("dbms");
-            Connection conn = null;
-            if (dbms == null || dbms.equals("mysql")) {
-                conn = DriverManager.getConnection("jdbc:mariadb://localhost:3306/ezsql", "quintans", "quintans");
-            } else if (dbms.equals("h2")) {
-                conn = DriverManager.getConnection("jdbc:h2:tcp://localhost:9092/test", "sa", "");
-            }
-            
-            db = new TypedDb(conn);
-            Driver driver = new H2DriverExt();
-            // Driver driver = new Oracle8iDriver();
-            db.setDriver(driver);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
-    }
-
-    @Before
-    public void setUp() throws Exception {
-        try {
-            // DELETES
-            db.delete(TArtist.T_ARTIST).execute();
-            
-            Insert insert = db.insert(TArtist.T_ARTIST)
-            .sets(TArtist.C_ID, TArtist.C_VERSION, TArtist.C_GENDER, TArtist.C_NAME, TArtist.C_BIRTHDAY);
-
-            insert.values(1, 1, EGender.MALE, "Pablo Picasso", null).execute();
-            insert.values(2, 1, EGender.MALE, "Vincent van Gogh", null).execute();
-            insert.values(3, 1, EGender.FEMALE, "Jane Doe", null).execute();
-            
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
-    }
-    
-    @After
-    public void tearDown() throws Exception {
-        db.getConnection().commit();
-    }
-    */
 
     public void dumpCollection(Collection<?> collection) {
         if (!LOGGER.isDebugEnabled()) {

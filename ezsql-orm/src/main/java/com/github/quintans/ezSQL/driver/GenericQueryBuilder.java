@@ -8,14 +8,8 @@ import java.util.List;
 import com.github.quintans.ezSQL.db.Association;
 import com.github.quintans.ezSQL.db.Relation;
 import com.github.quintans.ezSQL.db.Table;
-import com.github.quintans.ezSQL.dml.Condition;
-import com.github.quintans.ezSQL.dml.Function;
-import com.github.quintans.ezSQL.dml.Group;
-import com.github.quintans.ezSQL.dml.Join;
-import com.github.quintans.ezSQL.dml.Order;
-import com.github.quintans.ezSQL.dml.PathElement;
-import com.github.quintans.ezSQL.dml.Query;
-import com.github.quintans.ezSQL.dml.Union;
+import com.github.quintans.ezSQL.dml.*;
+import com.github.quintans.ezSQL.dml.Sort;
 import com.github.quintans.ezSQL.toolkit.utils.Appender;
 
 public class GenericQueryBuilder implements QueryBuilder {
@@ -169,11 +163,11 @@ public class GenericQueryBuilder implements QueryBuilder {
     }
 
     public void order() {
-        List<Order> orders = query.getOrders();
-        if(length(orders) > 0) {
-            for (Order ord : orders) {
-                if (ord.getHolder() != null) {
-                    this.orderPart.add(driver().translate(EDml.QUERY, ord.getHolder()));
+        List<Sort> sorts = query.getSorts();
+        if(length(sorts) > 0) {
+            for (Sort ord : sorts) {
+                if (ord.getColumnHolder() != null) {
+                    this.orderPart.add(driver().translate(EDml.QUERY, ord.getColumnHolder()));
                 } else {
                     this.orderPart.add(ord.getAlias());
                 }

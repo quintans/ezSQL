@@ -17,8 +17,8 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 public class TestI18n extends TestBootstrap {
 
-    public TestI18n(String environment, String script) {
-        super(environment, script);
+    public TestI18n(String environment) {
+        super(environment);
     }
 
     @Test
@@ -26,7 +26,7 @@ public class TestI18n extends TestBootstrap {
         tm.transactionNoResult(db -> {
             Collection<Book> books = db.query(TBook.T_BOOK).all()
                     .outer(TBook.A_I18N).fetch()
-                    .orderBy(TBook18.C_NAME).asc()
+                    .orderOn(TBook18.C_NAME.asc())
                     .list(Book.class, false);
 
             dumpCollection(books);
@@ -60,7 +60,7 @@ public class TestI18n extends TestBootstrap {
 
             Collection<Author> authors = db.query(T_AUTHOR).all()
                     .inner(T_AUTHOR.A_BOOKS, TBook.A_I18N).fetch()
-                    .orderBy(TBook18.C_NAME).desc()
+                    .orderOn(TBook18.C_NAME.desc())
                     .list(Author.class, false);
 
             dumpCollection(authors);
@@ -69,7 +69,7 @@ public class TestI18n extends TestBootstrap {
             System.out.println();
             authors = db.query(T_AUTHOR).all()
                     .outer(T_AUTHOR.A_BOOKS, TBook.A_I18N).fetch()
-                    .orderBy(TBook18.C_NAME).asc()
+                    .orderOn(TBook18.C_NAME.asc())
                     .list(Author.class, true);
 
             dumpCollection(authors);
