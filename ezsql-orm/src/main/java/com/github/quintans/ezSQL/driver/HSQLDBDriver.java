@@ -2,7 +2,7 @@ package com.github.quintans.ezSQL.driver;
 
 import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.dml.AutoKeyStrategy;
-import com.github.quintans.ezSQL.dml.Query;
+import com.github.quintans.ezSQL.dml.QueryDSL;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 
@@ -30,7 +30,7 @@ public class HSQLDBDriver extends GenericDriver {
     }
 
 	@Override
-	public String paginate(Query query, String sql) {
+	public String paginate(QueryDSL query, String sql) {
 		return sql;
 	}
 

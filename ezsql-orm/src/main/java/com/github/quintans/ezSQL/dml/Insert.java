@@ -28,13 +28,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-public class Insert extends CoreDSL {
+public class Insert extends InsertDSL<Insert> {
   private static final Logger LOG = Logger.getLogger(Insert.class);
   private final AbstractDb db;
 
   private boolean returnKey = true;
   private boolean previousHasAllKeyValues;
-  private boolean hasKeyValue;
   private final JdbcExecutor executor;
 
   public Insert(AbstractDb db, Table table) {
@@ -60,51 +59,6 @@ public class Insert extends CoreDSL {
     return this;
   }
 
-  public Insert set(Column<?> col, Function value) {
-    return innerSet(col, value);
-  }
-
-  public <C> Insert set(Column<C> col, C value) {
-    return innerSet(col, value);
-  }
-
-  @SuppressWarnings("unchecked")
-  public <C> C get(Column<C> col) {
-    return (C) coreGet(col);
-  }
-
-  public <C> Insert with(Column<C> c, C value) {
-    setParameter(c, value);
-    return this;
-  }
-
-  public Insert with(String name, Object value) {
-    setParameter(name, value);
-    return this;
-  }
-
-  protected Insert innerSet(Column<?> col, Object value) {
-    super.coreSet(col, value);
-    if (table.getSingleKeyColumn() != null && col.isKey()) {
-      this.hasKeyValue = (value != null);
-    }
-    return this;
-  }
-
-  public Insert sets(Column<?>... columns) {
-    coreSets(columns);
-    return this;
-  }
-
-  public Insert values(Object... values) {
-    coreValues(values);
-    return this;
-  }
-
-  public Map<Column<?>, Function> getValues() {
-    return this.values;
-  }
-
   public int getPending() {
     return executor.getPending();
   }
@@ -122,64 +76,6 @@ public class Insert extends CoreDSL {
 
       return true;
     }
-  }
-
-  /**
-   * Loads sets all the columns of the table to matching bean property
-   *
-   * @param bean The bean to match
-   * @return this
-   */
-  public Insert set(Object bean) {
-    mapObject(bean, false);
-
-    if (bean instanceof Updatable) {
-      ((Updatable) bean).clear();
-    }
-
-    return this;
-  }
-
-  @Override
-  public String computeSql() {
-    return driver.getSql(this);
-  }
-
-  private String getTablePart() {
-    Table table = getTable();
-    return getDriver().tableName(table);
-  }
-
-  private Tuple2<Appender, Appender> column() {
-    Appender columnPart = new Appender(", ");
-    Appender valuePart = new Appender(", ");
-
-    Map<Column<?>, Function> values = null;
-    values = getValues();
-    Map<String, Object> parameters = getParameters();
-    if (values != null) {
-      for (Entry<Column<?>, Function> entry : values.entrySet()) {
-        Column<?> column = entry.getKey();
-        Function token = entry.getValue();
-        // only includes null keys if IgnoreNullKeys is false
-        if (column.isKey() && getDriver().ignoreNullKeys() && EFunction.PARAM.equals(token.getOperator())) {
-          // ignore null keys
-          Object param = parameters.get(token.getValue());
-          if (param == null || param instanceof NullSql) {
-            token = null;
-          }
-        }
-
-        if (token != null) {
-          String val = getDriver().translate(EDml.INSERT, token);
-          if (val != null) {
-            columnPart.add(getDriver().columnName(column));
-            valuePart.add(val);
-          }
-        }
-      }
-    }
-    return new Tuple2<>(columnPart, valuePart);
   }
 
   public Map<Column<?>, Object> execute() {
@@ -341,36 +237,6 @@ public class Insert extends CoreDSL {
     }
 
     return keys;
-  }
-
-  private void mapObject(Object object, boolean versioned) {
-    this.parameters = new LinkedHashMap<>();
-    this.values = new LinkedHashMap<>();
-
-    if (object.getClass() != this.lastBeanClass) {
-      this.lastBeanClass = object.getClass();
-      this.lastSql = null;
-    }
-
-    Set<String> changed = null;
-    if (object instanceof Updatable) {
-      changed = ((Updatable) object).changed();
-    }
-
-    InsertMapper insertMapper = getDriver().findInsertMapper(object.getClass());
-    for (Column<?> column : table.getColumns()) {
-      String alias = column.getAlias();
-      if (changed == null || column.isKey() || column.isVersion() || changed.contains(alias)) {
-        insertMapper.map(getDriver(), column, object, versioned)
-            .onSuccess(o -> {
-              if (versioned && column.isVersion() && o == null) {
-                throw new PersistenceException("Undefined version for " +
-                    object.getClass().getSimpleName() + "." + alias);
-              }
-              this.coreSet(column, o);
-            });
-      }
-    }
   }
 
 }

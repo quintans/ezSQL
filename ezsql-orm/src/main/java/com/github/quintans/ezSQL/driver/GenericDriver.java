@@ -9,14 +9,31 @@ import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.db.NullSql;
 import com.github.quintans.ezSQL.db.Sequence;
 import com.github.quintans.ezSQL.db.Table;
-import com.github.quintans.ezSQL.dml.*;
+import com.github.quintans.ezSQL.dml.ColumnHolder;
+import com.github.quintans.ezSQL.dml.Condition;
+import com.github.quintans.ezSQL.dml.DeleteDSL;
+import com.github.quintans.ezSQL.dml.EFunction;
+import com.github.quintans.ezSQL.dml.Function;
+import com.github.quintans.ezSQL.dml.Insert;
+import com.github.quintans.ezSQL.dml.InsertDSL;
+import com.github.quintans.ezSQL.dml.QueryDSL;
+import com.github.quintans.ezSQL.dml.Update;
+import com.github.quintans.ezSQL.dml.UpdateDSL;
 import com.github.quintans.ezSQL.jdbc.AbstractPreparedStatementCallback;
 import com.github.quintans.ezSQL.sp.SqlProcedure;
 import com.github.quintans.ezSQL.toolkit.io.AutoCloseInputStream;
 import com.github.quintans.ezSQL.toolkit.io.BinStore;
 import com.github.quintans.ezSQL.toolkit.io.TextStore;
 import com.github.quintans.ezSQL.toolkit.utils.Misc;
-import com.github.quintans.ezSQL.transformers.*;
+import com.github.quintans.ezSQL.transformers.DeleteMapper;
+import com.github.quintans.ezSQL.transformers.DeleteMapperBean;
+import com.github.quintans.ezSQL.transformers.InsertMapper;
+import com.github.quintans.ezSQL.transformers.InsertMapperBean;
+import com.github.quintans.ezSQL.transformers.MapperSupporter;
+import com.github.quintans.ezSQL.transformers.QueryMapper;
+import com.github.quintans.ezSQL.transformers.QueryMapperBean;
+import com.github.quintans.ezSQL.transformers.UpdateMapper;
+import com.github.quintans.ezSQL.transformers.UpdateMapperBean;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 import org.apache.commons.io.IOUtils;
@@ -25,7 +42,13 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
@@ -421,89 +444,89 @@ public abstract class GenericDriver implements Driver {
       sb.append("?");
     }
 
-		sb.append(") }");
-		return sb.toString();
-	}
+    sb.append(") }");
+    return sb.toString();
+  }
 
-	public InsertBuilder createInsertBuilder(Insert insert) {
-	    return new GenericInsertBuilder(insert);
-	}
+  public InsertBuilder createInsertBuilder(InsertDSL insert) {
+    return new GenericInsertBuilder(insert);
+  }
 
-	@Override
-	public String getSql(Insert insert) {
-	    InsertBuilder proc = createInsertBuilder(insert);
+  @Override
+  public String getSql(InsertDSL insert) {
+    InsertBuilder proc = createInsertBuilder(insert);
 
-	    StringBuilder str = new StringBuilder();
-	    // INSERT
-	    str.append("INSERT INTO ").append(proc.getTablePart())
-	        .append("(")
-	        .append(proc.getColumnPart())
-	        .append(") VALUES(")
-	        .append(proc.getValuePart())
-	        .append(")");
+    StringBuilder str = new StringBuilder();
+    // INSERT
+    str.append("INSERT INTO ").append(proc.getTablePart())
+        .append("(")
+        .append(proc.getColumnPart())
+        .append(") VALUES(")
+        .append(proc.getValuePart())
+        .append(")");
 
-	    return str.toString();
-	}
+    return str.toString();
+  }
 
-	protected String getDefault() {
-		return "NULL";
-	}
+  protected String getDefault() {
+    return "NULL";
+  }
 
-	// UPDATE
-    public UpdateBuilder createUpdateBuilder(Update update) {
-        return new GenericUpdateBuilder(update);
+  // UPDATE
+  public UpdateBuilder createUpdateBuilder(UpdateDSL update) {
+    return new GenericUpdateBuilder(update);
+  }
+
+  @Override
+  public String getSql(UpdateDSL update) {
+    UpdateBuilder proc = createUpdateBuilder(update);
+
+    StringBuilder sel = new StringBuilder();
+
+    // SET
+    sel.append("UPDATE ").append(proc.getTablePart());
+    sel.append(" SET ").append(proc.getColumnPart());
+    // JOINS
+    // sel.append(proc.joinPart.String())
+    // WHERE - conditions
+    if (!proc.getWherePart().isEmpty()) {
+      sel.append(" WHERE ").append(proc.getWherePart());
     }
 
-    @Override
-    public String getSql(Update update) {
-        UpdateBuilder proc = createUpdateBuilder(update);
+    return sel.toString();
+  }
 
-		StringBuilder sel = new StringBuilder();
+  protected DeleteBuilder createDeleteBuilder(DeleteDSL delete) {
+    return new GenericDeleteBuilder(delete);
+  }
 
-	    // SET
-	    sel.append("UPDATE ").append(proc.getTablePart());
-	    sel.append(" SET ").append(proc.getColumnPart());
-	    // JOINS
-	    // sel.append(proc.joinPart.String())
-	    // WHERE - conditions
-	    if (!proc.getWherePart().isEmpty()) {
-	        sel.append(" WHERE ").append(proc.getWherePart());
-	    }
+  // DELETE
+  @Override
+  public String getSql(DeleteDSL delete) {
+    DeleteBuilder processor = createDeleteBuilder(delete);
 
-		return sel.toString();
-	}
+    StringBuilder sb = new StringBuilder();
 
-	protected DeleteBuilder createDeleteBuilder(Delete delete) {
-	    return new GenericDeleteBuilder(delete);
-	}
-
-	// DELETE
-	@Override
-	public String getSql(Delete delete) {
-	    DeleteBuilder processor = createDeleteBuilder(delete);
-
-		StringBuilder sb = new StringBuilder();
-
-        sb.append("DELETE FROM ").append(processor.getTablePart());
-	    String where = processor.getWherePart();
-        if (!where.isEmpty()) {
-            sb.append(" WHERE ").append(where);
-        }
-		return sb.toString();
-	}
-
-	@Override
-	public String getSql(Sequence sequence, boolean nextValue) {
-		throw new UnsupportedOperationException();
-	}
-
-    public QueryBuilder createQueryBuilder(Query query) {
-        return new GenericQueryBuilder(query);
+    sb.append("DELETE FROM ").append(processor.getTablePart());
+    String where = processor.getWherePart();
+    if (!where.isEmpty()) {
+      sb.append(" WHERE ").append(where);
     }
+    return sb.toString();
+  }
 
-	@Override
-	public String getSql(Query query) {
-	    QueryBuilder proc = this.createQueryBuilder(query);
+  @Override
+  public String getSql(Sequence sequence, boolean nextValue) {
+    throw new UnsupportedOperationException();
+  }
+
+  public QueryBuilder createQueryBuilder(QueryDSL query) {
+    return new GenericQueryBuilder(query);
+  }
+
+  @Override
+  public String getSql(QueryDSL query) {
+    QueryBuilder proc = this.createQueryBuilder(query);
 
     // SELECT COLUNAS
     StringBuilder sel = new StringBuilder();
@@ -967,7 +990,7 @@ public abstract class GenericDriver implements Driver {
   }
 
   public String subQuery(EDml dmlType, Function function) {
-    return String.format("( %s )", getSql((Query) function.getValue()));
+    return String.format("( %s )", getSql((QueryDSL) function.getValue()));
   }
 
   public String now(EDml dmlType, Function function) {
@@ -1011,7 +1034,7 @@ public abstract class GenericDriver implements Driver {
   // ================================
 
   @Override
-  public int paginationColumnOffset(Query query) {
+  public int paginationColumnOffset(QueryDSL query) {
     return 0;
   }
 
@@ -1020,7 +1043,7 @@ public abstract class GenericDriver implements Driver {
 
   }
 
-  public abstract String paginate(Query query, String sql);
+  public abstract String paginate(QueryDSL query, String sql);
 
   protected Object toDefault(ResultSetWrapper rsw, int position) throws SQLException {
     ResultSet rs = rsw.getResultSet();

@@ -3,23 +3,17 @@ package com.github.quintans.ezSQL.dml;
 import com.github.quintans.ezSQL.AbstractDb;
 import com.github.quintans.ezSQL.common.api.PostDeleter;
 import com.github.quintans.ezSQL.common.api.PreDeleter;
-import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.db.Discriminator;
 import com.github.quintans.ezSQL.db.PreDeleteTrigger;
 import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.exceptions.OptimisticLockException;
-import com.github.quintans.ezSQL.toolkit.utils.Result;
 import com.github.quintans.jdbc.SimpleJdbc;
-import com.github.quintans.jdbc.exceptions.PersistenceException;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 
-import static com.github.quintans.ezSQL.dml.Definition.param;
-
-public class Delete extends CoreDSL {
+public class Delete extends DeleteDSL<Delete> {
   private static final Logger LOG = Logger.getLogger(Delete.class);
   private AbstractDb db;
   private final JdbcExecutor executor;
@@ -32,19 +26,6 @@ public class Delete extends CoreDSL {
 
   public AbstractDb getDb() {
     return db;
-  }
-
-  /**
-   * Builds the delete action considering only the key properties.<br>
-   * Version column is ignored.
-   *
-   * @param bean
-   * @return this
-   */
-  public Delete set(Object bean) {
-    mapBean(bean, false);
-
-    return this;
   }
 
   public int execute() {
@@ -71,11 +52,6 @@ public class Delete extends CoreDSL {
 
   public void endBatch() {
     executor.endBatch(getSql(), this.parameters);
-  }
-
-  @Override
-  public String computeSql() {
-    return driver.getSql(this);
   }
 
   /**
@@ -133,60 +109,4 @@ public class Delete extends CoreDSL {
 
     return this.execute() != 0;
   }
-
-  private void mapBean(Object bean, boolean versioned) {
-    this.parameters = new LinkedHashMap<>();
-    this.values = new LinkedHashMap<>();
-
-    List<Condition> conditions = null;
-    if (bean.getClass() != this.lastBeanClass) {
-      conditions = new ArrayList<>();
-      this.condition = null;
-      this.lastBeanClass = bean.getClass();
-      this.lastSql = null;
-    }
-
-    for (Column<?> column : table.getColumns()) {
-      if (column.isKey() || versioned && column.isVersion()) {
-        Result<Object> result = getDriver().findDeleteMapper(bean.getClass()).map(getDriver(), column, bean);
-        if (result.isSuccess()) {
-          Object o = result.get();
-          String alias = column.getAlias();
-          if (column.isKey()) {
-            if (o == null)
-              throw new PersistenceException(String.format("Value for key property '%s' cannot be null.", alias));
-
-            if (conditions != null) {
-              conditions.add(column.is(param(alias)));
-            }
-            this.setParameter(column, o);
-          } else if (versioned && column.isVersion()) {
-            // if version is null ignores it
-            if (o != null) {
-              String as = "_" + alias + "_";
-              if (conditions != null) {
-                conditions.add(column.is(param(as)));
-              }
-              this.setParameter(as, o);
-            }
-          }
-        }
-      }
-    }
-
-    if (conditions != null) {
-      this.where(conditions);
-    }
-  }
-
-  public Delete where(Condition... restrictions) {
-    super.coreWhere(restrictions);
-    return this;
-  }
-
-  public Delete where(List<Condition> restrictions) {
-    super.coreWhere(restrictions);
-    return this;
-  }
-
 }

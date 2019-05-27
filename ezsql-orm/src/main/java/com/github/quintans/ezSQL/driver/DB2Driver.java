@@ -3,7 +3,7 @@ package com.github.quintans.ezSQL.driver;
 import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.dml.AutoKeyStrategy;
 import com.github.quintans.ezSQL.dml.Function;
-import com.github.quintans.ezSQL.dml.Query;
+import com.github.quintans.ezSQL.dml.QueryDSL;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 
@@ -102,18 +102,18 @@ public class DB2Driver extends GenericDriver {
 	}
     
     @Override
-	public String paginate(Query query, String sql){
+	public String paginate(QueryDSL query, String sql){
 		if(query.getSkip() > 0) { // se o primeiro resultado esta definido o ultimo tb esta
 //    		return String.format("SELECT * FROM (SELECT rr.*, ROW_NUMBER() OVER() AS rn FROM (%s FETCH FIRST %s ROWS ONLY) AS rr) AS r WHERE rn >= %s ORDER BY rn", 
 //    				sql, (query.getFirstResult() + query.getMaxResults() - 1), query.getFirstResult());
-			query.setParameter(Query.FIRST_RESULT, query.getSkip() + 1);
-			query.setParameter(Query.LAST_RESULT, query.getSkip() + query.getLimit());
+			query.setParameter(QueryDSL.FIRST_RESULT, query.getSkip() + 1);
+			query.setParameter(QueryDSL.LAST_RESULT, query.getSkip() + query.getLimit());
     		return String.format("SELECT * FROM (SELECT rr.*, ROW_NUMBER() OVER() AS rn FROM (%s FETCH FIRST :%s ROWS ONLY) AS rr) AS r WHERE rn >= :%s ORDER BY rn", 
-    				sql, Query.LAST_RESULT, Query.FIRST_RESULT);
+    				sql, QueryDSL.LAST_RESULT, QueryDSL.FIRST_RESULT);
 		} else if(query.getLimit() > 0){
 //	    	return String.format("%s fetch first %s rows only", sql, query.getMaxResults());	    
-			query.setParameter(Query.LAST_RESULT, query.getLimit());
-	    	return String.format("%s fetch first :%s rows only", sql, Query.LAST_RESULT);	    
+			query.setParameter(QueryDSL.LAST_RESULT, query.getLimit());
+	    	return String.format("%s fetch first :%s rows only", sql, QueryDSL.LAST_RESULT);
     	} else
     		return sql;
 	}

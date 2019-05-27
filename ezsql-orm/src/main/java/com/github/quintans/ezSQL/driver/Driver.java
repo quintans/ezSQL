@@ -8,7 +8,12 @@ import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.db.NullSql;
 import com.github.quintans.ezSQL.db.Sequence;
 import com.github.quintans.ezSQL.db.Table;
-import com.github.quintans.ezSQL.dml.*;
+import com.github.quintans.ezSQL.dml.AutoKeyStrategy;
+import com.github.quintans.ezSQL.dml.DeleteDSL;
+import com.github.quintans.ezSQL.dml.Function;
+import com.github.quintans.ezSQL.dml.InsertDSL;
+import com.github.quintans.ezSQL.dml.QueryDSL;
+import com.github.quintans.ezSQL.dml.UpdateDSL;
 import com.github.quintans.ezSQL.sp.SqlProcedure;
 import com.github.quintans.ezSQL.transformers.DeleteMapper;
 import com.github.quintans.ezSQL.transformers.InsertMapper;
@@ -26,13 +31,13 @@ public interface Driver {
 
     String getSql(SqlProcedure procedure);
 
-    String getSql(Insert insert);
+    String getSql(InsertDSL insert);
 
-    String getSql(Query query);
+    String getSql(QueryDSL query);
 
-    String getSql(Update update);
+    String getSql(UpdateDSL update);
 
-    String getSql(Delete delete);
+    String getSql(DeleteDSL delete);
 
     String getSql(Sequence sequence, boolean nextValue);
 
@@ -64,7 +69,7 @@ public interface Driver {
 
     boolean ignoreNullKeys();
 
-    int paginationColumnOffset(Query query);
+    int paginationColumnOffset(QueryDSL query);
 
     void prepareConnection(Connection connection);
     

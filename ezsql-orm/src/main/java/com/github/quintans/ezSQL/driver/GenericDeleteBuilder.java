@@ -3,21 +3,22 @@ package com.github.quintans.ezSQL.driver;
 import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.dml.Condition;
 import com.github.quintans.ezSQL.dml.Delete;
+import com.github.quintans.ezSQL.dml.DeleteDSL;
 import com.github.quintans.ezSQL.toolkit.utils.Appender;
 
 public class GenericDeleteBuilder implements DeleteBuilder {
-    protected Delete delete;
+    protected DeleteDSL delete;
     protected Appender tablePart = new Appender(", ");
     protected Appender wherePart = new Appender(" AND ");
     
-    public GenericDeleteBuilder(Delete delete) {
+    public GenericDeleteBuilder(DeleteDSL delete) {
         this.delete = delete;
         from();
         where();
     }
 
     protected Driver driver() {
-        return this.delete.getDb().getDriver();
+        return this.delete.getDriver();
     }
     
     public void from() {

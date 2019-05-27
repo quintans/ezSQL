@@ -5,6 +5,7 @@ import com.github.quintans.ezSQL.common.type.MyDateTime;
 import com.github.quintans.ezSQL.common.type.MyTime;
 import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.dml.Delete;
+import com.github.quintans.ezSQL.dml.DeleteDSL;
 import com.github.quintans.ezSQL.dml.Insert;
 import com.github.quintans.ezSQL.dml.Query;
 import com.github.quintans.ezSQL.dml.Update;
