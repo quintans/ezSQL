@@ -34,7 +34,7 @@ public class RawSql {
    *
    * @return
    */
-  public String getSql() {
+  public String getJdbcSql() {
     return sql;
   }
 

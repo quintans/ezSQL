@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class JdbcExecutor {
   private static Logger LOGGER = Logger.getLogger(JdbcExecutor.class);
@@ -19,33 +20,39 @@ public class JdbcExecutor {
   private SimpleJdbc simpleJdbc;
 
   private int batchLimit = 1000;
+  private RawSql lastRawSql;
 
   public JdbcExecutor(Driver driver, SimpleJdbc simpleJdbc) {
     this.driver = driver;
     this.simpleJdbc = simpleJdbc;
   }
 
-  public <T> T queryUnique(String sql, IRowTransformer<T> rt, Object... params) {
-    return simpleJdbc.queryUnique(sql, rt, params);
+  public <T> T queryUnique(String sql, IRowTransformer<T> rt, Map<String, Object> parameters) {
+    RawSql rawSql = parseSql(sql);
+    Map<String, Object> params = transformParameters(parameters);
+    return simpleJdbc.queryUnique(rawSql.getJdbcSql(), rt, rawSql.buildValues(params));
   }
 
-  public <T> List<T> queryRange(String sql, IRowTransformer<T> rt, int firstRow, int maxRows, Object... params) {
-    return simpleJdbc.queryRange(sql, rt, firstRow, maxRows, params);
+  public <T> List<T> queryRange(String sql, IRowTransformer<T> rt, int firstRow, int maxRows, Map<String, Object> parameters) {
+    RawSql rawSql = parseSql(sql);
+    Map<String, Object> params = transformParameters(parameters);
+    return simpleJdbc.queryRange(rawSql.getJdbcSql(), rt, firstRow, maxRows, rawSql.buildValues(params));
   }
 
-  public int execute(RawSql rawSql, Map<String, Object> parameters) {
+  public int execute(String sql, Map<String, Object> parameters) {
     // just in case;
     simpleJdbc.closeBatch();
-    debugSQL(rawSql.getOriginalSql(), parameters);
+    debugSQL(sql, parameters);
 
     Map<String, Object> pars = transformParameters(parameters);
 
-    int i = simpleJdbc.update(rawSql.getSql(), rawSql.buildValues(pars));
+    RawSql rawSql = parseSql(sql);
+    int i = simpleJdbc.update(rawSql.getJdbcSql(), rawSql.buildValues(pars));
     debug("result = %s", i);
     return i;
   }
 
-  public Map<String, Object> transformParameters(Map<String, Object> parameters) {
+  private Map<String, Object> transformParameters(Map<String, Object> parameters) {
     Map<String, Object> pars = new LinkedHashMap<String, Object>();
     for (Map.Entry<String, Object> entry : parameters.entrySet()) {
       Object val = entry.getValue();
@@ -69,26 +76,28 @@ public class JdbcExecutor {
     return vals;
   }
 
-  public int[] batch(RawSql rawSql, Map<String, Object> parameters) {
+  public int[] batch(String sql, Map<String, Object> parameters) {
     Map<String, Object> pars = transformParameters(parameters);
-    simpleJdbc.batch(rawSql.getSql(), rawSql.buildValues(pars));
+    RawSql rawSql = parseSql(sql);
+    simpleJdbc.batch(rawSql.getJdbcSql(), rawSql.buildValues(pars));
     if (simpleJdbc.getPending() >= batchLimit) {
-      return flushBatch(rawSql, parameters);
+      return flushBatch(sql, parameters);
     }
     return null;
   }
 
-  public int[] flushBatch(RawSql rawSql, Map<String, Object> parameters) {
+  public int[] flushBatch(String sql, Map<String, Object> parameters) {
     int[] result = null;
     if (simpleJdbc.getPending() > 0) {
+      RawSql rawSql = parseSql(sql);
       debugSQL(rawSql.getOriginalSql(), parameters);
       result = simpleJdbc.flushUpdate();
     }
     return result;
   }
 
-  public void endBatch(RawSql rawSql, Map<String, Object> parameters) {
-    flushBatch(rawSql, parameters);
+  public void endBatch(String sql, Map<String, Object> parameters) {
+    flushBatch(sql, parameters);
     simpleJdbc.closeBatch();
   }
 
@@ -129,23 +138,30 @@ public class JdbcExecutor {
       LOGGER.debug("SQL: " + sql);
       now = System.nanoTime();
     }
-    Long id = simpleJdbc.queryForLong(sql, new LinkedHashMap<String, Object>());
+    Long id = simpleJdbc.queryForLong(sql, new LinkedHashMap<>());
     if (LOGGER.isDebugEnabled()) {
       LOGGER.debug("executed in: " + (System.nanoTime() - now) / 1e6 + "ms");
     }
     return id;
   }
 
-  public int update(String sql, Map<String, Object> params) {
-    return simpleJdbc.update(sql, params);
+  public int update(String sql, Map<String, Object> parameters) {
+    RawSql rawSql = parseSql(sql);
+    Map<String, Object> params = transformParameters(parameters);
+    return simpleJdbc.update(rawSql.getJdbcSql(), rawSql.buildValues(params));
   }
 
-  public int update(String sql, Object... params) {
-    return simpleJdbc.update(sql, params);
+  public Object[] insert(String sql, ColumnType[] keyColumnTypes, Map<String, Object> parameters) {
+    RawSql rawSql = parseSql(sql);
+    Map<String, Object> params = transformParameters(parameters);
+    return simpleJdbc.insert(rawSql.getJdbcSql(), keyColumnTypes, rawSql.buildValues(params));
   }
 
-  public Object[] insert(String sql, ColumnType[] keyColumnTypes, Object... params) {
-    return simpleJdbc.insert(sql, keyColumnTypes, params);
+  private RawSql parseSql(String sql) {
+    if(lastRawSql == null || !Objects.equals(lastRawSql.getOriginalSql(), sql)) {
+      lastRawSql = RawSql.of(sql);
+    }
+    return lastRawSql;
   }
 
   private void debug(String format, Object... args) {

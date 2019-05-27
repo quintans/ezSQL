@@ -110,7 +110,7 @@ public class Update extends CoreDSL {
     if (pre != null) {
       pre.trigger(this);
     }
-    return executor.execute(getRawSql(), this.parameters);
+    return executor.execute(getSql(), this.parameters);
   }
 
   public int[] batch() {
@@ -118,7 +118,7 @@ public class Update extends CoreDSL {
     if (pre != null) {
       pre.trigger(this);
     }
-    return executor.batch(getRawSql(), this.parameters);
+    return executor.batch(getSql(), this.parameters);
   }
 
   /**
@@ -128,18 +128,18 @@ public class Update extends CoreDSL {
    * @see #endBatch()
    */
   public int[] flushBatch() {
-    return executor.flushBatch(getRawSql(), this.parameters);
+    return executor.flushBatch(getSql(), this.parameters);
   }
 
   /**
    * Closes batch freeing resources. Will also flush any pending dml commands.
    */
   public void endBatch() {
-    executor.endBatch(getRawSql(), this.parameters);
+    executor.endBatch(getSql(), this.parameters);
   }
 
   @Override
-  public String getSql() {
+  public String computeSql() {
     return driver.getSql(this);
   }
 
@@ -267,7 +267,7 @@ public class Update extends CoreDSL {
       conditions = new ArrayList<Condition>();
       this.condition = null;
       this.lastBeanClass = bean.getClass();
-      this.rawSql = null;
+      this.lastSql = null;
     }
 
     IdVer idVer = new IdVer();

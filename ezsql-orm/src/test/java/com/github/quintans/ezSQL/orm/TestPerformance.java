@@ -4,7 +4,6 @@ import com.github.quintans.ezSQL.DbJdbcSession;
 import com.github.quintans.ezSQL.dml.Insert;
 import com.github.quintans.ezSQL.dml.JdbcExecutor;
 import com.github.quintans.ezSQL.dml.Query;
-import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.ezSQL.orm.app.daos.EmployeeDAOTransformer;
 import com.github.quintans.ezSQL.orm.app.domain.Employee;
 import com.github.quintans.ezSQL.orm.app.mappings.TEmployee;
@@ -25,9 +24,9 @@ import java.util.Random;
 public class TestPerformance extends TestBootstrap {
 
     // private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-    private static final String femaleFirstNames[] = {"Maria", "Joana", "Mónica", "Paula", "Rosa", "Carla", "Claudia"};
-    private static final String maleFirstNames[] = {"Mario", "João", "Marco", "Paulo", "Rui", "Carlos", "Raul"};
-    private static final String lastNames[] = {"Marques", "Fernandes", "Machado", "Pereira", "Rodrigues", "Campos", "Lourosa"};
+    private static final String[] femaleFirstNames = {"Maria", "Joana", "Mónica", "Paula", "Rosa", "Carla", "Claudia"};
+    private static final String[] maleFirstNames = {"Mario", "João", "Marco", "Paulo", "Rui", "Carlos", "Raul"};
+    private static final String[] lastNames = {"Marques", "Fernandes", "Machado", "Pereira", "Rodrigues", "Campos", "Lourosa"};
     private static final long YEAR = 365L * 24L * 3600000L;
 
     private static final int WARM_UP = 100;
@@ -39,7 +38,7 @@ public class TestPerformance extends TestBootstrap {
     }
 
     @Test
-    public void testInsertDirectOrByReflectian() throws Exception {
+    public void testInsertDirectOrByReflectian() {
         tm.transactionNoResult(db -> {
             Insert insert;
             Stopwatch sw = new Stopwatch();
@@ -56,7 +55,8 @@ public class TestPerformance extends TestBootstrap {
                     .set(TEmployee.C_ID, 0L); // Force the ID placeholder generation for Postgresql. The Postgresql Driver does not generate ? for null IDs.
             SimpleJdbc jdbc = new SimpleJdbc(db.getJdbcSession());
             JdbcExecutor executor = new JdbcExecutor(driver, jdbc);
-            RawSql cachedSql = insert.getRawSql();
+            String sql = insert.getSql();
+            RawSql cachedSql = RawSql.of(sql);
 
             for (int i = 1; i <= LOOP; i++) {
                 int firstNameIdx = rnd.nextInt(7);
@@ -65,7 +65,7 @@ public class TestPerformance extends TestBootstrap {
                 Date creation = new Date(System.currentTimeMillis() - (rnd.nextInt(40) * YEAR));
 
                 sw.start();
-                jdbc.insert(cachedSql.getSql(), null, executor.transformParameters(i, name, sex, creation));
+                jdbc.insert(cachedSql.getJdbcSql(), null, executor.transformParameters(i, name, sex, creation));
                 sw.stop();
                 sex = !sex;
             }
@@ -74,7 +74,7 @@ public class TestPerformance extends TestBootstrap {
             db.delete(TEmployee.T_EMPLOYEE).execute();
             sw.reset();
             jdbc = new SimpleJdbc(new DbJdbcSession(db, driver.isPmdKnownBroken()));
-            String sql = cachedSql.getSql();
+            String jdbcSql = cachedSql.getJdbcSql();
             sex = rnd.nextBoolean();
             for (int i = 1; i <= LOOP; i++) {
                 int firstNameIdx = rnd.nextInt(7);
@@ -83,7 +83,7 @@ public class TestPerformance extends TestBootstrap {
                 Date creation = new Date(System.currentTimeMillis() - (rnd.nextInt(40) * YEAR));
 
                 sw.start();
-                jdbc.batch(sql, executor.transformParameters(i, name, sex, creation));
+                jdbc.batch(jdbcSql, executor.transformParameters(i, name, sex, creation));
                 if (i % BATCH == 0) {
                     jdbc.flushInsert();
                 }
@@ -195,9 +195,8 @@ public class TestPerformance extends TestBootstrap {
                 sex = !sex;
             }
 
-            Driver driver = db.getDriver();
             Stopwatch sw = new Stopwatch();
-            Query query = null;
+            Query query;
             // warm up
             for (int i = 0; i < WARM_UP; i++) {
                 query = db.query(TEmployee.T_EMPLOYEE).all();

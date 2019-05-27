@@ -4,7 +4,11 @@ import com.github.quintans.ezSQL.AbstractDb;
 import com.github.quintans.ezSQL.common.api.PostInserter;
 import com.github.quintans.ezSQL.common.api.PreInserter;
 import com.github.quintans.ezSQL.common.api.Updatable;
-import com.github.quintans.ezSQL.db.*;
+import com.github.quintans.ezSQL.db.Column;
+import com.github.quintans.ezSQL.db.Discriminator;
+import com.github.quintans.ezSQL.db.NullSql;
+import com.github.quintans.ezSQL.db.PreInsertTrigger;
+import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.ezSQL.driver.EDml;
 import com.github.quintans.ezSQL.toolkit.reflection.FieldUtils;
@@ -137,7 +141,7 @@ public class Insert extends CoreDSL {
   }
 
   @Override
-  public String getSql() {
+  public String computeSql() {
     return driver.getSql(this);
   }
 
@@ -186,7 +190,7 @@ public class Insert extends CoreDSL {
 
     boolean hasAllKeyValues = hasAllKeyValues();
     if (previousHasAllKeyValues != hasAllKeyValues) {
-      this.rawSql = null;
+      this.lastSql = null;
     }
     previousHasAllKeyValues = hasAllKeyValues;
 
@@ -209,9 +213,7 @@ public class Insert extends CoreDSL {
           this._set(singleKeyColumn, lastKey);
           kmap.put(singleKeyColumn, lastKey);
         }
-        cachedSql = this.getRawSql();
-        params = executor.transformParameters(this.parameters);
-        executor.update(cachedSql.getSql(), cachedSql.buildValues(params));
+        executor.update(getSql(), this.parameters);
         break;
 
       case RETURNING:
@@ -230,11 +232,7 @@ public class Insert extends CoreDSL {
           }
         }
 
-        cachedSql = this.getRawSql();
-
-        params = executor.transformParameters(this.parameters);
-
-        Object[] keys = executor.insert(cachedSql.getSql(), keyColumns, cachedSql.buildValues(params));
+        Object[] keys = executor.insert(getSql(), keyColumns, this.parameters);
         if (kmap != null) {
           for (int i = 0; i < columns.length; i++) {
             kmap.put(columns[i], keys[i]);
@@ -243,9 +241,7 @@ public class Insert extends CoreDSL {
         break;
 
       case AFTER:
-        cachedSql = this.getRawSql();
-        params = executor.transformParameters(this.parameters);
-        executor.update(cachedSql.getSql(), cachedSql.buildValues(params));
+        executor.update(getSql(), this.parameters);
         if (kmap != null && singleKeyColumn != null) {
           lastKey = executor.fetchAutoNumberBefore(singleKeyColumn);
           kmap.put(singleKeyColumn, lastKey);
@@ -264,7 +260,7 @@ public class Insert extends CoreDSL {
     if (pre != null) {
       pre.trigger(this);
     }
-    return executor.batch(getRawSql(), this.parameters);
+    return executor.batch(getSql(), this.parameters);
   }
 
   /**
@@ -274,14 +270,14 @@ public class Insert extends CoreDSL {
    * @see #endBatch()
    */
   public int[] flushBatch() {
-    return executor.flushBatch(getRawSql(), this.parameters);
+    return executor.flushBatch(getSql(), this.parameters);
   }
 
   /**
    * Closes batch freeing resources. Will also flush any pending dml commands.
    */
   public void endBatch() {
-    executor.endBatch(getRawSql(), this.parameters);
+    executor.endBatch(getSql(), this.parameters);
   }
 
   /**
@@ -353,7 +349,7 @@ public class Insert extends CoreDSL {
 
     if (object.getClass() != this.lastBeanClass) {
       this.lastBeanClass = object.getClass();
-      this.rawSql = null;
+      this.lastSql = null;
     }
 
     Set<String> changed = null;

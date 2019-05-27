@@ -3,7 +3,6 @@ package com.github.quintans.ezSQL.dml;
 import com.github.quintans.ezSQL.common.api.Value;
 import com.github.quintans.ezSQL.db.*;
 import com.github.quintans.ezSQL.driver.Driver;
-import com.github.quintans.jdbc.RawSql;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 import java.util.ArrayList;
@@ -31,7 +30,7 @@ public abstract class CoreDSL {
   protected String lastFkAlias = null;
   protected Join lastJoin = null;
 
-  protected RawSql rawSql;
+  protected String lastSql;
 
   protected List<Condition> discriminatorConditions = null;
 
@@ -111,7 +110,7 @@ public abstract class CoreDSL {
 
   public void setTableAlias(String alias) {
     this.tableAlias = alias;
-    this.rawSql = null;
+    this.lastSql = null;
   }
 
   public List<Join> getJoins() {
@@ -486,7 +485,7 @@ public abstract class CoreDSL {
       replaceRaw(copy);
       pe.setCondition(copy);
 
-      this.rawSql = null;
+      this.lastSql = null;
     }
   }
 
@@ -500,13 +499,13 @@ public abstract class CoreDSL {
         token.setTableAlias(fkAlias);
       }
 
-      this.rawSql = null;
+      this.lastSql = null;
     }
   }
 
   // WHERE ===
   protected void applyWhere(Condition restriction) {
-    this.rawSql = null;
+    this.lastSql = null;
     this.condition = null;
 
     List<Condition> conditions = new ArrayList<>();
@@ -543,15 +542,14 @@ public abstract class CoreDSL {
     return sb.toString();
   }
 
-  public RawSql getRawSql() {
-    if (this.rawSql == null) {
-      String sql = getSql();
-      this.rawSql = RawSql.of(sql);
+  public String getSql() {
+    if (this.lastSql == null) {
+      lastSql = computeSql();
     }
-    return this.rawSql;
+    return this.lastSql;
   }
 
-  protected abstract String getSql();
+  protected abstract String computeSql();
 
   // CONDITIONS
 
@@ -619,7 +617,7 @@ public abstract class CoreDSL {
 
     // if the column was not yet defined, the sql changed
     if (defineParameter(col, token))
-      this.rawSql = null;
+      this.lastSql = null;
   }
 
   protected Object _get(Column<?> col) {
@@ -640,7 +638,7 @@ public abstract class CoreDSL {
       _set(col, null);
     }
     this.sets = columns;
-    this.rawSql = null;
+    this.lastSql = null;
   }
 
   protected void _values(Object... values) {

@@ -5,7 +5,6 @@ import com.github.quintans.ezSQL.db.Association;
 import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.transformers.*;
-import com.github.quintans.jdbc.RawSql;
 import com.github.quintans.jdbc.SimpleJdbc;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 import com.github.quintans.jdbc.transformers.IRowTransformer;
@@ -114,7 +113,7 @@ public class Query extends CoreDSL {
     this.skip = other.getSkip();
     this.limit = other.getLimit();
 
-    this.rawSql = other.rawSql;
+    this.lastSql = other.lastSql;
   }
 
   public int getSkip() {
@@ -148,7 +147,7 @@ public class Query extends CoreDSL {
 
   public Query distinct() {
     this.distinct = true;
-    this.rawSql = null;
+    this.lastSql = null;
     return this;
   }
 
@@ -177,7 +176,7 @@ public class Query extends CoreDSL {
       }
     }
 
-    this.rawSql = null;
+    this.lastSql = null;
 
     return this;
   }
@@ -212,7 +211,7 @@ public class Query extends CoreDSL {
       this.tableAlias = alias;
     }
 
-    this.rawSql = null;
+    this.lastSql = null;
 
     return this;
   }
@@ -245,7 +244,7 @@ public class Query extends CoreDSL {
 
     this.sorts.add(sort);
 
-    this.rawSql = null;
+    this.lastSql = null;
 
     return this;
   }
@@ -403,7 +402,7 @@ public class Query extends CoreDSL {
       this.path.add(pe);
     }
 
-    this.rawSql = null;
+    this.lastSql = null;
 
     return this;
   }
@@ -499,7 +498,7 @@ public class Query extends CoreDSL {
       }
     }
     this.path = null;
-    this.rawSql = null;
+    this.lastSql = null;
   }
 
   private static String pathElementAlias(PathElement pe) {
@@ -557,7 +556,7 @@ public class Query extends CoreDSL {
       }
       includeInPath(lastPath, columns);
 
-      this.rawSql = null;
+      this.lastSql = null;
     } else {
       throw new PersistenceException("There is no current join");
     }
@@ -651,7 +650,7 @@ public class Query extends CoreDSL {
       }
       this.path.get(lenPath - 1).setCondition(retriction);
 
-      this.rawSql = null;
+      this.lastSql = null;
     } else {
       throw new PersistenceException("There is no current join");
     }
@@ -666,7 +665,7 @@ public class Query extends CoreDSL {
       this.unions = new ArrayList<>();
     this.unions.add(new Union(query, false));
 
-    this.rawSql = null;
+    this.lastSql = null;
 
     return this;
   }
@@ -676,7 +675,7 @@ public class Query extends CoreDSL {
       this.unions = new ArrayList<>();
     this.unions.add(new Union(query, true));
 
-    this.rawSql = null;
+    this.lastSql = null;
 
     return this;
   }
@@ -695,7 +694,7 @@ public class Query extends CoreDSL {
 
     this.groupBy = pos;
 
-    this.rawSql = null;
+    this.lastSql = null;
 
     return this;
   }
@@ -703,7 +702,7 @@ public class Query extends CoreDSL {
   public Query groupBy(int... pos) {
     this.groupBy = pos;
 
-    this.rawSql = null;
+    this.lastSql = null;
 
     return this;
   }
@@ -726,7 +725,7 @@ public class Query extends CoreDSL {
   }
 
   public Query groupBy(Column<?>... cols) {
-    this.rawSql = null;
+    this.lastSql = null;
 
     if (cols == null || cols.length == 0) {
       this.groupBy = null;
@@ -756,7 +755,7 @@ public class Query extends CoreDSL {
   }
 
   public Query groupBy(String... aliases) {
-    this.rawSql = null;
+    this.lastSql = null;
 
     if (aliases == null || aliases.length == 0) {
       this.groupBy = null;
@@ -1000,10 +999,7 @@ public class Query extends CoreDSL {
   }
 
   private <T> T fetchUnique(IRowTransformer<T> rt) {
-    RawSql rsql = getRawSql();
-    Map<String, Object> params = executor.transformParameters(this.parameters);
-    T o = executor.queryUnique(rsql.getSql(), rt, rsql.buildValues(params));
-    return o;
+    return executor.queryUnique(getSql(), rt, this.parameters);
   }
 
   /**
@@ -1067,16 +1063,12 @@ public class Query extends CoreDSL {
       join();
     }
 
-    RawSql rsql = getRawSql();
-
-    Map<String, Object> pars = executor.transformParameters(this.parameters);
-
     List<T> list;
     if (getDriver().useSQLPagination()) {
       // defining skip and limit as zero, will default to use SQL paginagion (intead of JDBC pagination).
-      list = executor.queryRange(rsql.getSql(), rowMapper, 0, 0, rsql.buildValues(pars));
+      list = executor.queryRange(getSql(), rowMapper, 0, 0, this.parameters);
     } else {
-      list = executor.queryRange(rsql.getSql(), rowMapper, this.skip, this.limit, rsql.buildValues(pars));
+      list = executor.queryRange(getSql(), rowMapper, this.skip, this.limit, this.parameters);
     }
     return list;
   }
@@ -1099,12 +1091,7 @@ public class Query extends CoreDSL {
       join();
     }
 
-    RawSql rsql = getRawSql();
-
-    Map<String, Object> pars = executor.transformParameters(this.parameters);
-
-    T result = executor.queryUnique(rsql.getSql(), rowMapper, rsql.buildValues(pars));
-    return result;
+    return executor.queryUnique(getSql(), rowMapper, this.parameters);
   }
 
   // ======== SELECT (ONE RESULT) ================
@@ -1159,16 +1146,16 @@ public class Query extends CoreDSL {
    * SQL String. It is cached for multiple access
    */
   @Override
-  public RawSql getRawSql() {
+  public String getSql() {
     if (columns.isEmpty()) {
       all();
     }
 
-    return super.getRawSql();
+    return super.getSql();
   }
 
   @Override
-  protected String getSql() {
+  protected String computeSql() {
     return getDriver().getSql(this);
   }
 

@@ -53,7 +53,7 @@ public class Delete extends CoreDSL {
       pre.trigger(this);
     }
 
-    return executor.execute(getRawSql(), this.parameters);
+    return executor.execute(getSql(), this.parameters);
   }
 
   public int[] batch() {
@@ -62,19 +62,19 @@ public class Delete extends CoreDSL {
       pre.trigger(this);
     }
 
-    return executor.batch(getRawSql(), this.parameters);
+    return executor.batch(getSql(), this.parameters);
   }
 
   public int[] flushBatch() {
-    return executor.flushBatch(getRawSql(), this.parameters);
+    return executor.flushBatch(getSql(), this.parameters);
   }
 
   public void endBatch() {
-    executor.endBatch(getRawSql(), this.parameters);
+    executor.endBatch(getSql(), this.parameters);
   }
 
   @Override
-  public String getSql() {
+  public String computeSql() {
     return driver.getSql(this);
   }
 
@@ -143,7 +143,7 @@ public class Delete extends CoreDSL {
       conditions = new ArrayList<>();
       this.condition = null;
       this.lastBeanClass = bean.getClass();
-      this.rawSql = null;
+      this.lastSql = null;
     }
 
     for (Column<?> column : table.getColumns()) {
