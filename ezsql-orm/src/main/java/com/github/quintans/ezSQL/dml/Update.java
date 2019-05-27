@@ -44,28 +44,28 @@ public class Update extends CoreDSL {
   }
 
   public Update set(Column<?> column) {
-    _set(column, column.param());
+    coreSet(column, column.param());
     return this;
   }
 
   public Update set(Column<?> col, Function value) {
-    _set(col, value);
+    coreSet(col, value);
     return this;
   }
 
   public <C> Update set(Column<C> col, C value) {
-    _set(col, value);
+    coreSet(col, value);
     return this;
   }
 
   public <C> Update set(Column<C> col, Column<C> value) {
-    _set(col, value);
+    coreSet(col, value);
     return this;
   }
 
   @SuppressWarnings("unchecked")
   public <C> C get(Column<C> col) {
-    return (C) _get(col);
+    return (C) coreGet(col);
   }
 
   public <C> Update with(Column<C> c, C value) {
@@ -96,12 +96,12 @@ public class Update extends CoreDSL {
   }
 
   public Update sets(Column<?>... columns) {
-    _sets(columns);
+    coreSets(columns);
     return this;
   }
 
   public Update values(Object... values) {
-    _values(values);
+    coreValues(values);
     return this;
   }
 
@@ -306,10 +306,10 @@ public class Update extends CoreDSL {
               }
               this.setParameter(as, o);
 
-              this._set(column, idVer.versionValue);
+              this.coreSet(column, idVer.versionValue);
             }
           } else {
-            this._set(column, o);
+            this.coreSet(column, o);
           }
         }
       }
@@ -329,12 +329,12 @@ public class Update extends CoreDSL {
   }
 
   public Update where(Condition... restrictions) {
-    super._where(restrictions);
+    super.coreWhere(restrictions);
     return this;
   }
 
   public Update where(List<Condition> restrictions) {
-    super._where(restrictions);
+    super.coreWhere(restrictions);
     return this;
   }
 }

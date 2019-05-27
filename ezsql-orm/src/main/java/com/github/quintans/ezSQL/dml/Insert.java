@@ -46,7 +46,7 @@ public class Insert extends CoreDSL {
     List<Discriminator> discriminators = table.getDiscriminators();
     if (discriminators != null) {
       for (Discriminator discriminator : discriminators) {
-        _set(discriminator.getColumn(), discriminator.getValue());
+        coreSet(discriminator.getColumn(), discriminator.getValue());
       }
     }
   }
@@ -70,7 +70,7 @@ public class Insert extends CoreDSL {
 
   @SuppressWarnings("unchecked")
   public <C> C get(Column<C> col) {
-    return (C) _get(col);
+    return (C) coreGet(col);
   }
 
   public <C> Insert with(Column<C> c, C value) {
@@ -84,7 +84,7 @@ public class Insert extends CoreDSL {
   }
 
   protected Insert innerSet(Column<?> col, Object value) {
-    super._set(col, value);
+    super.coreSet(col, value);
     if (table.getSingleKeyColumn() != null && col.isKey()) {
       this.hasKeyValue = (value != null);
     }
@@ -92,12 +92,12 @@ public class Insert extends CoreDSL {
   }
 
   public Insert sets(Column<?>... columns) {
-    _sets(columns);
+    coreSets(columns);
     return this;
   }
 
   public Insert values(Object... values) {
-    _values(values);
+    coreValues(values);
     return this;
   }
 
@@ -210,7 +210,7 @@ public class Insert extends CoreDSL {
       case BEFORE:
         if (kmap != null && singleKeyColumn != null) {
           lastKey = executor.fetchAutoNumberBefore(singleKeyColumn);
-          this._set(singleKeyColumn, lastKey);
+          this.coreSet(singleKeyColumn, lastKey);
           kmap.put(singleKeyColumn, lastKey);
         }
         executor.update(getSql(), this.parameters);
@@ -302,7 +302,7 @@ public class Insert extends CoreDSL {
     // table discriminators have higher priority - the is no way to override these values
     if (table.getDiscriminators() != null) {
       for (Discriminator disc : table.getDiscriminators()) {
-        this._set(disc.getColumn(), disc.getValue());
+        this.coreSet(disc.getColumn(), disc.getValue());
       }
     }
 
@@ -367,7 +367,7 @@ public class Insert extends CoreDSL {
                 throw new PersistenceException("Undefined version for " +
                     object.getClass().getSimpleName() + "." + alias);
               }
-              this._set(column, o);
+              this.coreSet(column, o);
             });
       }
     }

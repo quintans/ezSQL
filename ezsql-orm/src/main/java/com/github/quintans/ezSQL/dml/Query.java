@@ -224,15 +224,15 @@ public class Query extends CoreDSL {
 
   // WHERE ===
   public Query where(Condition restriction) {
-    return (Query) super._where(restriction);
+    return (Query) super.coreWhere(restriction);
   }
 
   public Query where(Condition... restrictions) {
-    return (Query) super._where(restrictions);
+    return (Query) super.coreWhere(restrictions);
   }
 
   public Query where(List<Condition> restrictions) {
-    return (Query) super._where(restrictions);
+    return (Query) super.coreWhere(restrictions);
   }
 
   // ===

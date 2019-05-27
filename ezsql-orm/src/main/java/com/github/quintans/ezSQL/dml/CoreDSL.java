@@ -438,24 +438,24 @@ public abstract class CoreDSL {
     }
   }
 
-  protected CoreDSL _where(Condition restriction) {
+  protected CoreDSL coreWhere(Condition restriction) {
     List<Condition> conditions = new ArrayList<Condition>();
     conditions.add(restriction);
-    _where(conditions);
+    coreWhere(conditions);
     return this;
   }
 
-  protected CoreDSL _where(Condition... restrictions) {
+  protected CoreDSL coreWhere(Condition... restrictions) {
     if (restrictions != null) {
       List<Condition> conditions = new ArrayList<Condition>();
       for (Condition restriction : restrictions)
         conditions.add(restriction);
-      _where(conditions);
+      coreWhere(conditions);
     }
     return this;
   }
 
-  protected CoreDSL _where(List<Condition> restrictions) {
+  protected CoreDSL coreWhere(List<Condition> restrictions) {
     if (restrictions != null) {
       applyWhere(Definition.and(restrictions));
     }
@@ -604,7 +604,7 @@ public abstract class CoreDSL {
    * @return this
    */
   @SuppressWarnings("unchecked")
-  protected void _set(Column<?> col, Object value) {
+  protected void coreSet(Column<?> col, Object value) {
     if (value == null) {
       value = col.getType();
     } else if (col.getType() == NullSql.CLOB && value instanceof String) {
@@ -620,7 +620,7 @@ public abstract class CoreDSL {
       this.lastSql = null;
   }
 
-  protected Object _get(Column<?> col) {
+  protected Object coreGet(Column<?> col) {
     Function tok = this.values.get(col);
     if (tok != null) {
       String key = (String) tok.getValue();
@@ -629,19 +629,19 @@ public abstract class CoreDSL {
     return null;
   }
 
-  protected void _sets(Column<?>... columns) {
+  protected void coreSets(Column<?>... columns) {
     for (Column<?> col : columns) {
       if (!table.equals(col.getTable())) {
         throw new PersistenceException("Column " + col + " does not belong to table " + table);
       }
       // start by setting columns as null
-      _set(col, null);
+      coreSet(col, null);
     }
     this.sets = columns;
     this.lastSql = null;
   }
 
-  protected void _values(Object... values) {
+  protected void coreValues(Object... values) {
     if (this.sets == null)
       throw new PersistenceException("Columns are not defined!");
 
@@ -650,7 +650,7 @@ public abstract class CoreDSL {
 
     int i = 0;
     for (Column<?> col : this.sets) {
-      _set(col, values[i++]);
+      coreSet(col, values[i++]);
     }
   }
 

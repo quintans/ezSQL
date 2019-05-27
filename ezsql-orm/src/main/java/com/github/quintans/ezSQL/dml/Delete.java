@@ -87,7 +87,7 @@ public class Delete extends CoreDSL {
    * @param bean
    */
   public void submit(Object bean) {
-    if (!_execute(bean))
+    if (!myExecute(bean))
       throw new OptimisticLockException();
 
     if (bean instanceof PostDeleter) {
@@ -103,7 +103,7 @@ public class Delete extends CoreDSL {
    * @return success
    */
   public boolean execute(Object bean) {
-    boolean result = _execute(bean);
+    boolean result = myExecute(bean);
 
     if (bean instanceof PostDeleter) {
       ((PostDeleter) bean).postDelete();
@@ -112,7 +112,7 @@ public class Delete extends CoreDSL {
     return result;
   }
 
-  private boolean _execute(Object bean) {
+  private boolean myExecute(Object bean) {
     if (bean == null)
       throw new IllegalArgumentException("Cannot delete a null object.");
 
@@ -180,12 +180,12 @@ public class Delete extends CoreDSL {
   }
 
   public Delete where(Condition... restrictions) {
-    super._where(restrictions);
+    super.coreWhere(restrictions);
     return this;
   }
 
   public Delete where(List<Condition> restrictions) {
-    super._where(restrictions);
+    super.coreWhere(restrictions);
     return this;
   }
 
