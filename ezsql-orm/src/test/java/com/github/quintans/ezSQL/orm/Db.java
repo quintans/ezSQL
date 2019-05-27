@@ -4,7 +4,7 @@ import java.sql.Connection;
 
 import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.dml.Delete;
-import com.github.quintans.ezSQL.dml.DmlBase;
+import com.github.quintans.ezSQL.dml.CoreDSL;
 import com.github.quintans.ezSQL.dml.Insert;
 import com.github.quintans.ezSQL.dml.Query;
 import com.github.quintans.ezSQL.dml.Update;
@@ -53,7 +53,7 @@ public class Db extends com.github.quintans.ezSQL.Db {
 		return delete;
 	}
 
-	private void setEnvironment(DmlBase dml) {
+	private void setEnvironment(CoreDSL dml) {
 		dml.setParameter(LANG_PARAMETER, this.language);
 	}
 

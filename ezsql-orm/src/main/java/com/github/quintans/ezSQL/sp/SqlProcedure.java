@@ -1,16 +1,13 @@
 package com.github.quintans.ezSQL.sp;
 
+import com.github.quintans.ezSQL.AbstractDb;
+import com.github.quintans.jdbc.SimpleJdbc;
+import com.github.quintans.jdbc.sp.SqlParameter;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.log4j.Level;
-
-import com.github.quintans.ezSQL.AbstractDb;
-import com.github.quintans.ezSQL.dml.Dml;
-import com.github.quintans.jdbc.SimpleJdbc;
-import com.github.quintans.jdbc.sp.SqlParameter;
 
 /**
  * Definition of a Database Stored Procedure
@@ -20,7 +17,6 @@ import com.github.quintans.jdbc.sp.SqlParameter;
  */
 public class SqlProcedure {
 	private static org.apache.log4j.Logger LOG = org.apache.log4j.Logger.getLogger(SqlProcedure.class);
-	private static final String FQCN = Dml.class.getCanonicalName();
 
 	private AbstractDb db;
     protected SimpleJdbc simpleJdbc;
@@ -123,9 +119,7 @@ public class SqlProcedure {
 		String sql = this.db.getDriver().getSql(this);
 		debugSQL(sql, copies);
 
-		long now = System.nanoTime();
 		Map<String, Object> response = simpleJdbc.call(sql, copies);
-		debugTime(now);
 
 		return response;
 	}
@@ -146,19 +140,10 @@ public class SqlProcedure {
 		return sb.toString();
 	}
 
-	private void debugTime(long now) {
-		if (LOG.isDebugEnabled()) {
-			LOG.log(FQCN, Level.DEBUG,
-				"executed in: " + (System.nanoTime() - now)/1e6 + "ms",
-				null);
-		}
-	}
-
 	private void debugSQL(String sql, List<SqlParameter> copies) {
 		if (LOG.isDebugEnabled()) {
-			LOG.log(FQCN, Level.DEBUG,
-				String.format("\n\tSQL: %s\n\tparameters: %s", sql, dumpParameters(copies)),
-				null);
+			LOG.debug(
+				String.format("SQL: %s\n\tparameters: %s", sql, dumpParameters(copies)));
 		}
 	}
 }

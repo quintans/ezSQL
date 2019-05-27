@@ -1,23 +1,25 @@
 package com.github.quintans.ezSQL.driver;
 
-import java.io.InputStream;
-import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
+import com.github.quintans.ezSQL.common.api.Converter;
 import com.github.quintans.ezSQL.common.type.MyDate;
 import com.github.quintans.ezSQL.common.type.MyDateTime;
 import com.github.quintans.ezSQL.common.type.MyTime;
-import com.github.quintans.ezSQL.db.*;
-import com.github.quintans.ezSQL.dml.AutoKeyStrategy;
-import com.github.quintans.ezSQL.dml.Delete;
-import com.github.quintans.ezSQL.dml.Function;
-import com.github.quintans.ezSQL.dml.Insert;
-import com.github.quintans.ezSQL.dml.Query;
-import com.github.quintans.ezSQL.dml.Update;
+import com.github.quintans.ezSQL.db.Column;
+import com.github.quintans.ezSQL.db.NullSql;
+import com.github.quintans.ezSQL.db.Sequence;
+import com.github.quintans.ezSQL.db.Table;
+import com.github.quintans.ezSQL.dml.*;
 import com.github.quintans.ezSQL.sp.SqlProcedure;
+import com.github.quintans.ezSQL.transformers.DeleteMapper;
+import com.github.quintans.ezSQL.transformers.InsertMapper;
+import com.github.quintans.ezSQL.transformers.QueryMapper;
+import com.github.quintans.ezSQL.transformers.UpdateMapper;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
+
+import java.io.InputStream;
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 public interface Driver {
     String translate(EDml dmlType, Function function);
@@ -33,6 +35,24 @@ public interface Driver {
     String getSql(Delete delete);
 
     String getSql(Sequence sequence, boolean nextValue);
+
+    void registerQueryMappers(QueryMapper... mappers);
+
+    QueryMapper findQueryMapper(Class<?> klass);
+
+    void registerInsertMappers(InsertMapper... mappers);
+
+    InsertMapper findInsertMapper(Class<?> klass);
+
+    void registerDeleteMappers(DeleteMapper... mappers);
+
+    DeleteMapper findDeleteMapper(Class<?> klass);
+
+    void registerUpdateMappers(UpdateMapper... mappers);
+
+    UpdateMapper findUpdateMapper(Class<?> klass);
+
+    Converter getConverter(Class<? extends Converter> converter);
 
     AutoKeyStrategy getAutoKeyStrategy();
 

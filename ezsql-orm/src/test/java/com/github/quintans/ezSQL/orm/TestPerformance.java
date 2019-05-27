@@ -2,6 +2,7 @@ package com.github.quintans.ezSQL.orm;
 
 import com.github.quintans.ezSQL.DbJdbcSession;
 import com.github.quintans.ezSQL.dml.Insert;
+import com.github.quintans.ezSQL.dml.JdbcExecutor;
 import com.github.quintans.ezSQL.dml.Query;
 import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.ezSQL.orm.app.daos.EmployeeDAOTransformer;
@@ -53,8 +54,9 @@ public class TestPerformance extends TestBootstrap {
             insert = db.insert(TEmployee.T_EMPLOYEE)
                     .sets(TEmployee.C_ID, TEmployee.C_NAME, TEmployee.C_SEX, TEmployee.C_CREATION)
                     .set(TEmployee.C_ID, 0L); // Force the ID placeholder generation for Postgresql. The Postgresql Driver does not generate ? for null IDs.
-            SimpleJdbc jdbc = insert.getSimpleJdbc();
-            RawSql cachedSql = insert.getSql();
+            SimpleJdbc jdbc = new SimpleJdbc(db.getJdbcSession());
+            JdbcExecutor executor = new JdbcExecutor(driver, jdbc);
+            RawSql cachedSql = insert.getRawSql();
 
             for (int i = 1; i <= LOOP; i++) {
                 int firstNameIdx = rnd.nextInt(7);
@@ -63,7 +65,7 @@ public class TestPerformance extends TestBootstrap {
                 Date creation = new Date(System.currentTimeMillis() - (rnd.nextInt(40) * YEAR));
 
                 sw.start();
-                jdbc.insert(cachedSql.getSql(), null, db.transformParameters(i, name, sex, creation));
+                jdbc.insert(cachedSql.getSql(), null, executor.transformParameters(i, name, sex, creation));
                 sw.stop();
                 sex = !sex;
             }
@@ -81,7 +83,7 @@ public class TestPerformance extends TestBootstrap {
                 Date creation = new Date(System.currentTimeMillis() - (rnd.nextInt(40) * YEAR));
 
                 sw.start();
-                jdbc.batch(sql, db.transformParameters(i, name, sex, creation));
+                jdbc.batch(sql, executor.transformParameters(i, name, sex, creation));
                 if (i % BATCH == 0) {
                     jdbc.flushInsert();
                 }

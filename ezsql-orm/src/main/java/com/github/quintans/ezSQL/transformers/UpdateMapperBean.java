@@ -3,6 +3,7 @@ package com.github.quintans.ezSQL.transformers;
 import com.github.quintans.ezSQL.AbstractDb;
 import com.github.quintans.ezSQL.common.api.Convert;
 import com.github.quintans.ezSQL.db.Column;
+import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.ezSQL.toolkit.reflection.FieldUtils;
 import com.github.quintans.ezSQL.toolkit.reflection.TypedField;
 import com.github.quintans.ezSQL.toolkit.utils.Result;
@@ -18,7 +19,7 @@ public class UpdateMapperBean implements UpdateMapper {
 
     @SuppressWarnings("unchecked")
     @Override
-    public Result<UpdateValue> map(AbstractDb db, Column column, Object object) {
+    public Result<UpdateValue> map(Driver driver, Column column, Object object) {
         String alias = column.getAlias();
         TypedField tf = FieldUtils.getBeanTypedField(object.getClass(), alias);
         if (tf != null) {
@@ -27,7 +28,7 @@ public class UpdateMapperBean implements UpdateMapper {
                 o = tf.get(object);
                 Convert convert = tf.getField().getAnnotation(Convert.class);
                 if(convert != null) {
-                    o = db.getConverter(convert.value()).toDb(o);
+                    o = driver.getConverter(convert.value()).toDb(o);
                 }
                 return Result.of(new UpdateValue(o, v -> {
                     try {
