@@ -2,17 +2,16 @@ package com.github.quintans.ezSQL.dml;
 
 import com.github.quintans.ezSQL.AbstractDb;
 import com.github.quintans.ezSQL.db.Table;
-import com.github.quintans.ezSQL.transformers.AbstractDbRowTransformer;
+import com.github.quintans.ezSQL.transformers.AbstractResultTransformer;
 import com.github.quintans.ezSQL.transformers.IRecordTransformer;
 import com.github.quintans.ezSQL.transformers.MapTransformer;
-import com.github.quintans.ezSQL.transformers.QueryMapper;
+import com.github.quintans.ezSQL.mapper.QueryMapper;
 import com.github.quintans.ezSQL.transformers.Record;
-import com.github.quintans.ezSQL.transformers.SimpleAbstractDbRowTransformer;
+import com.github.quintans.ezSQL.transformers.SimpleAbstractResultTransformer;
 import com.github.quintans.jdbc.SimpleJdbc;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
-import com.github.quintans.jdbc.transformers.IRowTransformer;
+import com.github.quintans.jdbc.transformers.IResultTransformer;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
-import com.github.quintans.jdbc.transformers.SimpleAbstractRowTransformer;
 import org.apache.log4j.Logger;
 
 import java.math.BigDecimal;
@@ -64,8 +63,8 @@ public class Query extends QueryDSL<Query> {
     select(createTransformer(processor));
   }
 
-  private AbstractDbRowTransformer<Void> createTransformer(final Consumer<Record> processor) {
-    return new AbstractDbRowTransformer<Void>() {
+  private AbstractResultTransformer<Void> createTransformer(final Consumer<Record> processor) {
+    return new AbstractResultTransformer<Void>() {
       @Override
       public Void transform(ResultSetWrapper rsw) throws SQLException {
         processor.accept(new Record(Query.this, rsw));
@@ -82,14 +81,14 @@ public class Query extends QueryDSL<Query> {
     return fetchUnique(createRawTransformer(clazzes));
   }
 
-  private SimpleAbstractDbRowTransformer<Object[]> createRawTransformer(final Class<?>... clazzes) {
+  private SimpleAbstractResultTransformer<Object[]> createRawTransformer(final Class<?>... clazzes) {
     if (length(clazzes) == 0) {
       throw new PersistenceException("Classes must be defined!");
     }
 
     final int offset = paginationColumnOffset();
 
-    return new SimpleAbstractDbRowTransformer<Object[]>() {
+    return new SimpleAbstractResultTransformer<Object[]>() {
       @Override
       public Object[] transform(ResultSetWrapper rsw) throws SQLException {
         return Query.this.transform(rsw, offset, clazzes);
@@ -122,7 +121,7 @@ public class Query extends QueryDSL<Query> {
   public <T> List<T> listRaw(final Class<T> clazz) {
     final int offset = paginationColumnOffset();
 
-    return list(new SimpleAbstractDbRowTransformer<T>() {
+    return list(new SimpleAbstractResultTransformer<T>() {
       @Override
       public T transform(ResultSetWrapper rsw) throws SQLException {
         return getDriver().fromDb(rsw, 1 + offset, clazz);
@@ -133,7 +132,7 @@ public class Query extends QueryDSL<Query> {
   public <T> T uniqueRaw(final Class<T> clazz) {
     final int offset = paginationColumnOffset();
 
-    return fetchUnique(new SimpleAbstractDbRowTransformer<T>() {
+    return fetchUnique(new SimpleAbstractResultTransformer<T>() {
       @Override
       public T transform(ResultSetWrapper rsw) throws SQLException {
         return getDriver().fromDb(rsw, 1 + offset, clazz);
@@ -144,7 +143,7 @@ public class Query extends QueryDSL<Query> {
   public Boolean uniqueBoolean() {
     final int offset = paginationColumnOffset();
 
-    return fetchUnique(new SimpleAbstractDbRowTransformer<Boolean>() {
+    return fetchUnique(new SimpleAbstractResultTransformer<Boolean>() {
       @Override
       public Boolean transform(ResultSetWrapper rsw) throws SQLException {
         return getDriver().toBoolean(rsw, 1 + offset);
@@ -155,7 +154,7 @@ public class Query extends QueryDSL<Query> {
   public Integer uniqueInteger() {
     final int offset = paginationColumnOffset();
 
-    return fetchUnique(new SimpleAbstractRowTransformer<Integer>() {
+    return fetchUnique(new SimpleAbstractResultTransformer<Integer>() {
       @Override
       public Integer transform(ResultSetWrapper rsw) throws SQLException {
         return rsw.getResultSet().getInt(1 + offset);
@@ -166,7 +165,7 @@ public class Query extends QueryDSL<Query> {
   public Long uniqueLong() {
     final int offset = paginationColumnOffset();
 
-    return fetchUnique(new SimpleAbstractRowTransformer<Long>() {
+    return fetchUnique(new SimpleAbstractResultTransformer<Long>() {
       @Override
       public Long transform(ResultSetWrapper rsw) throws SQLException {
         return rsw.getResultSet().getLong(1 + offset);
@@ -177,7 +176,7 @@ public class Query extends QueryDSL<Query> {
   public Float uniqueFloat() {
     final int offset = paginationColumnOffset();
 
-    return fetchUnique(new SimpleAbstractRowTransformer<Float>() {
+    return fetchUnique(new SimpleAbstractResultTransformer<Float>() {
       @Override
       public Float transform(ResultSetWrapper rsw) throws SQLException {
         return rsw.getResultSet().getFloat(1 + offset);
@@ -188,7 +187,7 @@ public class Query extends QueryDSL<Query> {
   public Double uniqueDouble() {
     final int offset = paginationColumnOffset();
 
-    return fetchUnique(new SimpleAbstractRowTransformer<Double>() {
+    return fetchUnique(new SimpleAbstractResultTransformer<Double>() {
       @Override
       public Double transform(ResultSetWrapper rsw) throws SQLException {
         return rsw.getResultSet().getDouble(1 + offset);
@@ -198,7 +197,7 @@ public class Query extends QueryDSL<Query> {
 
   public String uniqueString() {
     final int offset = paginationColumnOffset();
-    return fetchUnique(new SimpleAbstractRowTransformer<String>() {
+    return fetchUnique(new SimpleAbstractResultTransformer<String>() {
       @Override
       public String transform(ResultSetWrapper rsw) throws SQLException {
         return rsw.getResultSet().getString(1 + offset);
@@ -208,7 +207,7 @@ public class Query extends QueryDSL<Query> {
 
   public BigDecimal uniqueBigDecimal() {
     final int offset = paginationColumnOffset();
-    return fetchUnique(new SimpleAbstractRowTransformer<BigDecimal>() {
+    return fetchUnique(new SimpleAbstractResultTransformer<BigDecimal>() {
       @Override
       public BigDecimal transform(ResultSetWrapper rsw) throws SQLException {
         return rsw.getResultSet().getBigDecimal(1 + offset);
@@ -216,7 +215,8 @@ public class Query extends QueryDSL<Query> {
     });
   }
 
-  private <T> T fetchUnique(IRowTransformer<T> rt) {
+  private <T> T fetchUnique(IResultTransformer<T> rt) {
+    final int offset = paginationColumnOffset();
     return executor.queryUnique(getSql(), rt, this.parameters);
   }
 
@@ -248,8 +248,8 @@ public class Query extends QueryDSL<Query> {
     return list(klass, true);
   }
 
-  private <T> IRowTransformer<T> toRowTransformer(final IRecordTransformer<T> recordTransformer) {
-    return new SimpleAbstractRowTransformer<T>() {
+  private <T> IResultTransformer<T> toRowTransformer(final IRecordTransformer<T> recordTransformer) {
+    return new SimpleAbstractResultTransformer<T>() {
       @Override
       public T transform(ResultSetWrapper rsw) throws SQLException {
         return recordTransformer.transform(new Record(Query.this, rsw));
@@ -275,7 +275,7 @@ public class Query extends QueryDSL<Query> {
    * @param rowMapper The row transformer
    * @return A collection of transformed results
    */
-  public <T> List<T> list(final IRowTransformer<T> rowMapper) {
+  public <T> List<T> list(final IResultTransformer<T> rowMapper) {
     // closes any open path
     if (this.path != null) {
       join();
@@ -303,7 +303,7 @@ public class Query extends QueryDSL<Query> {
    * @param rowMapper The row transformer
    * @return A collection of transformed results
    */
-  public <T> T unique(final IRowTransformer<T> rowMapper) {
+  public <T> T unique(final IResultTransformer<T> rowMapper) {
     // closes any open path
     if (this.path != null) {
       join();
@@ -346,7 +346,7 @@ public class Query extends QueryDSL<Query> {
     return select(toRowTransformer(recordTransformer));
   }
 
-  public <T> T select(IRowTransformer<T> rowMapper) {
+  public <T> T select(IResultTransformer<T> rowMapper) {
     int holdMax = this.limit;
     limit(1);
 
@@ -378,5 +378,10 @@ public class Query extends QueryDSL<Query> {
 
   public int paginationColumnOffset() {
     return this.getDriver().paginationColumnOffset(this);
+  }
+
+  @Override
+  public Query where(List<Condition> restrictions) {
+    return super.where(restrictions);
   }
 }

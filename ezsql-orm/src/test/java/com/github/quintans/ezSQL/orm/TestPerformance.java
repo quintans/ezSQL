@@ -4,14 +4,14 @@ import com.github.quintans.ezSQL.DbJdbcSession;
 import com.github.quintans.ezSQL.dml.Insert;
 import com.github.quintans.ezSQL.dml.JdbcExecutor;
 import com.github.quintans.ezSQL.dml.Query;
-import com.github.quintans.ezSQL.orm.app.daos.EmployeeDAOTransformer;
+import com.github.quintans.ezSQL.orm.app.daos.EmployeeDAOMapper;
 import com.github.quintans.ezSQL.orm.app.domain.Employee;
 import com.github.quintans.ezSQL.orm.app.mappings.TEmployee;
 import com.github.quintans.ezSQL.transformers.MapTransformer;
 import com.github.quintans.jdbc.RawSql;
 import com.github.quintans.jdbc.SimpleJdbc;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
-import com.github.quintans.jdbc.transformers.SimpleAbstractRowTransformer;
+import com.github.quintans.jdbc.transformers.SimpleAbstractResultTransformer;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -200,18 +200,18 @@ public class TestPerformance extends TestBootstrap {
             // warm up
             for (int i = 0; i < WARM_UP; i++) {
                 query = db.query(TEmployee.T_EMPLOYEE).all();
-                query.list(new MapTransformer<>(query, false, Employee.class, new EmployeeDAOTransformer()));
+                query.list(new MapTransformer<>(query, false, Employee.class, new EmployeeDAOMapper()));
             }
             // READ - ORM transformer
             query = db.query(TEmployee.T_EMPLOYEE).all();
             sw.reset().start();
-            query.list(new MapTransformer<>(query, false, Employee.class, new EmployeeDAOTransformer()));
-            sw.stop().showTotal("query.list(EmployeeDAOTransformer)");
+            query.list(new MapTransformer<>(query, false, Employee.class, new EmployeeDAOMapper()));
+            sw.stop().showTotal("query.list(EmployeeDAOMapper)");
 
             // warm up
             for (int i = 0; i < WARM_UP; i++) {
                 query = db.query(TEmployee.T_EMPLOYEE).all();
-                query.list(new SimpleAbstractRowTransformer<Employee>() {
+                query.list(new SimpleAbstractResultTransformer<Employee>() {
                     @Override
                     public Employee transform(ResultSetWrapper rs) throws SQLException {
                         return new Employee();
@@ -229,7 +229,7 @@ public class TestPerformance extends TestBootstrap {
                 dto.setCreation(r.getDate(4));
                 return dto;
             });
-            sw.stop().showTotal("query.list(new SimpleAbstractDbRowTransformer<Employee>(db))");
+            sw.stop().showTotal("query.list(new SimpleAbstractResultTransformer<Employee>(db))");
 
             // warm up
             for (int i = 0; i < WARM_UP; i++) {

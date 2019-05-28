@@ -15,10 +15,10 @@ import com.github.quintans.ezSQL.dml.InsertDSL;
 import com.github.quintans.ezSQL.dml.QueryDSL;
 import com.github.quintans.ezSQL.dml.UpdateDSL;
 import com.github.quintans.ezSQL.sp.SqlProcedure;
-import com.github.quintans.ezSQL.transformers.DeleteMapper;
-import com.github.quintans.ezSQL.transformers.InsertMapper;
-import com.github.quintans.ezSQL.transformers.QueryMapper;
-import com.github.quintans.ezSQL.transformers.UpdateMapper;
+import com.github.quintans.ezSQL.mapper.DeleteMapper;
+import com.github.quintans.ezSQL.mapper.InsertMapper;
+import com.github.quintans.ezSQL.mapper.QueryMapper;
+import com.github.quintans.ezSQL.mapper.UpdateMapper;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 
 import java.io.InputStream;

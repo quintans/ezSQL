@@ -1,9 +1,9 @@
 package com.github.quintans.ezSQL.orm.mapper;
 
-import com.github.quintans.ezSQL.transformers.MapColumn;
-import com.github.quintans.ezSQL.transformers.QueryMapper;
-import com.github.quintans.ezSQL.transformers.Record;
+import com.github.quintans.ezSQL.mapper.MapColumn;
+import com.github.quintans.ezSQL.mapper.QueryMapper;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
+import com.github.quintans.ezSQL.mapper.Row;
 
 import java.util.HashMap;
 import java.util.List;
@@ -35,10 +35,10 @@ public class MapMapper implements QueryMapper {
     }
 
     @Override
-    public boolean map(Record record, Object instance, List<MapColumn> mapColumns) {
+    public boolean map(Row row, Object instance, List<MapColumn> mapColumns) {
         for (MapColumn mapColumn : mapColumns) {
             Map<String, Object> map = (Map<String, Object>) instance;
-            Object value = record.getObject(mapColumn.getIndex());
+            Object value = row.get(mapColumn.getIndex());
             map.put(mapColumn.getAlias(), value);
         }
 

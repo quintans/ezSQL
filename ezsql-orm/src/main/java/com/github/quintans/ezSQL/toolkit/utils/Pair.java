@@ -1,14 +1,14 @@
 package com.github.quintans.ezSQL.toolkit.utils;
 
-public class Tuple2<L, R> {
+public class Pair<L, R> {
   private final L left;
   private final R right;
 
-  public static <X, Y> Tuple2<X, Y> of(X left, Y right) {
-    return new Tuple2<>(left, right);
+  public static <X, Y> Pair<X, Y> of(X left, Y right) {
+    return new Pair<>(left, right);
   }
 
-  public Tuple2(L left, R right) {
+  public Pair(L left, R right) {
     this.left = left;
     this.right = right;
   }

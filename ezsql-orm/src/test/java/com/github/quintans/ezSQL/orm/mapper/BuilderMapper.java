@@ -1,6 +1,6 @@
 package com.github.quintans.ezSQL.orm.mapper;
 
-import com.github.quintans.ezSQL.transformers.QueryMapperBean;
+import com.github.quintans.ezSQL.mapper.QueryMapperBean;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 import java.lang.reflect.InvocationTargetException;

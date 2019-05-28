@@ -3,15 +3,12 @@ package com.github.quintans.jdbc.transformers;
 import java.sql.SQLException;
 import java.util.Collection;
 
-public interface IRowTransformer<T> {
+public interface IResultTransformer<T> {
 	/**
 	 * Initializes the collection that will hold the results
-	 * 
-	 * @param rsw
-	 *            The ResultSetWrapper
 	 * @return The collection
 	 */
-	Collection<T> beforeAll(ResultSetWrapper rsw);
+	Collection<T> beforeAll();
 
 	T transform(ResultSetWrapper rsw) throws SQLException;
 
@@ -23,7 +20,7 @@ public interface IRowTransformer<T> {
 	 * @param object
 	 *            The transformed object
 	 */
-	void onTransformation(Collection<T> result, T object);
+	void collect(Collection<T> result, T object);
 
 	void afterAll(Collection<T> result);
 }

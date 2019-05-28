@@ -5,13 +5,12 @@ import com.github.quintans.ezSQL.common.type.MyDateTime;
 import com.github.quintans.ezSQL.common.type.MyTime;
 import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.dml.Delete;
-import com.github.quintans.ezSQL.dml.DeleteDSL;
 import com.github.quintans.ezSQL.dml.Insert;
 import com.github.quintans.ezSQL.dml.Query;
 import com.github.quintans.ezSQL.dml.Update;
 import com.github.quintans.ezSQL.exceptions.OptimisticLockException;
-import com.github.quintans.ezSQL.orm.app.daos.ArtistDAOTransformer;
-import com.github.quintans.ezSQL.orm.app.daos.PaintingDAOTransformer;
+import com.github.quintans.ezSQL.orm.app.daos.ArtistDAOMapper;
+import com.github.quintans.ezSQL.orm.app.daos.PaintingDAOMapper;
 import com.github.quintans.ezSQL.orm.app.domain.*;
 import com.github.quintans.ezSQL.orm.app.dtos.ArtistValueDTO;
 import com.github.quintans.ezSQL.orm.app.dtos.ImageDTO;
@@ -113,7 +112,7 @@ public class TestStandard extends TestBootstrap {
     public void testCyclicFkReference() {
         tm.transactionNoResult(db -> {
             Query query = db.queryAll(TArtist.T_ARTIST).innerFetch(TArtist.A_PAINTINGS);
-            List<Artist> artists = query.list(new MapTransformer<>(query, true, Artist.class, new ArtistDAOTransformer()));
+            List<Artist> artists = query.list(new MapTransformer<>(query, true, Artist.class, new ArtistDAOMapper()));
             dumpCollection(artists);
 
             assertEquals("Wrong size for artist list.", 2, artists.size());
@@ -124,7 +123,7 @@ public class TestStandard extends TestBootstrap {
     public void testCyclicFkReference2() {
         tm.transactionNoResult(db -> {
             Query query = db.queryAll(TPainting.T_PAINTING).innerFetch(TPainting.A_ARTIST);
-            List<Painting> entities = query.list(new MapTransformer<>(query, true, Painting.class, new PaintingDAOTransformer()));
+            List<Painting> entities = query.list(new MapTransformer<>(query, true, Painting.class, new PaintingDAOMapper()));
             dumpCollection(entities);
 
             assertEquals("Wrong size for artist list.", 4, entities.size());
@@ -336,7 +335,7 @@ public class TestStandard extends TestBootstrap {
             String sql = db.getDriver().getSql(query);
             System.out.println("SQL: " + sql);
 
-            List<Artist> artists = query.list(new MapTransformer<>(query, true, Artist.class, new ArtistDAOTransformer()));
+            List<Artist> artists = query.list(new MapTransformer<>(query, true, Artist.class, new ArtistDAOMapper()));
             dumpCollection(artists);
 
             assertEquals("Size of artist list is wrong!", 2, artists.size());
@@ -396,7 +395,7 @@ public class TestStandard extends TestBootstrap {
                     .orderBy(TArtist.C_ID.asc())
                     .orderOn(TPainting.C_NAME.asc());
 
-            List<Artist> artists = query.list(new MapTransformer<>(query, true, Artist.class, new ArtistDAOTransformer()));
+            List<Artist> artists = query.list(new MapTransformer<>(query, true, Artist.class, new ArtistDAOMapper()));
             dumpCollection(artists);
 
             assertEquals("Size of artist list is wrong!", 3, artists.size());
@@ -580,7 +579,7 @@ public class TestStandard extends TestBootstrap {
             Query query = db.query(TArtist.T_ARTIST).all()
                     .orderBy(TArtist.C_NAME.asc())
                     .outer(TArtist.A_PAINTINGS).fetch();
-            List<Artist> artists = query.list(new MapTransformer<>(query, true, Artist.class, new ArtistDAOTransformer()));
+            List<Artist> artists = query.list(new MapTransformer<>(query, true, Artist.class, new ArtistDAOMapper()));
 
             dumpCollection(artists);
 

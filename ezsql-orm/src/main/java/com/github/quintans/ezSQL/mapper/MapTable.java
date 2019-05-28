@@ -1,4 +1,4 @@
-package com.github.quintans.ezSQL.transformers;
+package com.github.quintans.ezSQL.mapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -97,7 +97,7 @@ public class MapTable {
         return sb.toString();
     }
 
-    private boolean create(Record record, Class<?> rootClass, Object parentInstance, QueryMapper mapper) {
+    private boolean create(Row record, Class<?> rootClass, Object parentInstance, QueryMapper mapper) {
         // collect all values from the columns
         if (parentInstance == null) {
             instance = mapper.createRoot(rootClass);
@@ -111,17 +111,17 @@ public class MapTable {
         return finalize;
     }
 
-    public void process(Record record, Map<List<Object>, Object> domainCache, Class<?> rootClass, Object parentInstance, QueryMapper mapper) {
+    public void process(Row row, Map<List<Object>, Object> domainCache, Class<?> rootClass, Object parentInstance, QueryMapper mapper) {
         List<Object> keyValues;
         boolean finalize = false;
         if (domainCache != null) {
-            keyValues = grabKeyValues(record);
+            keyValues = grabKeyValues(row);
             if (!keyValues.isEmpty() && !keys.equals(keyValues)) {
                 reset();
 
                 instance = domainCache.get(keyValues);
                 if (instance == null) {
-                    finalize = create(record, rootClass, parentInstance, mapper);
+                    finalize = create(row, rootClass, parentInstance, mapper);
                 } else {
                     finalize = true;
                 }
@@ -134,7 +134,7 @@ public class MapTable {
 
             }
         } else {
-            finalize = create(record, rootClass, parentInstance, mapper);
+            finalize = create(row, rootClass, parentInstance, mapper);
         }
 
         if (finalize) {
@@ -145,17 +145,17 @@ public class MapTable {
 
         if (instance != null) {
             for (MapTable mapTable : mapTables) {
-                mapTable.process(record, domainCache, rootClass, instance, mapper);
+                mapTable.process(row, domainCache, rootClass, instance, mapper);
             }
         }
     }
 
-    private List<Object> grabKeyValues(Record record) {
+    private List<Object> grabKeyValues(Row row) {
         List<Object> keyValues = new ArrayList<>();
         keyValues.add(tableAlias);
         for (MapColumn mc : mapColumns) {
             if (mc.isKey()) {
-                Object value = record.getObject(mc.getIndex());
+                Object value = row.get(mc.getIndex());
                 if (value != null) {
                     keyValues.add(value);
                 }

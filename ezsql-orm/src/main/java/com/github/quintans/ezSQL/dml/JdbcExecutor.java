@@ -5,7 +5,7 @@ import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.jdbc.ColumnType;
 import com.github.quintans.jdbc.RawSql;
 import com.github.quintans.jdbc.SimpleJdbc;
-import com.github.quintans.jdbc.transformers.IRowTransformer;
+import com.github.quintans.jdbc.transformers.IResultTransformer;
 import org.apache.log4j.Logger;
 
 import java.util.LinkedHashMap;
@@ -27,13 +27,13 @@ public class JdbcExecutor {
     this.simpleJdbc = simpleJdbc;
   }
 
-  public <T> T queryUnique(String sql, IRowTransformer<T> rt, Map<String, Object> parameters) {
+  public <T> T queryUnique(String sql, IResultTransformer<T> rt, Map<String, Object> parameters) {
     RawSql rawSql = parseSql(sql);
     Map<String, Object> params = transformParameters(parameters);
     return simpleJdbc.queryUnique(rawSql.getJdbcSql(), rt, rawSql.buildValues(params));
   }
 
-  public <T> List<T> queryRange(String sql, IRowTransformer<T> rt, int firstRow, int maxRows, Map<String, Object> parameters) {
+  public <T> List<T> queryRange(String sql, IResultTransformer<T> rt, int firstRow, int maxRows, Map<String, Object> parameters) {
     RawSql rawSql = parseSql(sql);
     Map<String, Object> params = transformParameters(parameters);
     return simpleJdbc.queryRange(rawSql.getJdbcSql(), rt, firstRow, maxRows, rawSql.buildValues(params));

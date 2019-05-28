@@ -5,8 +5,8 @@ import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.ezSQL.toolkit.utils.Result;
-import com.github.quintans.ezSQL.transformers.UpdateMapper;
-import com.github.quintans.ezSQL.transformers.UpdateValue;
+import com.github.quintans.ezSQL.mapper.UpdateMapper;
+import com.github.quintans.ezSQL.mapper.UpdateValue;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 import java.util.ArrayList;
@@ -18,7 +18,7 @@ import java.util.function.Consumer;
 
 import static com.github.quintans.ezSQL.dml.Definition.param;
 
-public class UpdateDSL<T extends UpdateDSL> extends CoreDSL {
+public class UpdateDSL<T extends UpdateDSL<T>> extends CoreDSL {
 
   public UpdateDSL(Driver driver, Table table) {
     super(driver, table);

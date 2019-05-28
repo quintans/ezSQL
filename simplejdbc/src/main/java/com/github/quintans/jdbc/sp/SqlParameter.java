@@ -2,7 +2,7 @@ package com.github.quintans.jdbc.sp;
 
 import java.sql.Types;
 
-import com.github.quintans.jdbc.transformers.IRowTransformer;
+import com.github.quintans.jdbc.transformers.IResultTransformer;
 
 /**
  * SQL parameter used in calling a stored procedure
@@ -16,7 +16,7 @@ public class SqlParameter {
 	private String name;
 	private Object value;
 	private int jdbcType;
-	private IRowTransformer<Object> rowTransformer;
+	private IResultTransformer<Object> rowTransformer;
 
 	/**
 	 * copy constructor
@@ -56,7 +56,7 @@ public class SqlParameter {
 	 * @param rowTransformer
 	 *            the result transformer
 	 */
-	public SqlParameter(String name, IRowTransformer<Object> rowTransformer) {
+	public SqlParameter(String name, IResultTransformer<Object> rowTransformer) {
 		this.type = SqlParameterType.RESULTSET;
 		this.name = name;
 		this.rowTransformer = rowTransformer;
@@ -141,7 +141,7 @@ public class SqlParameter {
 	 * 
 	 * @return
 	 */
-	public IRowTransformer<Object> getRowTransformer() {
+	public IResultTransformer<Object> getRowTransformer() {
 		return this.rowTransformer;
 	}
 
@@ -193,7 +193,7 @@ public class SqlParameter {
 	 *            the transformer
 	 * @return
 	 */
-	public static SqlParameter RESULTSET(String name, IRowTransformer<Object> rowTransformer) {
+	public static SqlParameter RESULTSET(String name, IResultTransformer<Object> rowTransformer) {
 		return new SqlParameter(name, rowTransformer);
 	}
 

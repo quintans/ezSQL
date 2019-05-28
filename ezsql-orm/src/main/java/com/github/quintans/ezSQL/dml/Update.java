@@ -4,20 +4,15 @@ import com.github.quintans.ezSQL.AbstractDb;
 import com.github.quintans.ezSQL.common.api.PostUpdater;
 import com.github.quintans.ezSQL.common.api.PreUpdater;
 import com.github.quintans.ezSQL.common.api.Updatable;
-import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.db.Discriminator;
 import com.github.quintans.ezSQL.db.PreUpdateTrigger;
 import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.exceptions.OptimisticLockException;
-import com.github.quintans.ezSQL.toolkit.utils.Result;
-import com.github.quintans.ezSQL.transformers.UpdateMapper;
-import com.github.quintans.ezSQL.transformers.UpdateValue;
 import com.github.quintans.jdbc.SimpleJdbc;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 import org.apache.log4j.Logger;
 
 import java.util.*;
-import java.util.function.Consumer;
 
 import static com.github.quintans.ezSQL.dml.Definition.param;
 

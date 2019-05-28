@@ -10,18 +10,18 @@ import java.util.LinkedList;
  * 
  * @param <T>
  */
-public abstract class SimpleAbstractRowTransformer<T> implements IRowTransformer<T> {
+public abstract class SimpleAbstractResultTransformer<T> implements IResultTransformer<T> {
 
-	public SimpleAbstractRowTransformer() {
+	public SimpleAbstractResultTransformer() {
 	}
 
 	@Override
-	public Collection<T> beforeAll(final ResultSetWrapper resultSet) {
+	public Collection<T> beforeAll() {
 		return new LinkedList<T>();
 	}
 
 	@Override
-	public void onTransformation(Collection<T> result, T object) {
+	public void collect(Collection<T> result, T object) {
 		result.add(object);
 	}
 

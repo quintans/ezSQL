@@ -1,7 +1,4 @@
-package com.github.quintans.ezSQL.transformers;
-
-import com.github.quintans.ezSQL.dml.Query;
-import com.github.quintans.jdbc.transformers.ResultSetWrapper;
+package com.github.quintans.ezSQL.mapper;
 
 import java.util.List;
 
@@ -37,10 +34,10 @@ public interface QueryMapper extends MapperSupporter {
      * collecting the data from the database and put in the domain instance.
      * The value from a column is always put in an domain instance.
      *
-     * @param record record
+     * @param row record
      * @param instance domain instance to return
      * @param mapColumns column mapping info
      * @return true if the instance was populated with data
      */
-    boolean map(Record record, Object instance, List<MapColumn> mapColumns);
+    boolean map(Row row, Object instance, List<MapColumn> mapColumns);
 }

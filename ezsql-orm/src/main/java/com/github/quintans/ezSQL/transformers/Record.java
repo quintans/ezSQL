@@ -1,7 +1,8 @@
 package com.github.quintans.ezSQL.transformers;
 
-import com.github.quintans.ezSQL.dml.Query;
+import com.github.quintans.ezSQL.dml.QueryDSL;
 import com.github.quintans.ezSQL.driver.Driver;
+import com.github.quintans.ezSQL.mapper.Row;
 import com.github.quintans.ezSQL.toolkit.io.BinStore;
 import com.github.quintans.ezSQL.toolkit.io.TextStore;
 import com.github.quintans.ezSQL.toolkit.utils.Misc;
@@ -12,19 +13,15 @@ import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class Record {
-    private Query query;
+public class Record implements Row {
+    private Driver driver;
     private ResultSetWrapper rsw;
     private int offset;
 
-    public Record(Query query, ResultSetWrapper rsw) {
-        this.query = query;
+    public Record(QueryDSL<?> query, ResultSetWrapper rsw) {
+        this.driver = query.getDriver();
         this.rsw = rsw;
-        this.offset = query.paginationColumnOffset();
-    }
-
-    public Query getQuery() {
-        return query;
+        this.offset = driver.paginationColumnOffset(query);
     }
 
     public int getOffset() {
@@ -36,7 +33,7 @@ public class Record {
     }
 
     private Driver driver() {
-        return query.getDb().getDriver();
+        return driver;
     }
 
     public Object getIdentity(int columnIndex) throws SQLException {
@@ -103,11 +100,15 @@ public class Record {
         return val;
     }
 
-    public <T> T get(int columnIndex, Class<T> type) throws SQLException {
-        return driver().fromDb(rsw, columnIndex + offset, type);
+    public <T> T get(int columnIndex, Class<T> type) {
+        try {
+            return driver().fromDb(rsw, columnIndex + offset, type);
+        } catch (SQLException e) {
+            throw new PersistenceException(e);
+        }
     }
 
-    public Object getObject(int columnIndex) {
+    public Object get(int columnIndex) {
         try {
             ResultSet rs = rsw.getResultSet();
             Object value = rs.getObject(columnIndex);

@@ -4,14 +4,14 @@ import com.github.quintans.ezSQL.common.api.Updatable;
 import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.driver.Driver;
-import com.github.quintans.ezSQL.transformers.InsertMapper;
+import com.github.quintans.ezSQL.mapper.InsertMapper;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class InsertDSL<T extends InsertDSL> extends CoreDSL {
+public class InsertDSL<T extends InsertDSL<T>> extends CoreDSL {
   protected boolean hasKeyValue;
 
   public InsertDSL(Driver driver, Table table) {

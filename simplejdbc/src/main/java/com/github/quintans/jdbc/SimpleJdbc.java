@@ -4,9 +4,9 @@ import com.github.quintans.jdbc.exceptions.PersistenceException;
 import com.github.quintans.jdbc.exceptions.PersistenceIntegrityConstraintException;
 import com.github.quintans.jdbc.sp.SqlParameter;
 import com.github.quintans.jdbc.sp.SqlParameterType;
-import com.github.quintans.jdbc.transformers.IRowTransformer;
+import com.github.quintans.jdbc.transformers.IResultTransformer;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
-import com.github.quintans.jdbc.transformers.SimpleAbstractRowTransformer;
+import com.github.quintans.jdbc.transformers.SimpleAbstractResultTransformer;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -143,11 +143,11 @@ public class SimpleJdbc {
    * @param params The replacement parameters.
    * @return List of objects.
    */
-  public <T> List<T> query(String sql, IRowTransformer<T> rt, Object... params) {
+  public <T> List<T> query(String sql, IResultTransformer<T> rt, Object... params) {
     return queryRange(sql, rt, 0, 0, params);
   }
 
-  public <T> T queryUnique(String sql, IRowTransformer<T> rt, Object... params) {
+  public <T> T queryUnique(String sql, IResultTransformer<T> rt, Object... params) {
     List<T> result = queryRange(sql, rt, 0, 1, params);
     if (result.size() == 1)
       return result.get(0);
@@ -167,7 +167,7 @@ public class SimpleJdbc {
    * @param params   The replacement parameters.
    * @return The list of objects returned by the handler.
    */
-  public <T> List<T> queryRange(String sql, IRowTransformer<T> rt, int firstRow, int maxRows, Object... params) {
+  public <T> List<T> queryRange(String sql, IResultTransformer<T> rt, int firstRow, int maxRows, Object... params) {
 
     PreparedStatement stmt = null;
     ResultSet rs = null;
@@ -194,7 +194,7 @@ public class SimpleJdbc {
         rs.absolute(firstRow);
 
       // the returned collection can be null
-      result = rt.beforeAll(rsw);
+      result = rt.beforeAll();
       int rowNum = 0;
 
       //while (rs.next() && (maxRows == 0 || rowNum < maxRows)) {
@@ -204,7 +204,7 @@ public class SimpleJdbc {
           throw new PersistenceException("The query returned more than one result!");
         }
 
-        rt.onTransformation(result, rt.transform(rsw));
+        rt.collect(result, rt.transform(rsw));
         rowNum++;
       }
 
@@ -233,7 +233,7 @@ public class SimpleJdbc {
    * @param params The named parameters.
    * @return The transformed result
    */
-  public <T> List<T> queryForList(String sql, IRowTransformer<T> rt, Map<String, Object> params) {
+  public <T> List<T> queryForList(String sql, IResultTransformer<T> rt, Map<String, Object> params) {
     return queryForList(sql, rt, 0, 0, params);
   }
 
@@ -248,7 +248,7 @@ public class SimpleJdbc {
    * @param params   The named parameters.
    * @return The transformed result
    */
-  public <T> List<T> queryForList(String sql, IRowTransformer<T> rt, int firstRow, int maxRows, Map<String, Object> params) {
+  public <T> List<T> queryForList(String sql, IResultTransformer<T> rt, int firstRow, int maxRows, Map<String, Object> params) {
     RawSql rawSql = RawSql.of(sql);
     return queryRange(rawSql.getJdbcSql(), rt, firstRow, maxRows, rawSql.buildValues(params));
   }
@@ -261,7 +261,7 @@ public class SimpleJdbc {
    * @return list with array of objects representing each result row
    */
   public List<Object[]> queryForList(final String sql, Map<String, Object> params) {
-    IRowTransformer<Object[]> rt = new SimpleAbstractRowTransformer<Object[]>() {
+    IResultTransformer<Object[]> rt = new SimpleAbstractResultTransformer<Object[]>() {
       @Override
       public Object[] transform(ResultSetWrapper rsw) throws SQLException {
         int[] columnTypes = rsw.getColumnTypes();
@@ -290,7 +290,7 @@ public class SimpleJdbc {
    * @param params The named parameters.
    * @return The transformed result
    */
-  public <T> T queryForObject(String sql, final IRowTransformer<T> rt, Map<String, Object> params) {
+  public <T> T queryForObject(String sql, final IResultTransformer<T> rt, Map<String, Object> params) {
     RawSql rawSql = RawSql.of(sql);
     return queryUnique(rawSql.getJdbcSql(), rt, rawSql.buildValues(params));
   }
@@ -303,7 +303,7 @@ public class SimpleJdbc {
    * @return The result as a Long
    */
   public Long queryForLong(String sql, Map<String, Object> params) {
-    IRowTransformer<Long> rt = new SimpleAbstractRowTransformer<Long>() {
+    IResultTransformer<Long> rt = new SimpleAbstractResultTransformer<Long>() {
       @Override
       public Long transform(ResultSetWrapper rsw) throws SQLException {
         return rsw.getResultSet().getLong(1);
@@ -530,12 +530,12 @@ public class SimpleJdbc {
         if (SqlParameterType.RESULTSET.equals(parameter.getType())) {
           ResultSet rs = (ResultSet) stmt.getObject(parameter.getName());
           ResultSetWrapper rsw = new ResultSetWrapper(rs);
-          IRowTransformer<Object> rt = parameter.getRowTransformer();
-          Collection<Object> result = rt.beforeAll(rsw);
+          IResultTransformer<Object> rt = parameter.getRowTransformer();
+          Collection<Object> result = rt.beforeAll();
 
           try {
             while (rs.next()) {
-              rt.onTransformation(result, rt.transform(rsw));
+              rt.collect(result, rt.transform(rsw));
             }
           } finally {
             rt.afterAll(result);

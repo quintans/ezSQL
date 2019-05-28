@@ -1,4 +1,4 @@
-package com.github.quintans.ezSQL.transformers;
+package com.github.quintans.ezSQL.mapper;
 
 import com.github.quintans.ezSQL.common.api.Convert;
 import com.github.quintans.ezSQL.toolkit.reflection.FieldUtils;
@@ -7,7 +7,6 @@ import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -86,7 +85,7 @@ public class QueryMapperBean implements QueryMapper {
 
     @SuppressWarnings("unchecked")
     @Override
-    public boolean map(Record record, Object instance, List<MapColumn> mapColumns) {
+    public boolean map(Row row, Object instance, List<MapColumn> mapColumns) {
         try {
             boolean touched = false;
             for (MapColumn mapColumn : mapColumns) {
@@ -97,11 +96,11 @@ public class QueryMapperBean implements QueryMapper {
                     Convert convert = tf.getField().getAnnotation(Convert.class);
                     Object value;
                     if(convert != null) {
-                        value = record.get(mapColumn.getIndex(), null);
+                        value = row.get(mapColumn.getIndex());
                         value = convert.value().newInstance().fromDb(value);
                     } else {
                         Class<?> type = tf.getPropertyType();
-                        value = record.get(mapColumn.getIndex(), type);
+                        value = row.get(mapColumn.getIndex(), type);
                     }
                     tf.set(instance, value);
                     touched |= value != null;
@@ -109,7 +108,7 @@ public class QueryMapperBean implements QueryMapper {
             }
 
             return touched;
-        } catch (IllegalAccessException | SQLException | InvocationTargetException | InstantiationException e) {
+        } catch (IllegalAccessException | InvocationTargetException | InstantiationException e) {
             throw new PersistenceException(e);
         }
     }

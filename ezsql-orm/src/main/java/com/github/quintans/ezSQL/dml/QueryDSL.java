@@ -16,7 +16,7 @@ import java.util.Set;
 import static com.github.quintans.ezSQL.toolkit.utils.Misc.empty;
 import static com.github.quintans.ezSQL.toolkit.utils.Misc.length;
 
-public class QueryDSL<T extends QueryDSL> extends CoreDSL {
+public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
   public static final String FIRST_RESULT = "first";
   public static final String LAST_RESULT = "last";
 

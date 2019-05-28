@@ -1,6 +1,5 @@
-package com.github.quintans.ezSQL.transformers;
+package com.github.quintans.ezSQL.mapper;
 
-import com.github.quintans.ezSQL.AbstractDb;
 import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.ezSQL.toolkit.utils.Result;

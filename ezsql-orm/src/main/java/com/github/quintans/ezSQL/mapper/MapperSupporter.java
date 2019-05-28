@@ -1,4 +1,4 @@
-package com.github.quintans.ezSQL.transformers;
+package com.github.quintans.ezSQL.mapper;
 
 public interface MapperSupporter {
     boolean support(Class<?> rootClass);

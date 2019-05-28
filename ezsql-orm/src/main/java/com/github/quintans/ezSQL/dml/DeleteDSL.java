@@ -12,7 +12,7 @@ import java.util.List;
 
 import static com.github.quintans.ezSQL.dml.Definition.param;
 
-public class DeleteDSL<T extends DeleteDSL> extends CoreDSL {
+public class DeleteDSL<T extends DeleteDSL<T>> extends CoreDSL {
 
   public DeleteDSL(Driver driver, Table table) {
     super(driver, table);
