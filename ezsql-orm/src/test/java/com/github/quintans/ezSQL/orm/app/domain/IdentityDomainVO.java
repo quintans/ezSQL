@@ -1,12 +1,12 @@
 package com.github.quintans.ezSQL.orm.app.domain;
 
 import com.github.quintans.ezSQL.common.api.Updatable;
-import com.github.quintans.ezSQL.toolkit.utils.HashCodeUtil;
 
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
 
 public abstract class IdentityDomainVO<T extends Serializable> implements Updatable {
@@ -49,10 +49,7 @@ public abstract class IdentityDomainVO<T extends Serializable> implements Updata
 	@Override
 	public int hashCode() {
 		if (this._forHash == 0) {
-			int result = HashCodeUtil.SEED;
-			result = HashCodeUtil.hash(result, this.getClass());
-			result = HashCodeUtil.hash(result, this.id);
-			this._forHash = result;
+			this._forHash = Objects.hash(this.getClass(), this.id);
 		}
 
 		return this._forHash;
