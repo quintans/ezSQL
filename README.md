@@ -59,15 +59,18 @@ Simple ORM library for JAVA
 
 ## Introduction
 
-**ezSQL** is a tool that aims to simplify the work of a developer when writing and executing SQL.
-It is _just_ a wrapper around JDBC.
+**ezSQL** is a tool that allows to write SQL in a **static typed** manner.
+It provides a rich SQL DSL and a configurable results mapper, that we can run against any driver that understands SQL
+and that returns a result set that allow us to get the column values by column position. Such is the case of JDBC or R2DBC.
 
-It provides an easy way of executing **static typed** SQL and to project results to arbitrary beans.
+Specialized mappers are provided to project results to arbitrary beans.
 To handle SQL, without hiding it, is the main goal of this tool. ORM features are just a bonus.
 
-Some quick examples just to open the apetite.
+All the examples presented here are based in the JDBC version, the version that comes with the library
 
-Retrive the query results into a list of beans.
+Some quick examples just to open the appetite.
+
+Retrieve the query results into a list of beans.
 
 ```java
 List<Artist> artists = db.query(TArtist.T_ARTIST)
@@ -111,14 +114,13 @@ Main Features:
 Motivation
 ==
 ezSQL was born out of the frustration of the "magic" of Hibernate.
-Also, writing HQL in plain text led to many mistakes and made refactoring dificult.
+Also, writing HQL in plain text led to many mistakes and made refactoring difficult.
+(Nowadays there are tools that already solve this, like jOOQ, QueryDSL, to name a few)
 Another issue was the impossible task of serializing my entity beans
 without bringing along the entire database.
 
-_(Side note: the goSQL project is the same as this project, but in Go.)_
-
 ## SimpleJDBC
-ezSQL is build on top of the class named **SimpleJDBC**.
+ezSQL main implementation is build on top of the class named **SimpleJDBC**.
 This class isolates the developer from the details of JDBC call, like statement creation,
 exception handling, parameters handling, etc
 
@@ -130,10 +132,6 @@ The tested databases are: H2, MySQL and PostgreSQL.
 
 In the resource folder of the ezsql-orm project you can find properties files for how to connect to these databases.
 Use this properties as a guide on how to install these databases.
-
-In the /sql folder at the parent project, you can find scripts for creating the tables for each database.
-
-To test against H2 you need to use `-Denv=h2` as a VM option
 
 ## Environment
 To use ezSQL we must need to know the database structure.
