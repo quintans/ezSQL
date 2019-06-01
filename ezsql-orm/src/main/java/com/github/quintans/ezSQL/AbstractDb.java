@@ -2,20 +2,26 @@ package com.github.quintans.ezSQL;
 
 import com.github.quintans.ezSQL.common.api.Updatable;
 import com.github.quintans.ezSQL.db.Association;
-import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.db.Relation;
 import com.github.quintans.ezSQL.db.Table;
-import com.github.quintans.ezSQL.dml.*;
+import com.github.quintans.ezSQL.dml.Condition;
+import com.github.quintans.ezSQL.dml.Definition;
+import com.github.quintans.ezSQL.dml.Delete;
+import com.github.quintans.ezSQL.dml.Insert;
+import com.github.quintans.ezSQL.dml.Query;
+import com.github.quintans.ezSQL.dml.Update;
 import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.ezSQL.toolkit.reflection.FieldUtils;
 import com.github.quintans.ezSQL.toolkit.reflection.TypedField;
 import com.github.quintans.jdbc.JdbcSession;
-import com.github.quintans.jdbc.SimpleJdbc;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
-import org.apache.log4j.Logger;
 
 import java.sql.Connection;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public abstract class AbstractDb {
 
@@ -52,10 +58,13 @@ public abstract class AbstractDb {
     // check if target property is set
     String targetAlias = association.getAlias();
     TypedField targetTf = FieldUtils.getBeanTypedField(bean.getClass(), targetAlias);
+    if(targetTf == null) {
+      return null;
+    }
     Object value;
     try {
       value = targetTf.get(bean);
-      if (value != null) { // if value is set returns
+      if (value != null) { // if value is set, returns
         return (T) value;
       } else if (bean instanceof Updatable) {
         Set<String> changed = ((Updatable) bean).changed();
@@ -67,13 +76,15 @@ public abstract class AbstractDb {
       Class<?> klass = targetTf.getPropertyType();
 
       Relation[] relations = association.getRelations();
-      List<Condition> restrictions = new ArrayList<Condition>();
+      List<Condition> restrictions = new ArrayList<>();
       for (Relation relation : relations) {
         // from source FK
         String fkAlias = relation.getFrom().getColumn().getAlias();
         TypedField tf = FieldUtils.getBeanTypedField(bean.getClass(), fkAlias);
-        value = tf.get(bean);
-        restrictions.add(relation.getTo().getColumn().is(Definition.raw(value)));
+        if(tf != null) {
+          value = tf.get(bean);
+          restrictions.add(relation.getTo().getColumn().is(Definition.raw(value)));
+        }
       }
 
       Query query = query(association.getTableTo()).all()
@@ -82,9 +93,9 @@ public abstract class AbstractDb {
         Class<?> genKlass = FieldUtils.getTypeGenericClass(targetTf.getType());
         value = query.list(genKlass);
         if (Set.class.isAssignableFrom(klass)) {
-          value = new LinkedHashSet<Object>((Collection<? extends Object>) value);
+          value = new LinkedHashSet<Object>((Collection<?>) value);
         } else if (List.class.isAssignableFrom(klass)) {
-          value = new ArrayList<Object>((Collection<? extends Object>) value);
+          value = new ArrayList<Object>((Collection<?>) value);
         }
       } else {
         value = query.select(klass);
@@ -93,7 +104,7 @@ public abstract class AbstractDb {
       targetTf.set(bean, value);
 
     } catch (Exception ex) {
-      throw new PersistenceException("Unable to retrive association " + association + " for " + bean, ex);
+      throw new PersistenceException("Unable to retrieve association " + association + " for " + bean, ex);
     }
 
     return (T) value;
@@ -103,8 +114,8 @@ public abstract class AbstractDb {
    * selct over a table.<br>
    * If no columns are added, when executing a select or list all columns of the driving table will be added.
    *
-   * @param table
-   * @return
+   * @param table table to query
+   * @return Query
    */
   public Query query(Table table) {
     return new Query(this, table);

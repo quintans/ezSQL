@@ -8,13 +8,11 @@ import com.github.quintans.ezSQL.db.PreDeleteTrigger;
 import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.exceptions.OptimisticLockException;
 import com.github.quintans.jdbc.SimpleJdbc;
-import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Delete extends DeleteDSL<Delete> {
-  private static final Logger LOG = Logger.getLogger(Delete.class);
   private AbstractDb db;
   private final JdbcExecutor executor;
 
@@ -60,7 +58,7 @@ public class Delete extends DeleteDSL<Delete> {
    * An OptimisticLockException is thrown if it fails to update.<br>
    * See also {@link #execute(Object) execute(Object)}.<br>
    *
-   * @param bean
+   * @param bean bean
    */
   public void submit(Object bean) {
     if (!myExecute(bean))
@@ -75,7 +73,7 @@ public class Delete extends DeleteDSL<Delete> {
    * Remove the table row associated with the supplied bean.<br>
    * Version column is ignored if null.
    *
-   * @param bean
+   * @param bean bean
    * @return success
    */
   public boolean execute(Object bean) {
@@ -100,7 +98,7 @@ public class Delete extends DeleteDSL<Delete> {
 
     // table discriminators have higher priority
     if (table.getDiscriminators() != null) {
-      List<Condition> conditions = new ArrayList<Condition>(table.getDiscriminators().size());
+      List<Condition> conditions = new ArrayList<>(table.getDiscriminators().size());
       for (Discriminator disc : table.getDiscriminators()) {
         conditions.add(disc.getCondition());
       }

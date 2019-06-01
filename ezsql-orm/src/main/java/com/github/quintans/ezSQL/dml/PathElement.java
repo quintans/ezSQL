@@ -5,7 +5,7 @@ import java.util.List;
 import com.github.quintans.ezSQL.db.Association;
 
 public class PathElement {
-	private Boolean inner = true;
+	private Boolean inner;
 	private Association base;
 	private Association derived;
 	private Condition condition;

@@ -1,11 +1,17 @@
 package com.github.quintans.ezSQL.dml;
 
 import com.github.quintans.ezSQL.common.api.Value;
-import com.github.quintans.ezSQL.db.*;
+import com.github.quintans.ezSQL.db.Association;
+import com.github.quintans.ezSQL.db.Column;
+import com.github.quintans.ezSQL.db.Discriminator;
+import com.github.quintans.ezSQL.db.NullSql;
+import com.github.quintans.ezSQL.db.Relation;
+import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +27,7 @@ public abstract class CoreDSL {
   protected String tableAlias;
   protected List<Join> joins;
   protected Condition condition;
-  protected Map<String, Object> parameters = new LinkedHashMap<String, Object>();
+  protected Map<String, Object> parameters = new LinkedHashMap<>();
 
   public static final String JOIN_PREFIX = "j";
   protected AliasBag joinBag = new AliasBag(JOIN_PREFIX);
@@ -70,13 +76,13 @@ public abstract class CoreDSL {
 
     public void addCondition(Condition condition) {
       if (this.conditions == null)
-        this.conditions = new ArrayList<Condition>();
+        this.conditions = new ArrayList<>();
       this.conditions.add(condition);
     }
 
     public void addConditions(List<Condition> conditions) {
       if (this.conditions == null)
-        this.conditions = new ArrayList<Condition>();
+        this.conditions = new ArrayList<>();
       this.conditions.addAll(conditions);
     }
   }
@@ -165,12 +171,12 @@ public abstract class CoreDSL {
    * consegue percorrer
    */
   public static PathElement[] deepestCommonPath(List<PathElement[]> cachedAssociation, List<PathElement> associations) {
-    List<PathElement> common = new ArrayList<PathElement>();
+    List<PathElement> common = new ArrayList<>();
 
     if (associations != null) {
       for (PathElement[] path : cachedAssociation) {
         // finds the common start portion in this path
-        List<PathElement> temp = new ArrayList<PathElement>();
+        List<PathElement> temp = new ArrayList<>();
         for (int depth = 0; depth < path.length; depth++) {
           PathElement pe = path[depth];
           if (depth < associations.size()) {
@@ -189,7 +195,7 @@ public abstract class CoreDSL {
       }
     }
 
-    return common.toArray(new PathElement[common.size()]);
+    return common.toArray(new PathElement[0]);
   }
 
   public String getAliasForAssociation(Association association) {
@@ -203,12 +209,12 @@ public abstract class CoreDSL {
    * Indicates that the current association chain should be used to join only.
    * A table end alias can also be supplied.
    *
-   * @param paths
-   * @param fetch
+   * @param paths paths to the Association
+   * @param fetch fetch columns
    */
   protected void joinTo(List<PathElement> paths, boolean fetch) {
     if (paths != null) {
-      this.addJoin(paths, null, fetch);
+      this.addJoin(paths, fetch);
 
       PathCondition[] cache = buildPathConditions(paths);
       // process the acumulated conditions
@@ -228,7 +234,7 @@ public abstract class CoreDSL {
               if (firstConditions != null) {
                 // add the criterias restriction refering to the table,
                 // due to association discriminator
-                conds = new ArrayList<Condition>(conds);
+                conds = new ArrayList<>(conds);
                 conds.addAll(firstConditions);
                 firstConditions = null;
               }
@@ -248,7 +254,7 @@ public abstract class CoreDSL {
   private PathCondition[] buildPathConditions(List<PathElement> paths) {
     // see if any targeted table has discriminator columns
     int index = 0;
-    List<Condition> tableConditions = null;
+    List<Condition> tableConditions;
     PathCondition[] cache = new PathCondition[paths.size() + 1];
 
     // the path condition on position 0 refers the condition on the FROM table
@@ -315,23 +321,21 @@ public abstract class CoreDSL {
     return cache;
   }
 
-  // guarda os caminhos(associacao) já percorrida
-  protected List<PathElement[]> cachedAssociation = new ArrayList<PathElement[]>();
+  // keeps the paths(associations) already traversed
+  protected List<PathElement[]> cachedAssociation = new ArrayList<>();
 
-  protected List<PathElement> addJoin(List<PathElement> associations, PathElement[] common, boolean fetch) {
-    List<PathElement> local = new ArrayList<PathElement>();
+  protected List<PathElement> addJoin(List<PathElement> associations, boolean fetch) {
+    List<PathElement> local = new ArrayList<>();
 
-    if (common == null) {
-      common = deepestCommonPath(this.cachedAssociation, associations);
-    }
+    PathElement[] common = deepestCommonPath(this.cachedAssociation, associations);
 
     if (this.joins == null)
-      this.joins = new ArrayList<Join>();
+      this.joins = new ArrayList<>();
 
     // guarda os novos
     // List<ForeignKey> newFks = new ArrayList<ForeignKey>();
     // cria copia, pois os table alias vao ser definidos
-    Association fks[] = new Association[associations.size()];
+    Association[] fks = new Association[associations.size()];
     Association lastFk = null;
     boolean matches = true;
     int f = 0;
@@ -350,12 +354,10 @@ public abstract class CoreDSL {
         // copia para atribuir os alias para esta query
         fks[f] = association.bareCopy();
 
-        /**
-         * processa as associações
-         * o alias do lado inicial (from) da primeira associação fica
-         * com o valor firstAlias (valor da tabela principal)
-         * o alias do lado final da última associação, fica com o valor
-         * de lastAlias, se este não for nulo
+        /*
+        Processes associations.
+        The alias of the initial side (from) of the first association is set with firstAlias (main table value).
+        The alias of the final sid of the last association, is set with the lastAlias, if it is not null
          */
         String fkAlias;
         if (f == 0) {
@@ -439,7 +441,7 @@ public abstract class CoreDSL {
   }
 
   protected CoreDSL coreWhere(Condition restriction) {
-    List<Condition> conditions = new ArrayList<Condition>();
+    List<Condition> conditions = new ArrayList<>();
     conditions.add(restriction);
     coreWhere(conditions);
     return this;
@@ -447,9 +449,7 @@ public abstract class CoreDSL {
 
   protected CoreDSL coreWhere(Condition... restrictions) {
     if (restrictions != null) {
-      List<Condition> conditions = new ArrayList<Condition>();
-      for (Condition restriction : restrictions)
-        conditions.add(restriction);
+      List<Condition> conditions = Arrays.asList(restrictions);
       coreWhere(conditions);
     }
     return this;
@@ -463,10 +463,10 @@ public abstract class CoreDSL {
   }
 
   /**
-   * condição a usar na associação imediatamente anterior
+   * Condition to use in the preceding association
    *
-   * @param chain
-   * @param condition
+   * @param chain     paths
+   * @param condition condition
    */
   protected void applyOn(List<PathElement> chain, Condition condition) {
     if (chain != null && chain.size() > 0) {
@@ -556,7 +556,7 @@ public abstract class CoreDSL {
   /**
    * replaces RAW with PARAM
    *
-   * @param token
+   * @param token token
    */
   protected void replaceRaw(Function token) {
     Function[] members = token.getMembers();
@@ -584,9 +584,9 @@ public abstract class CoreDSL {
       }
     } else {
       if (members != null) {
-        for (int i = 0; i < members.length; i++) {
-          if (members[i] != null) {
-            this.replaceRaw(members[i]);
+        for (Function member : members) {
+          if (member != null) {
+            this.replaceRaw(member);
           }
         }
       }
@@ -601,9 +601,8 @@ public abstract class CoreDSL {
    *
    * @param col   The column
    * @param value The value to set
-   * @return this
+   * @return this CoreDSL
    */
-  @SuppressWarnings("unchecked")
   protected void coreSet(Column<?> col, Object value) {
     if (value == null) {
       value = col.getType();
@@ -659,7 +658,7 @@ public abstract class CoreDSL {
       throw new PersistenceException(col + " does not belong to table " + this.table);
 
     if (this.values == null)
-      this.values = new LinkedHashMap<Column<?>, Function>();
+      this.values = new LinkedHashMap<>();
 
     Function tok = this.values.put(col, value);
     // if it is a parameter remove it
@@ -680,7 +679,7 @@ public abstract class CoreDSL {
         return false;
       } else if (EFunction.PARAM.equals(tok.getOperator())) {
         // removes the previous token
-        this.parameters.remove((String) tok.getValue());
+        this.parameters.remove(tok.getValue());
       }
     }
 
