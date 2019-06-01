@@ -601,7 +601,6 @@ public abstract class CoreDSL {
    *
    * @param col   The column
    * @param value The value to set
-   * @return this CoreDSL
    */
   protected void coreSet(Column<?> col, Object value) {
     if (value == null) {

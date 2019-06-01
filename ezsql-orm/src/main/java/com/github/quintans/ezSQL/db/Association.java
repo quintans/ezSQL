@@ -26,7 +26,7 @@ public class Association {
 	/**
 	 * Copy constructor
 	 * 
-	 * @param fk
+	 * @param fk association
 	 */
 	public Association(Association fk) {
 		if (fk.isMany2Many()) {
@@ -124,8 +124,8 @@ public class Association {
 	 * Cria uma ForeignKey com as relações invertidas da ForeignKey passada<br>
 	 * <b>WARNING:</b> this can lead to <code>ExceptionInInitialitionError</code> due to circular references.
 	 * 
-	 * @param alias
-	 * @param fkey
+	 * @param alias alias
+	 * @param fkey foreign key
 	 */
 	public Association(String alias, Association fkey) {
 		if (fkey.isMany2Many()) {

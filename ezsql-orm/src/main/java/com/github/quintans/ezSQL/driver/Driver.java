@@ -133,24 +133,24 @@ public interface Driver {
     /**
      * Converts a java Date to a database Time
      *  
-     * @param o
-     * @return
+     * @param o date
+     * @return db time
      */
     Object fromTime(java.util.Date o);
     
     /**
      * Converts a java Date to a database Date
      * 
-     * @param o
-     * @return
+     * @param o date
+     * @return db date
      */
     Object fromDate(java.util.Date o);
     
     /**
      * Converts a java Date to a database Date and Time. Is the same as Timestamp but without timezone convertions.
      * 
-     * @param o
-     * @return
+     * @param o date
+     * @return db time and date
      */
     Object fromDateTime(java.util.Date o);
     
@@ -170,7 +170,7 @@ public interface Driver {
 	 * instead of PreparedStatement.setNull(parameterIndex, type);
 	 * 
 	 * @param o the column type
-	 * @return
+	 * @return db type
 	 */
     Object fromNull(NullSql o);
     

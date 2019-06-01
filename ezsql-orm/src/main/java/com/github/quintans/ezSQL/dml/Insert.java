@@ -158,7 +158,9 @@ public class Insert extends InsertDSL<Insert> {
   /**
    * Sends the batched commands to the database. This will not close the batch. For that use {@link #endBatch() endBatch}
    *
-   * @return
+   * @return an array of update counts containing one element for each
+   * command in the batch.  The elements of the array are ordered according
+   * to the order in which commands were added to the batch.
    * @see #endBatch()
    */
   public int[] flushBatch() {
@@ -178,8 +180,8 @@ public class Insert extends InsertDSL<Insert> {
    * exists.<b> This is a fast way of creating an Insert but for multiple
    * inserts it is not as efficient as values().execute().</b>
    *
-   * @param bean
-   * @return
+   * @param bean the bean
+   * @return map with keys
    */
   public Map<Column<?>, Object> submit(Object bean) {
     if (bean == null)

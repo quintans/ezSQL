@@ -51,6 +51,7 @@ public abstract class AbstractDb {
    *
    * @param bean        the target bean
    * @param association the mapping
+   * @param <T> type to be returned
    * @return the bean instance returned from de data base
    */
   @SuppressWarnings("unchecked")

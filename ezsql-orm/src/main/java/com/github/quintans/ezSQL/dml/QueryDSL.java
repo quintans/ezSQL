@@ -21,7 +21,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
   public static final String LAST_RESULT = "last";
 
   protected String alias;
-  protected QueryDSL subquery;
+  protected QueryDSL<?> subquery;
   protected boolean distinct;
   protected List<Function> columns = new ArrayList<>();
   protected List<Sort> sorts;
@@ -108,7 +108,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
   }
 
   @SuppressWarnings("unchecked")
-  public  T skip(int firstResult) {
+  public T skip(int firstResult) {
     if (firstResult < 0)
       this.skip = 0;
     else
@@ -121,7 +121,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
   }
 
   @SuppressWarnings("unchecked")
-  public  T limit(int maxResults) {
+  public T limit(int maxResults) {
     if (maxResults < 0) {
       this.limit = 0;
     } else {
@@ -131,12 +131,12 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
   }
 
   @SuppressWarnings("unchecked")
-  public  T getSubquery() {
+  public T getSubquery() {
     return (T) this.subquery;
   }
 
   @SuppressWarnings("unchecked")
-  public  T distinct() {
+  public T distinct() {
     this.distinct = true;
     this.lastSql = null;
     return (T) this;
@@ -149,7 +149,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
   // COLUMN ===
 
   @SuppressWarnings("unchecked")
-  public  T all() {
+  public T all() {
     if (this.table != null) {
       for (Column<?> column : this.table.getColumns()) {
         column(column);
@@ -159,7 +159,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
   }
 
   @SuppressWarnings("unchecked")
-  public  T column(Object... cols) {
+  public T column(Object... cols) {
     if (cols != null && cols.length > 0) {
       for (Object col : cols) {
         this.lastFunction = Function.converteOne(col);
@@ -175,13 +175,13 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
   }
 
   @SuppressWarnings("unchecked")
-  public  T count() {
+  public T count() {
     column(Definition.count());
     return (T) this;
   }
 
   @SuppressWarnings("unchecked")
-  public  T count(Object... expr) {
+  public T count(Object... expr) {
     if (expr != null && expr.length > 0) {
       for (Object e : expr) {
         column(Definition.count(e));
@@ -197,7 +197,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
    * @return The query
    */
   @SuppressWarnings("unchecked")
-  public  T as(String alias) {
+  public T as(String alias) {
     if (this.lastFunction != null) {
       this.lastFunction.as(alias);
     } else if (this.path != null) {
@@ -220,17 +220,17 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
 
   // WHERE ===
   @SuppressWarnings("unchecked")
-  public  T where(Condition restriction) {
+  public T where(Condition restriction) {
     return (T) super.coreWhere(restriction);
   }
 
   @SuppressWarnings("unchecked")
-  public  T where(Condition... restrictions) {
+  public T where(Condition... restrictions) {
     return (T) super.coreWhere(restrictions);
   }
 
   @SuppressWarnings("unchecked")
-  public  T where(List<Condition> restrictions) {
+  public T where(List<Condition> restrictions) {
     return (T) super.coreWhere(restrictions);
   }
 
@@ -238,7 +238,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
 
   // ORDER ===
   @SuppressWarnings("unchecked")
-  private  T addOrder(Sort sort) {
+  private T addOrder(Sort sort) {
     if (this.sorts == null)
       this.sorts = new ArrayList<>();
 
@@ -259,7 +259,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
    * @return the query
    */
   @SuppressWarnings("unchecked")
-  public  T orderBy(Sort... sorts) {
+  public T orderBy(Sort... sorts) {
     for (Sort sort : sorts) {
       if (sort.getAlias() != null) {
         return addOrder(sort);
@@ -284,7 +284,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
     return (T) this;
   }
 
-  public  T orderOn(Sort sort, String alias) {
+  public T orderOn(Sort sort, String alias) {
     Sort other = sort.toBuilder().build();
     ColumnHolder ch = other.getColumnHolder();
     if (alias != null) {
@@ -305,7 +305,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
    *                     ordenação
    * @return devolve a query
    */
-  public  T orderOn(Sort sort, Association... associations) {
+  public T orderOn(Sort sort, Association... associations) {
     if (empty(associations)) {
       throw new IllegalArgumentException("Associations cannot be empty");
     }
@@ -316,7 +316,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
     return orderOn(sort, pathElements);
   }
 
-  private  T orderOn(Sort sort, List<PathElement> pathElements) {
+  private T orderOn(Sort sort, List<PathElement> pathElements) {
     PathElement[] common = deepestCommonPath(this.cachedAssociation, pathElements);
     if (common.length == pathElements.size()) {
       return orderOn(sort, pathElementAlias(common[common.length - 1]));
@@ -334,7 +334,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
    * @return current query
    */
   @SuppressWarnings("unchecked")
-  public  T orderOn(Sort sort) {
+  public T orderOn(Sort sort) {
     if (this.path != null) {
       PathElement last = this.path.get(this.path.size() - 1);
       if (last.getOrders() == null) {
@@ -367,7 +367,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
    * @return
    */
   @SuppressWarnings("unchecked")
-  private  T myAssociate(boolean inner, Association... associations) {
+  private T myAssociate(boolean inner, Association... associations) {
     if (length(associations) == 0) {
       throw new PersistenceException("Inner cannot be used with an empty association list!");
     }
@@ -413,20 +413,24 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
   /**
    * includes the associations as inner joins to the current path.
    *
+   * @param associations associations
+   * @return itself
+   */
+  /**
    * @param associations
    * @return
    */
-  public  T inner(Association... associations) {
+  public T inner(Association... associations) {
     return myAssociate(true, associations);
   }
 
   /**
    * includes the associations as outer joins to the current path
    *
-   * @param associations
-   * @return
+   * @param associations associations
+   * @return itself
    */
-  public  T outer(Association... associations) {
+  public T outer(Association... associations) {
     return myAssociate(false, associations);
   }
 
@@ -449,10 +453,10 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
    * If no columns where included in this path, it will includes all the columns
    * of all the tables referred by the association path.
    *
-   * @return
+   * @return itself
    */
   @SuppressWarnings("unchecked")
-  public  T fetch() {
+  public T fetch() {
     myFetch(this.path);
 
     return (T) this;
@@ -462,10 +466,10 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
    * This will NOT trigger a result that can be dumped in a tree object.<br>
    * Any included column, will be considered as belonging to the root object.
    *
-   * @return
+   * @return itself
    */
   @SuppressWarnings("unchecked")
-  public  T join() {
+  public T join() {
     myJoin(false);
     return (T) this;
   }
@@ -518,22 +522,22 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
   /**
    * The same as inner(...).join()
    *
-   * @param associations
-   * @return
+   * @param associations associations
+   * @return itself
    */
   @SuppressWarnings("unchecked")
-  public  T innerJoin(Association... associations) {
+  public T innerJoin(Association... associations) {
     return (T) inner(associations).join();
   }
 
   /**
    * The same as outer(...).join()
    *
-   * @param associations
-   * @return
+   * @param associations associations
+   * @return itself
    */
   @SuppressWarnings("unchecked")
-  public  T outerJoin(Association... associations) {
+  public T outerJoin(Association... associations) {
     return (T) outer(associations).join();
   }
 
@@ -542,10 +546,10 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
    * referring to the table targeted by the last association.
    *
    * @param columns or functions
-   * @return
+   * @return itself
    */
   @SuppressWarnings("unchecked")
-  public  T include(Object... columns) {
+  public T include(Object... columns) {
     int lenPath = length(this.path);
     if (lenPath > 0) {
       PathElement lastPath = this.path.get(lenPath - 1);
@@ -592,11 +596,11 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
   /**
    * includes all column from the table from the last association but the ones declared in this method.
    *
-   * @param columns
-   * @return
+   * @param columns columns
+   * @return itself
    */
   @SuppressWarnings("unchecked")
-  public  T exclude(Column<?>... columns) {
+  public T exclude(Column<?>... columns) {
     int lenPath = length(this.path);
     if (lenPath > 0) {
       if (length(columns) == 0) {
@@ -622,10 +626,10 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
    * a TODAS as colunas da tabela no fim das associações.<br>
    *
    * @param associations as foreign keys que definem uma navegação
-   * @return
+   * @return itself
    */
   @SuppressWarnings("unchecked")
-  public  T outerFetch(Association... associations) {
+  public T outerFetch(Association... associations) {
     outer(associations).fetch();
     return (T) this;
   }
@@ -636,10 +640,10 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
    * TODAS as colunas da tabela no fim das associações.<br>
    *
    * @param associations as foreign keys que definem uma navegação
-   * @return
+   * @return itself
    */
   @SuppressWarnings("unchecked")
-  public  T innerFetch(Association... associations) {
+  public T innerFetch(Association... associations) {
     inner(associations).fetch();
     return (T) this;
   }
@@ -648,10 +652,10 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
    * Restriction to get to the previous association
    *
    * @param condition Restriction
-   * @return
+   * @return itself
    */
   @SuppressWarnings("unchecked")
-  public  T on(Condition... condition) {
+  public T on(Condition... condition) {
     int lenPath = length(this.path);
     if (lenPath > 0) {
       Condition retriction;
@@ -673,7 +677,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
 
   // UNIONS ===
   @SuppressWarnings("unchecked")
-  public  T union(QueryDSL query) {
+  public T union(QueryDSL query) {
     if (this.unions == null)
       this.unions = new ArrayList<>();
     this.unions.add(new Union(query, false));
@@ -684,7 +688,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
   }
 
   @SuppressWarnings("unchecked")
-  public  T unionAll(QueryDSL query) {
+  public T unionAll(QueryDSL query) {
     if (this.unions == null)
       this.unions = new ArrayList<>();
     this.unions.add(new Union(query, true));
@@ -702,7 +706,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
 
   // GROUP BY ===
   @SuppressWarnings("unchecked")
-  public  T groupByUntil(int untilPos) {
+  public T groupByUntil(int untilPos) {
     int[] pos = new int[untilPos];
     for (int i = 0; i < pos.length; i++)
       pos[i] = i + 1;
@@ -715,7 +719,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
   }
 
   @SuppressWarnings("unchecked")
-  public  T groupBy(int... pos) {
+  public T groupBy(int... pos) {
     this.groupBy = pos;
 
     this.lastSql = null;
@@ -741,7 +745,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
   }
 
   @SuppressWarnings("unchecked")
-  public  T groupBy(Column<?>... cols) {
+  public T groupBy(Column<?>... cols) {
     this.lastSql = null;
 
     if (cols == null || cols.length == 0) {
@@ -772,7 +776,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
   }
 
   @SuppressWarnings("unchecked")
-  public  T groupBy(String... aliases) {
+  public T groupBy(String... aliases) {
     this.lastSql = null;
 
     if (aliases == null || aliases.length == 0) {
@@ -807,11 +811,11 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
    * Adds a Having clause to the query. The tokens are not processed. You will
    * have to explicitly set all table alias.
    *
-   * @param having
-   * @return this
+   * @param having having conditions
+   * @return itself
    */
   @SuppressWarnings("unchecked")
-  public  T having(Condition... having) {
+  public T having(Condition... having) {
     if (having != null) {
       this.having = Definition.and(having);
       this.replaceAlias(this.having);
@@ -823,7 +827,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
   /**
    * replaces ALIAS with the respective select parcel
    *
-   * @param token
+   * @param token token
    */
   private void replaceAlias(Function token) {
     Function[] members = token.getMembers();

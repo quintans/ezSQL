@@ -104,7 +104,7 @@ public class JdbcExecutor {
   /**
    * batch statements that are still pending to execute
    *
-   * @return
+   * @return number of pending statements
    */
   public int getPending() {
     return simpleJdbc.getPending();
@@ -117,7 +117,7 @@ public class JdbcExecutor {
   /**
    * Defines the amount of pending DML commands at witch the ezSQL will flush them to the Database.
    *
-   * @param batchLimit
+   * @param batchLimit the batch limit
    */
   public void batchLimit(int batchLimit) {
     this.batchLimit = batchLimit;

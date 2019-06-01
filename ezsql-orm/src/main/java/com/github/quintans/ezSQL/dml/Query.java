@@ -112,11 +112,12 @@ public class Query extends QueryDSL<Query> {
 
 
   /**
-   * Retrives a collection of objects of simple type (not beans). Ex: Boolean,
+   * Retrieves a collection of objects of simple type (not beans). Ex: Boolean,
    * String, enum, ...
    *
    * @param clazz class of the object to return
-   * @return
+   * @param <T> generic
+   * @return list of raw elements
    */
   public <T> List<T> listRaw(final Class<T> clazz) {
     final int offset = paginationColumnOffset();
@@ -241,8 +242,9 @@ public class Query extends QueryDSL<Query> {
    * matching the alias with bean property name. If no alias is supplied, it
    * is used the column alias.
    *
-   * @param klass
-   * @return
+   * @param klass class of the object to return
+   * @param <T> type of klass
+   * @return list of type T
    */
   public <T> List<T> list(Class<T> klass) {
     return list(klass, true);
@@ -260,9 +262,9 @@ public class Query extends QueryDSL<Query> {
   /**
    * Executes a query and transforms the row with a record transformer
    *
-   * @param recordTransformer
-   * @param <T>
-   * @return
+   * @param recordTransformer record Transformer
+   * @param <T> type of beans to transform to
+   * @return list of beans
    */
   public <T> List<T> list(final IRecordTransformer<T> recordTransformer) {
     return list(toRowTransformer(recordTransformer));

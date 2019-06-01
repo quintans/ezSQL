@@ -12,9 +12,9 @@ import com.github.quintans.jdbc.SimpleJdbc;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 import org.apache.log4j.Logger;
 
-import java.util.*;
-
-import static com.github.quintans.ezSQL.dml.Definition.param;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 public class Update extends UpdateDSL<Update> {
   private static final Logger LOG = Logger.getLogger(Update.class);
@@ -31,6 +31,7 @@ public class Update extends UpdateDSL<Update> {
   public AbstractDb getDb() {
     return db;
   }
+
   public int execute() {
     PreUpdateTrigger pre = getTable().getPreUpdateTrigger();
     if (pre != null) {
@@ -50,7 +51,7 @@ public class Update extends UpdateDSL<Update> {
   /**
    * Sends the batched commands to the database. This will not close the batch. For that use {@link #endBatch() endBatch}
    *
-   * @return
+   * @return affected rows per batched statement
    * @see #endBatch()
    */
   public int[] flushBatch() {

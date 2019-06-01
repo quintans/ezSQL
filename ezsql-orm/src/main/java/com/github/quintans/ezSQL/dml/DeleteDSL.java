@@ -27,7 +27,7 @@ public class DeleteDSL<T extends DeleteDSL<T>> extends CoreDSL {
    * Builds the delete action considering only the key properties.<br>
    * Version column is ignored.
    *
-   * @param bean
+   * @param bean Object to use to set the key properties
    * @return this
    */
   @SuppressWarnings("unchecked")
