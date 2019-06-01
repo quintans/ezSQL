@@ -9,23 +9,19 @@ import java.util.Collection;
 
 public abstract class AbstractResultTransformer<T> implements IResultTransformer<T> {
 
-	@Override
-	public Collection<T> beforeAll() {
-		return null;
-	}
+  abstract public T transform(ResultSetWrapper rsw) throws SQLException;
 
-	@Override
-	abstract public T transform(ResultSetWrapper rs) throws SQLException;
+  @Override
+  public void collect(ResultSetWrapper rsw) throws SQLException {
+    T object = transform(rsw);
+    if (object instanceof Updatable) {
+      ((Updatable) object).clear();
+    }
+  }
 
-	@Override
-	public void collect(Collection<T> result, T object) {
-	    if(object instanceof Updatable) {
-	        ((Updatable) object).clear();
-	    }
-	}
-
-	@Override
-	public void afterAll(Collection<T> result) {
-	}
+  @Override
+  public Collection<T> collection() {
+    return null;
+  }
 
 }

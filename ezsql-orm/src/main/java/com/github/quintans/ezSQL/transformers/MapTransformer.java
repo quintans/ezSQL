@@ -10,30 +10,23 @@ import java.sql.SQLException;
 import java.util.Collection;
 
 public class MapTransformer<T> extends Mapper<T> implements IResultTransformer<T> {
+
     public MapTransformer(Query query, boolean reuse, Class<T> rootClass, QueryMapper mapper) {
         super(query, reuse, rootClass, mapper);
     }
 
-    @Override
-    public Collection<T> beforeAll() {
-        return init();
-    }
-
-    @Override
     public T transform(ResultSetWrapper rsw) throws SQLException {
         return map(new Record(getQuery(), rsw));
     }
 
     @Override
-    public void collect(Collection<T> result, T object) {
-        if (object != null) {
-            result.add(object);
-        }
+    public void collect(ResultSetWrapper rsw) throws SQLException{
+        super.collect(transform(rsw));
     }
 
     @Override
-    public void afterAll(Collection<T> result) {
-        cleanUp(result);
+    public Collection<T> collection() {
+        return super.collection();
     }
 
 }

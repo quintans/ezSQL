@@ -193,8 +193,6 @@ public class SimpleJdbc {
       if (firstRow > 0)
         rs.absolute(firstRow);
 
-      // the returned collection can be null
-      result = rt.beforeAll();
       int rowNum = 0;
 
       //while (rs.next() && (maxRows == 0 || rowNum < maxRows)) {
@@ -204,21 +202,21 @@ public class SimpleJdbc {
           throw new PersistenceException("The query returned more than one result!");
         }
 
-        rt.collect(result, rt.transform(rsw));
+        rt.collect(rsw);
         rowNum++;
       }
 
     } catch (SQLException e) {
       rethrow(e, sql, params);
     } finally {
-      rt.afterAll(result);
+      result = rt.collection();
       closeQuietly(rs, stmt);
     }
 
     if (result instanceof List) {
       return (List<T>) result;
     } else if (result != null) {
-      return new ArrayList<T>(result);
+      return new ArrayList<>(result);
     } else {
       return null;
     }
@@ -531,14 +529,14 @@ public class SimpleJdbc {
           ResultSet rs = (ResultSet) stmt.getObject(parameter.getName());
           ResultSetWrapper rsw = new ResultSetWrapper(rs);
           IResultTransformer<Object> rt = parameter.getRowTransformer();
-          Collection<Object> result = rt.beforeAll();
+          Collection<Object> result;
 
           try {
             while (rs.next()) {
-              rt.collect(result, rt.transform(rsw));
+              rt.collect(rsw);
             }
           } finally {
-            rt.afterAll(result);
+            result = rt.collection();
           }
 
           rs.close();

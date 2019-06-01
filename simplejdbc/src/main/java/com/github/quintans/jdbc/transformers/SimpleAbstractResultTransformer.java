@@ -1,32 +1,27 @@
 package com.github.quintans.jdbc.transformers;
 
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.LinkedList;
 
 /**
  * User: quintans
- * Date: 13-jun-2006
- * Time: 22:13:52
- * 
+ *
  * @param <T>
  */
 public abstract class SimpleAbstractResultTransformer<T> implements IResultTransformer<T> {
+  private Collection<T> collection = new LinkedList<>();
 
-	public SimpleAbstractResultTransformer() {
-	}
+  public abstract T transform(ResultSetWrapper rsw) throws SQLException;
 
-	@Override
-	public Collection<T> beforeAll() {
-		return new LinkedList<T>();
-	}
+  @Override
+  public void collect(ResultSetWrapper rsw) throws SQLException {
+    collection.add(transform(rsw));
+  }
 
-	@Override
-	public void collect(Collection<T> result, T object) {
-		result.add(object);
-	}
-
-	@Override
-	public void afterAll(Collection<T> result) {
-	}
+  @Override
+  public Collection<T> collection() {
+    return collection;
+  }
 
 }

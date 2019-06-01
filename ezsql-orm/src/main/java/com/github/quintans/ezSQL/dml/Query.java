@@ -7,11 +7,11 @@ import com.github.quintans.ezSQL.transformers.IRecordTransformer;
 import com.github.quintans.ezSQL.transformers.MapTransformer;
 import com.github.quintans.ezSQL.mapper.QueryMapper;
 import com.github.quintans.ezSQL.transformers.Record;
-import com.github.quintans.ezSQL.transformers.SimpleAbstractResultTransformer;
 import com.github.quintans.jdbc.SimpleJdbc;
 import com.github.quintans.jdbc.exceptions.PersistenceException;
 import com.github.quintans.jdbc.transformers.IResultTransformer;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
+import com.github.quintans.jdbc.transformers.SimpleAbstractResultTransformer;
 import org.apache.log4j.Logger;
 
 import java.math.BigDecimal;
