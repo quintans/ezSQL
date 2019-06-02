@@ -1,7 +1,7 @@
 package com.github.quintans.ezSQL.db;
 
-import com.github.quintans.ezSQL.dml.Delete;
+import com.github.quintans.ezSQL.dml.DeleteDSL;
 
 public interface PreDeleteTrigger {
-    void trigger(Delete delete);
+    void trigger(DeleteDSL delete);
 }

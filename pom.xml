@@ -12,6 +12,7 @@
 		<module>simplejdbc</module>
 		<module>ezsql-common</module>
 		<module>ezsql-orm</module>
+		<module>ezsql-orm-jdbc</module>
 	</modules>
 
 	<name>ezSQL</name>

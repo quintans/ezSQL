@@ -4,5 +4,5 @@ public enum AutoKeyStrategy {
     NONE,
     BEFORE,
     RETURNING,
-    AFTER;
+    AFTER
 }

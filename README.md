@@ -60,7 +60,7 @@ Simple ORM library for JAVA
 ## Introduction
 
 **ezSQL** is a tool that allows to write SQL in a **static typed** manner.
-It provides a rich SQL DSL and a configurable results mapper, that we can run against any driver that understands SQL
+It provides a rich SQL DSL and a configurable results mapper, that we can run against any translator that understands SQL
 and that returns a result set that allow us to get the column values by column position. Such is the case of JDBC or R2DBC.
 
 Specialized mappers are provided to project results to arbitrary beans.
@@ -374,7 +374,7 @@ operations. This object extend the abstract class AbstractDb that is nothing mor
 public class Config {
   public static final TransactionManager<Db> TM = new TransactionManager<Db>(
     () -> dataSource.getConnection(),
-    c -> new Db(c, driver)
+    c -> new Db(c, translator)
   );
 }
 ```
@@ -419,8 +419,8 @@ public class BeansConfig {
         
         @Bean
         public Db db(DataSource ds) throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-            Driver driver = (Driver) Class.forName(env.getProperty("ezSQL.driver")).newInstance();
-            return new Db(ds, driver);           
+            Driver translator = (Driver) Class.forName(env.getProperty("ezSQL.translator")).newInstance();
+            return new Db(ds, translator);           
         }
 }
 
@@ -433,9 +433,9 @@ public class Db extends AbstractDb {
 
 	private DataSource dataSource;
 
-	public Db(DataSource dataSource, Driver driver) {
+	public Db(DataSource dataSource, Driver translator) {
 		this.dataSource = dataSource;
-		setDriver(driver);
+		setDriver(translator);
 	}
 
 	@Override
@@ -575,7 +575,7 @@ db.insert(TImage.T_IMAGE).set(image).execute();
 ```
 
 #### Generated Keys
-If the driver supports getting generated keys, a map is returned with the
+If the translator supports getting generated keys, a map is returned with the
 generated values for the primary key columns when executing the insert.
 ```java
 Map<Column, Object> keys = db.insert(TImage.T_IMAGE)
@@ -1381,7 +1381,7 @@ It’s only three steps:
 and in the new class add the new function identifier. Ex: **IFNULL**
 1. Create a function factory, as it’s done in `pt.armis.ezSQL.dml.Definition`.
  You can use previous created class.
-1. Extend our driver, override `appendFunction` to include our implementation,
+1. Extend our translator, override `appendFunction` to include our implementation,
 not forgetting to call `super.appendFunction` at the end.
 
 The code would look like this...

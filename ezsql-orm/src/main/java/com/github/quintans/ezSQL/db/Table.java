@@ -3,10 +3,10 @@ package com.github.quintans.ezSQL.db;
 import com.github.quintans.ezSQL.common.type.MyDate;
 import com.github.quintans.ezSQL.common.type.MyTime;
 import com.github.quintans.ezSQL.dml.Condition;
+import com.github.quintans.ezSQL.exception.OrmException;
 import com.github.quintans.ezSQL.toolkit.io.BinStore;
 import com.github.quintans.ezSQL.toolkit.io.TextStore;
 import com.github.quintans.ezSQL.toolkit.utils.Strings;
-import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,21 +18,21 @@ import java.util.Map;
 import java.util.Set;
 
 public class Table {
-  private Map<String, Column<?>> columnsMap = new LinkedHashMap<String, Column<?>>();
+  private Map<String, Column<?>> columnsMap = new LinkedHashMap<>();
   private Map<String, Association> associationMap = null;
 
   /**
    * table name
    */
-  protected String name = null;
+  protected String name;
   /**
    * table alias
    */
-  protected String alias = null;
+  protected String alias;
   /**
    * lista das colunas
    */
-  protected Set<Column<?>> columns = new LinkedHashSet<Column<?>>();
+  protected Set<Column<?>> columns = new LinkedHashSet<>();
   protected Column<?> singleKey;
   protected Set<Column<?>> keys = new LinkedHashSet<Column<?>>();
   protected Column<?> version = null;
@@ -203,7 +203,7 @@ public class Table {
 
       // checks if this column alias uniqueness
       if (this.columnsMap.get(col.getAlias()) != null) {
-        throw new PersistenceException(String.format("The alias '%s' for the column '%s' is not unique!", col.getAlias(), col.toString()));
+        throw new OrmException("The alias '%s' for the column '%s' is not unique!", col.getAlias(), col);
       } else {
         this.columnsMap.put(col.getAlias(), col);
       }
@@ -231,7 +231,7 @@ public class Table {
     // all columns must be from this table.
     for (Column<?> source : from) {
       if (!this.equals(source.getTable())) {
-        throw new PersistenceException(source.toString() + " does not belong to " + this.toString());
+        throw new OrmException("%s does not belong to %s", source, this);
       }
     }
 
@@ -332,12 +332,11 @@ public class Table {
 
   public Association addAssociation(String name, Association fk) {
     if (this.associationMap == null) {
-      this.associationMap = new LinkedHashMap<String, Association>();
+      this.associationMap = new LinkedHashMap<>();
     } else {
       if (this.associationMap.containsKey(name)) {
-        throw new PersistenceException(
-            String.format("A associação %s já se encontra mapeada para a tabela %s com o valor %s",
-                fk.toString(), getAlias(), this.associationMap.get(fk.getAlias()).toString()));
+        throw new OrmException("The association %s is already mapped to the table %s with the value %s",
+                fk, getAlias(), this.associationMap.get(fk.getAlias()));
       }
     }
 

@@ -3,9 +3,9 @@ package com.github.quintans.ezSQL.dml;
 import com.github.quintans.ezSQL.common.api.Updatable;
 import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.db.Table;
-import com.github.quintans.ezSQL.driver.Driver;
+import com.github.quintans.ezSQL.translator.Translator;
+import com.github.quintans.ezSQL.exception.OrmException;
 import com.github.quintans.ezSQL.mapper.InsertMapper;
-import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -14,13 +14,13 @@ import java.util.Set;
 public class InsertDSL<T extends InsertDSL<T>> extends CoreDSL {
   protected boolean hasKeyValue;
 
-  public InsertDSL(Driver driver, Table table) {
-    super(driver, table);
+  public InsertDSL(Translator translator, Table table) {
+    super(translator, table);
   }
 
   @Override
   public String computeSql() {
-    return driver.getSql(this);
+    return translator.getSql(this);
   }
 
   public T set(Column<?> col, Function value) {
@@ -104,15 +104,15 @@ public class InsertDSL<T extends InsertDSL<T>> extends CoreDSL {
       changed = ((Updatable) object).changed();
     }
 
-    InsertMapper insertMapper = getDriver().findInsertMapper(object.getClass());
+    InsertMapper insertMapper = getTranslator().findInsertMapper(object.getClass());
     for (Column<?> column : table.getColumns()) {
       String alias = column.getAlias();
       if (changed == null || column.isKey() || column.isVersion() || changed.contains(alias)) {
-        insertMapper.map(getDriver(), column, object, versioned)
+        insertMapper.map(getTranslator(), column, object, versioned)
             .onSuccess(o -> {
               if (versioned && column.isVersion() && o == null) {
-                throw new PersistenceException("Undefined version for " +
-                    object.getClass().getSimpleName() + "." + alias);
+                throw new OrmException("Undefined version for %s.%s",
+                    object.getClass().getSimpleName(), alias);
               }
               this.coreSet(column, o);
             });

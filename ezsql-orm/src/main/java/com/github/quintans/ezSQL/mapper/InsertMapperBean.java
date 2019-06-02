@@ -2,11 +2,11 @@ package com.github.quintans.ezSQL.mapper;
 
 import com.github.quintans.ezSQL.common.api.Convert;
 import com.github.quintans.ezSQL.db.Column;
-import com.github.quintans.ezSQL.driver.Driver;
+import com.github.quintans.ezSQL.translator.Translator;
+import com.github.quintans.ezSQL.exception.OrmException;
 import com.github.quintans.ezSQL.toolkit.reflection.FieldUtils;
 import com.github.quintans.ezSQL.toolkit.reflection.TypedField;
 import com.github.quintans.ezSQL.toolkit.utils.Result;
-import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -18,7 +18,7 @@ public class InsertMapperBean implements InsertMapper {
     }
 
     @Override
-    public Result<Object> map(Driver driver, Column<?> column, Object object, boolean versioned) {
+    public Result<Object> map(Translator translator, Column<?> column, Object object, boolean versioned) {
         String alias = column.getAlias();
         TypedField tf = FieldUtils.getBeanTypedField(object.getClass(), alias);
         if (tf != null) {
@@ -27,11 +27,11 @@ public class InsertMapperBean implements InsertMapper {
                 o = tf.get(object);
                 Convert convert = tf.getField().getAnnotation(Convert.class);
                 if(convert != null) {
-                    o = driver.getConverter(convert.value()).toDb(o);
+                    o = translator.getConverter(convert.value()).toDb(o);
                 }
                 return Result.of(o);
             } catch (IllegalAccessException | InvocationTargetException e) {
-                throw new PersistenceException("Unable to read from " + object.getClass().getSimpleName() + "." + alias, e);
+                throw new OrmException("Unable to read from " + object.getClass().getSimpleName() + "." + alias, e);
             }
         }
         return Result.fail();

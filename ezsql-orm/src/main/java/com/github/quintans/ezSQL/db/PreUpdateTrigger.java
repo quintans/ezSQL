@@ -1,7 +1,7 @@
 package com.github.quintans.ezSQL.db;
 
-import com.github.quintans.ezSQL.dml.Update;
+import com.github.quintans.ezSQL.dml.UpdateDSL;
 
 public interface PreUpdateTrigger {
-    void trigger(Update update);
+    void trigger(UpdateDSL update);
 }

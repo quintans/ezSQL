@@ -8,7 +8,7 @@ import com.github.quintans.ezSQL.dml.Function;
 import com.github.quintans.ezSQL.dml.Join;
 import com.github.quintans.ezSQL.dml.PathElement;
 import com.github.quintans.ezSQL.dml.QueryDSL;
-import com.github.quintans.jdbc.exceptions.PersistenceException;
+import com.github.quintans.ezSQL.exception.OrmException;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -132,7 +132,7 @@ public class Mapper<T> {
     }
 
     if (reuse && tableKeys != queryKeys) {
-      throw new PersistenceException("At least one Key column was not found for " + table.toString()
+      throw new OrmException("At least one Key column was not found for " + table.toString()
           + ". When transforming to a object tree and reusing previous beans, ALL key columns must be declared in the select.");
     }
 

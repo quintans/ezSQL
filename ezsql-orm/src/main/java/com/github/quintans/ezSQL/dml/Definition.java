@@ -4,8 +4,8 @@ import com.github.quintans.ezSQL.db.ColGroup;
 import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.dml.SearchedCase.SearchedWhen;
+import com.github.quintans.ezSQL.exception.OrmException;
 import com.github.quintans.ezSQL.toolkit.utils.Misc;
-import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,7 +18,7 @@ public class Definition {
       Table table = from[0].getTable();
       for (Column<?> source : from) {
         if (!table.equals(source.getTable())) {
-          throw new PersistenceException("All columns must belong to the same table");
+          throw new OrmException("All columns must belong to the same table");
         }
       }
       return new ColGroup(from);
@@ -85,7 +85,7 @@ public class Definition {
     else if (top != null)
       return lesserOrMatch(column, top);
     else
-      throw new PersistenceException("Invalid Range Function");
+      throw new OrmException("Invalid Range Function");
   }
 
   public static Condition valueRange(Object bottom, Object top, Object value) {
@@ -213,7 +213,7 @@ public class Definition {
     return new Function(EFunction.AUTONUM, o);
   }
 
-  public static Function subQuery(Query inner) {
+  public static Function subQuery(QueryDSL inner) {
     return new FunctionEnd(EFunction.SUBQUERY, inner);
   }
 

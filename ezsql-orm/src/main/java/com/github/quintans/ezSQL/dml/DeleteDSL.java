@@ -2,9 +2,9 @@ package com.github.quintans.ezSQL.dml;
 
 import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.db.Table;
-import com.github.quintans.ezSQL.driver.Driver;
+import com.github.quintans.ezSQL.translator.Translator;
+import com.github.quintans.ezSQL.exception.OrmException;
 import com.github.quintans.ezSQL.toolkit.utils.Result;
-import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -14,13 +14,13 @@ import static com.github.quintans.ezSQL.dml.Definition.param;
 
 public class DeleteDSL<T extends DeleteDSL<T>> extends CoreDSL {
 
-  public DeleteDSL(Driver driver, Table table) {
-    super(driver, table);
+  public DeleteDSL(Translator translator, Table table) {
+    super(translator, table);
   }
 
   @Override
   protected String computeSql() {
-    return driver.getSql(this);
+    return translator.getSql(this);
   }
 
   /**
@@ -51,13 +51,13 @@ public class DeleteDSL<T extends DeleteDSL<T>> extends CoreDSL {
 
     for (Column<?> column : table.getColumns()) {
       if (column.isKey() || versioned && column.isVersion()) {
-        Result<Object> result = getDriver().findDeleteMapper(bean.getClass()).map(getDriver(), column, bean);
+        Result<Object> result = getTranslator().findDeleteMapper(bean.getClass()).map(getTranslator(), column, bean);
         if (result.isSuccess()) {
           Object o = result.get();
           String alias = column.getAlias();
           if (column.isKey()) {
             if (o == null)
-              throw new PersistenceException(String.format("Value for key property '%s' cannot be null.", alias));
+              throw new OrmException("Value for key property '%s' cannot be null.", alias);
 
             if (conditions != null) {
               conditions.add(column.is(param(alias)));

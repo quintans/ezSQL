@@ -67,7 +67,6 @@ public class Column<T> extends Base<T> {
    * @param alias The alias of the column
    * @return itself
    */
-  @SuppressWarnings("unchecked")
   public Column<T> AS(String alias) {
     this.alias = alias;
     return this;
@@ -82,7 +81,6 @@ public class Column<T> extends Base<T> {
    *
    * @return itself
    */
-  @SuppressWarnings("unchecked")
   public Column<T> key(Class<T> keyType) {
     this.keyType = keyType;
     this.key = true;
@@ -105,7 +103,6 @@ public class Column<T> extends Base<T> {
    *
    * @return itself
    */
-  @SuppressWarnings("unchecked")
   public Column<T> version() {
     this.version = true;
     this.table.setVersionColumn(this);
@@ -117,7 +114,6 @@ public class Column<T> extends Base<T> {
    *
    * @return itself
    */
-  @SuppressWarnings("unchecked")
   public Column<T> deletion() {
     this.deletion = true;
     this.table.setDeletionColumn(this);

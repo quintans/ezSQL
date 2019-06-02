@@ -1,7 +1,7 @@
 package com.github.quintans.ezSQL.db;
 
-import com.github.quintans.ezSQL.dml.Insert;
+import com.github.quintans.ezSQL.dml.InsertDSL;
 
 public interface PreInsertTrigger {
-    void trigger(Insert insert);
+    void trigger(InsertDSL insert);
 }

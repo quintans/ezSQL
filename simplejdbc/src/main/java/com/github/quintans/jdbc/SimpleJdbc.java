@@ -8,7 +8,15 @@ import com.github.quintans.jdbc.transformers.IResultTransformer;
 import com.github.quintans.jdbc.transformers.ResultSetWrapper;
 import com.github.quintans.jdbc.transformers.SimpleAbstractResultTransformer;
 
-import java.sql.*;
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.ParameterMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
+import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -352,7 +360,7 @@ public class SimpleJdbc {
 
   /**
    * Executa INSERT devolvendo uma array com as chaves geradas.
-   * Se o driver não suportar a obtenção de chaves geradas, devolve null.
+   * Se o translator não suportar a obtenção de chaves geradas, devolve null.
    *
    * @param sql            instrução sql (INSERT) a executar
    * @param keyColumnTypes as colunas chaves a devolver
@@ -419,43 +427,40 @@ public class SimpleJdbc {
     }
 
     ParameterMetaData pmd = null;
-    if (!jdbcSession.isPmdKnownBroken()) {
-      try {
-        pmd = stmt.getParameterMetaData();
-        if (pmd == null) { // can be returned by implementations that don't support the method
-          jdbcSession.setPmdKnownBroken(true);
-        } else {
-          if (pmd.getParameterCount() < params.length) {
-            throw new SQLException("Too many parameters: expected "
-                + pmd.getParameterCount() + ", was given " + params.length);
-          }
-        }
-      } catch (SQLFeatureNotSupportedException e) {
-        jdbcSession.setPmdKnownBroken(true);
-      }
-    }
 
     for (int i = 0; i < params.length; i++) {
-      if (params[i] != null) {
-        if (params[i] instanceof PreparedStatementCallback)
-          ((PreparedStatementCallback) params[i]).execute(stmt, i + 1);
-        else
-          stmt.setObject(i + 1, params[i]);
+      Object param = params[i];
+      int parameterIndex = i + 1;
+      if (param != null) {
+        if (param instanceof PreparedStatementCallback) {
+          ((PreparedStatementCallback) param).execute(stmt, parameterIndex);
+        } else
+          stmt.setObject(parameterIndex, param);
       } else {
-        // throw new SQLException(String.format("Valores nulos como parâmetro não são permitidos. Usar %s", NullSql.class.toString()));
-
         // VARCHAR works with many drivers regardless
         // of the actual column type. Oddly, NULL and
         // OTHER don't work with Oracle's drivers.
         int sqlType = Types.VARCHAR;
-        if (!jdbcSession.isPmdKnownBroken() && pmd != null) {
+
+        if (!jdbcSession.isPmdKnownBroken()) {
           try {
-            sqlType = pmd.getParameterType(i + 1);
+            if (pmd == null) { // can be returned by implementations that don't support the method
+              pmd = stmt.getParameterMetaData();
+              if(pmd == null) {
+                jdbcSession.setPmdKnownBroken(true);
+              }
+            } else {
+              if (pmd.getParameterCount() < params.length) {
+                throw new SQLException("Too many parameters: expected "
+                    + pmd.getParameterCount() + ", was given " + params.length);
+              }
+            }
+            sqlType = pmd.getParameterType(parameterIndex);
           } catch (SQLException e) {
             jdbcSession.setPmdKnownBroken(true);
           }
         }
-        stmt.setNull(i + 1, sqlType);
+        stmt.setNull(parameterIndex, sqlType);
       }
     }
   }

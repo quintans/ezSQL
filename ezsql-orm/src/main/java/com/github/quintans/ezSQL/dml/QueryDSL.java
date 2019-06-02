@@ -3,8 +3,8 @@ package com.github.quintans.ezSQL.dml;
 import com.github.quintans.ezSQL.db.Association;
 import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.db.Table;
-import com.github.quintans.ezSQL.driver.Driver;
-import com.github.quintans.jdbc.exceptions.PersistenceException;
+import com.github.quintans.ezSQL.translator.Translator;
+import com.github.quintans.ezSQL.exception.OrmException;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -39,12 +39,12 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
 
   protected boolean useTree;
 
-  public QueryDSL(Driver driver, Table table) {
-    super(driver, table);
+  public QueryDSL(Translator translator, Table table) {
+    super(translator, table);
   }
 
   public QueryDSL(QueryDSL subquery) {
-    super(subquery.getDriver(), null);
+    super(subquery.getTranslator(), null);
     this.subquery = subquery;
     // copy the parameters of the subquery to the main query
     for (Map.Entry<String, Object> entry : subquery.getParameters().entrySet()) {
@@ -54,7 +54,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
 
   @Override
   protected String computeSql() {
-    return getDriver().getSql(this);
+    return getTranslator().getSql(this);
   }
 
   public String getAlias() {
@@ -82,7 +82,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
 
     if (other.getSubquery() != null) {
       QueryDSL q = other.getSubquery();
-      this.subquery = new QueryDSL(this.driver, q.getTable());
+      this.subquery = new QueryDSL(this.translator, q.getTable());
       this.subquery.copy(q);
     }
 
@@ -279,7 +279,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
           }
         }
       }
-      throw new PersistenceException("Column " + column + " does belong to " + table + " table or any table in existing joins");
+      throw new OrmException("Column " + column + " does belong to " + table + " table or any table in existing joins");
     }
     return (T) this;
   }
@@ -321,7 +321,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
     if (common.length == pathElements.size()) {
       return orderOn(sort, pathElementAlias(common[common.length - 1]));
     } else
-      throw new PersistenceException("The path specified in the orderBy is not valid");
+      throw new OrmException("The path specified in the orderBy is not valid");
 
   }
 
@@ -369,7 +369,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
   @SuppressWarnings("unchecked")
   private T myAssociate(boolean inner, Association... associations) {
     if (length(associations) == 0) {
-      throw new PersistenceException("Inner cannot be used with an empty association list!");
+      throw new OrmException("Inner cannot be used with an empty association list!");
     }
 
     if (this.path == null)
@@ -395,7 +395,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
             .append(assoc.genericPath())
             .append("] must start on table ")
             .append(lastTable.getName());
-        throw new PersistenceException(sb.toString());
+        throw new OrmException(sb.toString());
       }
       lastTable = assoc.getTableTo();
     }
@@ -559,10 +559,10 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
         if (c instanceof Column) {
           Column<?> col = (Column<?>) c;
           if (!col.getTable().equals(lastTable)) {
-            throw new PersistenceException(
-                String.format("Column %s does not belong to the table target by the association %s.",
+            throw new OrmException(
+                "Column %s does not belong to the table target by the association %s.",
                     col.toString(),
-                    lastPath.getBase().genericPath()));
+                    lastPath.getBase().genericPath());
           }
         }
       }
@@ -570,7 +570,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
 
       this.lastSql = null;
     } else {
-      throw new PersistenceException("There is no current join");
+      throw new OrmException("There is no current join");
     }
     return (T) this;
   }
@@ -604,7 +604,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
     int lenPath = length(this.path);
     if (lenPath > 0) {
       if (length(columns) == 0) {
-        throw new PersistenceException("null or empty values was passed");
+        throw new OrmException("null or empty values was passed");
       }
       Set<Column<?>> cols = this.path.get(lenPath - 1).getBase().getTableTo().getColumns();
       LinkedHashSet<Column<?>> remain = new LinkedHashSet<>(cols);
@@ -614,7 +614,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
 
       include(remain.toArray());
     } else {
-      throw new PersistenceException("There is no current join");
+      throw new OrmException("There is no current join");
     }
     return (T) this;
   }
@@ -660,7 +660,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
     if (lenPath > 0) {
       Condition retriction;
       if (length(condition) == 0) {
-        throw new PersistenceException("null or empty criterias was passed");
+        throw new OrmException("null or empty criterias was passed");
       } else {
         retriction = Definition.and(condition);
       }
@@ -668,7 +668,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
 
       this.lastSql = null;
     } else {
-      throw new PersistenceException("There is no current join");
+      throw new OrmException("There is no current join");
     }
     return (T) this;
   }
@@ -769,7 +769,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
       pos++;
 
       if (this.groupBy[i] == 0)
-        throw new PersistenceException(String.format("Column alias '%s' was not found", cols[i]));
+        throw new OrmException("Column alias '%s' was not found", cols[i]);
     }
 
     return (T) this;
@@ -797,7 +797,7 @@ public class QueryDSL<T extends QueryDSL<T>> extends CoreDSL {
       pos++;
 
       if (this.groupBy[i] == 0)
-        throw new PersistenceException(String.format("Column alias '%s' was not found", aliases[i]));
+        throw new OrmException("Column alias '%s' was not found", aliases[i]);
     }
 
     return (T) this;

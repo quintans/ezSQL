@@ -7,8 +7,8 @@ import com.github.quintans.ezSQL.db.Discriminator;
 import com.github.quintans.ezSQL.db.NullSql;
 import com.github.quintans.ezSQL.db.Relation;
 import com.github.quintans.ezSQL.db.Table;
-import com.github.quintans.ezSQL.driver.Driver;
-import com.github.quintans.jdbc.exceptions.PersistenceException;
+import com.github.quintans.ezSQL.translator.Translator;
+import com.github.quintans.ezSQL.exception.OrmException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,7 +21,7 @@ import static com.github.quintans.ezSQL.toolkit.utils.Misc.length;
 
 public abstract class CoreDSL {
 
-  protected Driver driver;
+  protected Translator translator;
 
   protected Table table;
   protected String tableAlias;
@@ -87,8 +87,8 @@ public abstract class CoreDSL {
     }
   }
 
-  public CoreDSL(Driver driver, Table table) {
-    this.driver = driver;
+  public CoreDSL(Translator translator, Table table) {
+    this.translator = translator;
 
     this.table = table;
     this.tableAlias = PREFIX + "0";
@@ -102,8 +102,8 @@ public abstract class CoreDSL {
     }
   }
 
-  public Driver getDriver() {
-    return driver;
+  public Translator getTranslator() {
+    return translator;
   }
 
   public Table getTable() {
@@ -576,7 +576,7 @@ public abstract class CoreDSL {
       token.setOperator(EFunction.PARAM);
       token.setValue(parameter);
     } else if (EFunction.SUBQUERY.equals(token.getOperator())) {
-      Query subquery = (Query) token.getValue();
+      QueryDSL subquery = (QueryDSL) token.getValue();
       // copy the parameters of the subquery to the main query
       Map<String, Object> pars = subquery.getParameters();
       for (Entry<String, Object> entry : pars.entrySet()) {
@@ -630,7 +630,7 @@ public abstract class CoreDSL {
   protected void coreSets(Column<?>... columns) {
     for (Column<?> col : columns) {
       if (!table.equals(col.getTable())) {
-        throw new PersistenceException("Column " + col + " does not belong to table " + table);
+        throw new OrmException("Column %s does not belong to table %s", col, table);
       }
       // start by setting columns as null
       coreSet(col, null);
@@ -641,10 +641,10 @@ public abstract class CoreDSL {
 
   protected void coreValues(Object... values) {
     if (this.sets == null)
-      throw new PersistenceException("Columns are not defined!");
+      throw new OrmException("Columns are not defined!");
 
     if (this.sets.length != values.length)
-      throw new PersistenceException("The number of defined columns is diferent from the number of passed values!");
+      throw new OrmException("The number of defined columns is diferent from the number of passed values!");
 
     int i = 0;
     for (Column<?> col : this.sets) {
@@ -654,7 +654,7 @@ public abstract class CoreDSL {
 
   private boolean defineParameter(Column<?> col, Function value) {
     if (!col.getTable().getName().equals(this.table.getName()))
-      throw new PersistenceException(col + " does not belong to table " + this.table);
+      throw new OrmException("%s does not belong to table %s", col, this.table);
 
     if (this.values == null)
       this.values = new LinkedHashMap<>();

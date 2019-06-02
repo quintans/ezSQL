@@ -3,11 +3,11 @@ package com.github.quintans.ezSQL.dml;
 import com.github.quintans.ezSQL.common.api.Updatable;
 import com.github.quintans.ezSQL.db.Column;
 import com.github.quintans.ezSQL.db.Table;
-import com.github.quintans.ezSQL.driver.Driver;
-import com.github.quintans.ezSQL.toolkit.utils.Result;
+import com.github.quintans.ezSQL.translator.Translator;
+import com.github.quintans.ezSQL.exception.OrmException;
 import com.github.quintans.ezSQL.mapper.UpdateMapper;
 import com.github.quintans.ezSQL.mapper.UpdateValue;
-import com.github.quintans.jdbc.exceptions.PersistenceException;
+import com.github.quintans.ezSQL.toolkit.utils.Result;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -20,13 +20,13 @@ import static com.github.quintans.ezSQL.dml.Definition.param;
 
 public class UpdateDSL<T extends UpdateDSL<T>> extends CoreDSL {
 
-  public UpdateDSL(Driver driver, Table table) {
-    super(driver, table);
+  public UpdateDSL(Translator translator, Table table) {
+    super(translator, table);
   }
 
   @Override
   public String computeSql() {
-    return driver.getSql(this);
+    return translator.getSql(this);
   }
 
 
@@ -127,14 +127,14 @@ public class UpdateDSL<T extends UpdateDSL<T>> extends CoreDSL {
     for (Column<?> column : table.getColumns()) {
       String alias = column.getAlias();
       if (changed == null || column.isKey() || column.isVersion() || changed.contains(alias)) {
-        UpdateMapper mapper = getDriver().findUpdateMapper(bean.getClass());
-        Result<UpdateValue> result = mapper.map(driver, column, bean);
+        UpdateMapper mapper = getTranslator().findUpdateMapper(bean.getClass());
+        Result<UpdateValue> result = mapper.map(translator, column, bean);
         if (result.isSuccess()) {
           UpdateValue updateValue = result.get();
           Object o = updateValue.getCurrent();
           if (column.isKey()) {
             if (o == null)
-              throw new PersistenceException(String.format("Value for key property '%s' cannot be null.", alias));
+              throw new OrmException("Value for key property '%s' cannot be null.", alias);
 
             if (conditions != null) {
               conditions.add(column.is(param(alias)));

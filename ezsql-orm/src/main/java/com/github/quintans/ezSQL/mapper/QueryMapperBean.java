@@ -1,9 +1,9 @@
 package com.github.quintans.ezSQL.mapper;
 
 import com.github.quintans.ezSQL.common.api.Convert;
+import com.github.quintans.ezSQL.exception.OrmException;
 import com.github.quintans.ezSQL.toolkit.reflection.FieldUtils;
 import com.github.quintans.ezSQL.toolkit.reflection.TypedField;
-import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -37,10 +37,10 @@ public class QueryMapperBean implements QueryMapper {
                 }
                 return create(type);
             } else {
-                throw new PersistenceException(parentInstance.getClass() + " does not have setter for " + name);
+                throw new OrmException(parentInstance.getClass() + " does not have setter for " + name);
             }
         } catch (ClassNotFoundException e) {
-            throw new PersistenceException(e);
+            throw new OrmException(e);
         }
     }
 
@@ -48,12 +48,12 @@ public class QueryMapperBean implements QueryMapper {
         try {
             Constructor<?> constructor = type.getDeclaredConstructor();
             if (constructor == null) {
-                throw new PersistenceException(type.getCanonicalName() + " does not have an empty constructor.");
+                throw new OrmException(type.getCanonicalName() + " does not have an empty constructor.");
             }
             constructor.setAccessible(true);
             return constructor.newInstance();
         } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-            throw new PersistenceException(e);
+            throw new OrmException(e);
         }
     }
 
@@ -79,7 +79,7 @@ public class QueryMapperBean implements QueryMapper {
                 }
             }
         } catch (Exception e) {
-            throw new PersistenceException(e);
+            throw new OrmException(e);
         }
     }
 
@@ -109,7 +109,7 @@ public class QueryMapperBean implements QueryMapper {
 
             return touched;
         } catch (IllegalAccessException | InvocationTargetException | InstantiationException e) {
-            throw new PersistenceException(e);
+            throw new OrmException(e);
         }
     }
 }

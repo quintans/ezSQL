@@ -2,11 +2,9 @@ package com.github.quintans.ezSQL.dml;
 
 import com.github.quintans.ezSQL.Base;
 import com.github.quintans.ezSQL.db.Column;
-import com.github.quintans.jdbc.exceptions.PersistenceException;
+import com.github.quintans.ezSQL.exception.OrmException;
 
 import java.util.Objects;
-
-import static com.github.quintans.ezSQL.toolkit.utils.Misc.match;
 
 public class Function extends Base<Object> {
   protected String operator;
@@ -141,8 +139,8 @@ public class Function extends Base<Object> {
     if (o instanceof Function) {
       Function other = (Function) o;
       if (this.operator.equals(other.operator)
-          && match(this.alias, other.alias)
-          && match(this.value, other.value)
+          && Objects.equals(this.alias, other.alias)
+          && Objects.equals(this.value, other.value)
           && matchMembers(other.members)) {
         return true;
       }
@@ -159,7 +157,7 @@ public class Function extends Base<Object> {
 
     int idx = 0;
     for (Object o : this.members) {
-      if (!match(o, m[idx]))
+      if (!Objects.equals(o, m[idx]))
         return false;
       idx++;
     }
@@ -180,14 +178,14 @@ public class Function extends Base<Object> {
 
   public static Function converteOne(Object value) {
     if (value == null) {
-      throw new PersistenceException("Value cannot be NULL. Use one of NullSql types.");
+      throw new OrmException("Value cannot be NULL. Use one of NullSql types.");
     }
     if (value instanceof Column) {
       return new ColumnHolder((Column<?>) value);
     } else if (value instanceof Function) {
       return (Function) ((Function) value).clone();
-    } else if (value instanceof Query) {
-      return Definition.subQuery((Query) value);
+    } else if (value instanceof QueryDSL) {
+      return Definition.subQuery((QueryDSL) value);
     } else {
       return new FunctionEnd(EFunction.RAW, value);
     }

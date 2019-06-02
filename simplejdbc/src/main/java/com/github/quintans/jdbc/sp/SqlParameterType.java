@@ -7,5 +7,5 @@ package com.github.quintans.jdbc.sp;
  *
  */
 public enum SqlParameterType {
-	IN, OUT, IN_OUT, RESULTSET;
+	IN, OUT, IN_OUT, RESULTSET
 }

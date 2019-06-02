@@ -1,11 +1,11 @@
 package com.github.quintans.ezSQL.mapper;
 
 import com.github.quintans.ezSQL.db.Column;
-import com.github.quintans.ezSQL.driver.Driver;
+import com.github.quintans.ezSQL.translator.Translator;
+import com.github.quintans.ezSQL.exception.OrmException;
 import com.github.quintans.ezSQL.toolkit.reflection.FieldUtils;
 import com.github.quintans.ezSQL.toolkit.reflection.TypedField;
 import com.github.quintans.ezSQL.toolkit.utils.Result;
-import com.github.quintans.jdbc.exceptions.PersistenceException;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -17,7 +17,7 @@ public class DeleteMapperBean implements DeleteMapper {
   }
 
   @Override
-  public Result<Object> map(Driver driver, Column column, Object object) {
+  public Result<Object> map(Translator translator, Column column, Object object) {
     String alias = column.getAlias();
     TypedField tf = FieldUtils.getBeanTypedField(object.getClass(), alias);
     if (tf != null) {
@@ -25,7 +25,7 @@ public class DeleteMapperBean implements DeleteMapper {
       try {
         o = tf.get(object);
       } catch (IllegalAccessException | InvocationTargetException e) {
-        throw new PersistenceException("Unable to read from " + object.getClass().getSimpleName() + "." + alias, e);
+        throw new OrmException("Unable to read from " + object.getClass().getSimpleName() + "." + alias, e);
       }
       return Result.of(o);
     }
