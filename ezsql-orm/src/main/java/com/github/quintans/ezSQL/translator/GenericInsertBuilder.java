@@ -1,6 +1,7 @@
 package com.github.quintans.ezSQL.translator;
 
 import com.github.quintans.ezSQL.db.Column;
+import com.github.quintans.ezSQL.db.NullSql;
 import com.github.quintans.ezSQL.db.Table;
 import com.github.quintans.ezSQL.dml.EFunction;
 import com.github.quintans.ezSQL.dml.Function;
@@ -53,7 +54,7 @@ public class GenericInsertBuilder implements InsertBuilder {
         if (column.isKey() && driver().ignoreNullKeys() && EFunction.PARAM.equals(token.getOperator())) {
           // ignore null keys
           Object param = parameters.get(token.getValue());
-          if (param == null || param instanceof Class) {
+          if (param == null || param instanceof NullSql) {
             token = null;
           }
         }

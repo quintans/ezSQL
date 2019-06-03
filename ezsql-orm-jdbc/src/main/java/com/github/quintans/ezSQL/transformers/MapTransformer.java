@@ -18,7 +18,7 @@ public class MapTransformer<T> extends Mapper<T> implements IResultTransformer<T
 
   public T transform(ResultSetWrapper rsw) throws SQLException {
     Query query = (Query) getQuery();
-    return map(((Driver) query.getTranslator()).newRecord(query, rsw));
+    return map(query.getDriver().newRecord(query, rsw));
   }
 
   @Override
