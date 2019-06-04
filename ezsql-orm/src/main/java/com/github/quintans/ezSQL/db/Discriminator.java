@@ -15,7 +15,7 @@ public class Discriminator {
       value = column.getType();
     }
     this.value = Function.converteOne(value);
-    this.condition = Definition.is(this.column, this.value);
+    this.condition = Definition.eq(this.column, this.value);
   }
 
   public Column<?> getColumn() {

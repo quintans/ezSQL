@@ -91,7 +91,7 @@ Update without the use of beans.
 ```java
 db.update(TArtist.T_ARTIST)
     .set(TArtist.C_NAME, "Henri Matisse")
-    .where(TArtist.C_ID.is(3L))
+    .where(TArtist.C_ID.eq(3L))
     .execute();
 ```
 
@@ -619,7 +619,7 @@ TODO
 ```java
 db.update(TArtist.T_ARTIST)
 	.set(TArtist.C_NAME, "Henri Matisse")
-	.where(TArtist.C_ID.is(3L))
+	.where(TArtist.C_ID.eq(3L))
 	.execute();
 ```
 
@@ -649,7 +649,7 @@ bc.set(new File("TheGreenLine.jpg"));
 
 Update update = db.update(TImage.T_IMAGE)
 	.set(TImage.T_IMAGE, bc)
-	.where(TImage.C_ID.is(1L))
+	.where(TImage.C_ID.eq(1L))
 	.execute();
 ```
 
@@ -668,10 +668,10 @@ The same as [Batch Insert](#batch-insert) but now for update.
 ```java
 Update update = db.update(TArtist.T_ARTIST);
 update.set(TArtist.C_NAME, "Jane Doe")
-	.where(TArtist.C_ID.is(1L))
+	.where(TArtist.C_ID.eq(1L))
 	.batch();
 update.set(TArtist.C_NAME, "John Doe")
-	.where(TArtist.C_ID.is(2L))
+	.where(TArtist.C_ID.eq(2L))
 	.batch();
 update.endBatch();
 ```
@@ -687,7 +687,7 @@ TODO
 
 ```java
 Delete delete = db.delete(TArtist.T_ARTIST)
-			.where(TArtist.C_ID.is(param("id")));
+			.where(TArtist.C_ID.eq(param("id")));
 delete.setInteger("id", 3L);
 delete.execute();
 ```
@@ -703,7 +703,7 @@ The same example but without the param/setParameter pair:
 
 ```java
 db.delete(TArtist.T_ARTIST)
-	.where(TArtist.C_ID.is(3L))
+	.where(TArtist.C_ID.eq(3L))
 	.execute();
 ```
 
@@ -719,8 +719,8 @@ The same as [Batch Insert](#batch-insert) but now for delete.
 
 ```java
 Delete delete = db.delete(TArtist.T_ARTIST);
-delete.where(TArtist.C_ID.is(1L)).batch();
-delete.where(TArtist.C_ID.is(2L)).batch();
+delete.where(TArtist.C_ID.eq(1L)).batch();
+delete.where(TArtist.C_ID.eq(2L)).batch();
 delete.endBatch();
 ```
 
@@ -883,7 +883,7 @@ returning the result as collection of ArtistValueDTO objects.
 Query subquery = db.query(TPainting.T_PAINTING).as("p")
 	.count()
 	.where(
-		TPainting.C_ARTIST.is(TArtist.C_ID.of("a"))
+		TPainting.C_ARTIST.eq(TArtist.C_ID.of("a"))
 	);
 
 List<ArtistValueDTO> values = db.query(TArtist.T_ARTIST).as("a")
@@ -928,7 +928,7 @@ Ex: list all Paintings from Pablo Picasso (id = 1)
 ```java
 List<Painting> values = db.query(TPainting.T_PAINTING)
 		.inner(TPainting.A_ARTIST)
-		.on(TArtist.C_ID.is(1L))
+		.on(TArtist.C_ID.eq(1L))
 		.join()
 		.list(Painting.class);
 ```
@@ -938,7 +938,7 @@ is applied to the last association. We could do something like:
 
 ```java
 Query query = db.query(TPainting.T_PAINTING)
-		.inner(TPainting.A_ARTIST).on(TArtist.C_ID.is(1L)).join()
+		.inner(TPainting.A_ARTIST).on(TArtist.C_ID.eq(1L)).join()
 		.inner(TPainting.A_GALLERIES).on(TGallery.C_NAME.ilk("%AZUL")).join();
 ```
 
@@ -1021,7 +1021,7 @@ retrieving only the Artists that have paintings.
 Query subquery = db.query(TPainting.T_PAINTING).as("p")
 	.column(TPainting.C_NAME)
 	.where(
-		TPainting.C_ARTIST.is(TArtist.C_ID.of("a"))
+		TPainting.C_ARTIST.eq(TArtist.C_ID.of("a"))
 	);
 
 Collection<ArtistValueDTO> values = db.query(TArtist.T_ARTIST).as("a")
@@ -1360,7 +1360,7 @@ An update over this table definition will result in:
 ```java
 Update update = db.update(TGender.T_GENDER)
 	.sets(TGender.C_VALUE)
-	.where(TGender.C_KEY.is("U"));
+	.where(TGender.C_KEY.eq("U"));
 update.values("Undefined").execute();
 ```
 

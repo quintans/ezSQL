@@ -60,7 +60,7 @@ public class DeleteDSL<T extends DeleteDSL<T>> extends CoreDSL {
               throw new OrmException("Value for key property '%s' cannot be null.", alias);
 
             if (conditions != null) {
-              conditions.add(column.is(param(alias)));
+              conditions.add(column.eq(param(alias)));
             }
             this.setParameter(column, o);
           } else if (versioned && column.isVersion()) {
@@ -68,7 +68,7 @@ public class DeleteDSL<T extends DeleteDSL<T>> extends CoreDSL {
             if (o != null) {
               String as = "_" + alias + "_";
               if (conditions != null) {
-                conditions.add(column.is(param(as)));
+                conditions.add(column.eq(param(as)));
               }
               this.setParameter(as, o);
             }

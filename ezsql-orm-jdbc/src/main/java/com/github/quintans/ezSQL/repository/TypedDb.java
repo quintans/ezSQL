@@ -30,7 +30,7 @@ public class TypedDb extends com.github.quintans.ezSQL.Db {
     Column<K> keyColumn = table.getSingleKeyColumn();
 
     return query(table)
-        .where(keyColumn.is(id))
+        .where(keyColumn.eq(id))
         .select(table.getType());
   }
 
@@ -76,7 +76,7 @@ public class TypedDb extends com.github.quintans.ezSQL.Db {
 
     int result = delete(table)
         .where(
-            keyColumn.is(raw(id))
+            keyColumn.eq(raw(id))
         )
         .execute();
 
@@ -89,8 +89,8 @@ public class TypedDb extends com.github.quintans.ezSQL.Db {
 
     int result = delete(table)
         .where(
-            keyColumn.is(raw(id)),
-            versionColumn.is(raw(version))
+            keyColumn.eq(raw(id)),
+            versionColumn.eq(raw(version))
         )
         .execute();
 

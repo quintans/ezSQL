@@ -137,19 +137,19 @@ public class UpdateDSL<T extends UpdateDSL<T>> extends CoreDSL {
               throw new OrmException("Value for key property '%s' cannot be null.", alias);
 
             if (conditions != null) {
-              conditions.add(column.is(param(alias)));
+              conditions.add(column.eq(param(alias)));
             }
             this.setParameter(alias, o);
 
             idVer.noId = false;
           } else if (versioned && column.isVersion()) {
-            // if version is null ignores it
+            // if version eq null ignores it
             if (o != null) {
               idVer.versionValue = mapper.newVersion(o);
               idVer.setter = updateValue.getSetter();
               String as = "_" + alias + "_";
               if (conditions != null) {
-                conditions.add(column.is(param(as)));
+                conditions.add(column.eq(param(as)));
               }
               this.setParameter(as, o);
 

@@ -37,7 +37,7 @@ public class TestConverter extends TestBootstrap {
             assertEquals("Wrong value for eye color", "102|102|0|255", eyeColor);
 
             employee = db.query(TEmployee.T_EMPLOYEE)
-                    .where(TEmployee.C_ID.is(employee.getId()))
+                    .where(TEmployee.C_ID.eq(employee.getId()))
                     .unique(Employee.class);
             assertEquals("Wrong value for eye color", BEIGE, employee.getEyeColor());
         });
@@ -45,7 +45,7 @@ public class TestConverter extends TestBootstrap {
 
     private String getEyeColor(AbstractDb db, Long id) {
         return db.query(TEmployee.T_EMPLOYEE).column(TEmployee.C_EYE_COLOR)
-                .where(TEmployee.C_ID.is(id))
+                .where(TEmployee.C_ID.eq(id))
                 .single(String.class);
     }
 }

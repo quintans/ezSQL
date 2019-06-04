@@ -168,8 +168,8 @@ public class Column<T> extends Base<T> {
     return this.deletion;
   }
 
-  public Condition is() {
-    return is(param());
+  public Condition eq() {
+    return eq(param());
   }
 
   public Function param() {

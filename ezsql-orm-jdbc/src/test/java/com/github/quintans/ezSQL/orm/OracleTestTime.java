@@ -75,7 +75,7 @@ public class OracleTestTime extends TestCase {
       Update upd = new Update(db, TTimer.T_TIMER)
           .set(TTimer.C_DATE, new MyDateTime(ticks))
           .set(TTimer.C_TIMESTAMP, new Date(ticks))
-          .where(TTimer.C_ID.is(raw(1L)));
+          .where(TTimer.C_ID.eq(raw(1L)));
 
       upd.execute();
     });

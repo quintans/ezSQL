@@ -80,7 +80,7 @@ public class TestStandard extends TestBootstrap {
   public void testLoadAssociation() {
     tm.transactionNoResult(db -> {
       Artist artist = db.query(TArtist.T_ARTIST).all()
-          .where(TArtist.C_ID.is(1L))
+          .where(TArtist.C_ID.eq(1L))
           .select(Artist.class);
       Set<Painting> paintings = db.loadAssociation(artist, TArtist.A_PAINTINGS);
       dumpCollection(paintings);
@@ -114,7 +114,7 @@ public class TestStandard extends TestBootstrap {
     tm.transactionNoResult(db -> {
       List<Artist> artists = db.queryAll(TArtist.T_ARTIST)
           .where(
-              TArtist.C_NAME.like("%n%").and(TArtist.C_GENDER.is(EGender.FEMALE))
+              TArtist.C_NAME.like("%n%").and(TArtist.C_GENDER.eq(EGender.FEMALE))
           )
           .list(Artist.class);
       dumpCollection(artists);
@@ -128,7 +128,7 @@ public class TestStandard extends TestBootstrap {
     tm.transactionNoResult(db -> {
       List<Artist> artists = db.queryAll(TArtist.T_ARTIST)
           .where(
-              TArtist.C_NAME.like("J%").or(TArtist.C_GENDER.is(EGender.MALE))
+              TArtist.C_NAME.like("J%").or(TArtist.C_GENDER.eq(EGender.MALE))
           )
           .list(Artist.class);
       dumpCollection(artists);
@@ -241,7 +241,7 @@ public class TestStandard extends TestBootstrap {
       Query subquery = db.query(TPainting.T_PAINTING).as("p")
           .count()
           .where(
-              TPainting.C_ARTIST.is(TArtist.C_ID.of("a"))
+              TPainting.C_ARTIST.eq(TArtist.C_ID.of("a"))
           );
 
       Query query = db.query(TArtist.T_ARTIST).as("a")
@@ -260,7 +260,7 @@ public class TestStandard extends TestBootstrap {
       Query subquery = db.query(TPainting.T_PAINTING).as("p")
           .column(TPainting.C_NAME)
           .where(
-              TPainting.C_ARTIST.is(TArtist.C_ID.of("a"))
+              TPainting.C_ARTIST.eq(TArtist.C_ID.of("a"))
           );
 
       Query query = db.query(TArtist.T_ARTIST).as("a")
@@ -397,11 +397,11 @@ public class TestStandard extends TestBootstrap {
     tm.transactionNoResult(db -> {
       Query query = db.query(TArtist.T_ARTIST).all()
           .inner(TArtist.A_PAINTINGS).include(TPainting.C_NAME)
-          .inner(TPainting.A_GALLERIES).on(TGallery.C_ID.is(1L)).fetch();
+          .inner(TPainting.A_GALLERIES).on(TGallery.C_ID.eq(1L)).fetch();
       List<Artist> artists = query.list(Artist.class, false);
       dumpCollection(artists);
 
-      assertEquals("Size of artist list is wrong!", 3, artists.size());
+      assertEquals("Size of artist list eq wrong!", 3, artists.size());
       for (Artist artist : artists) {
         Set<Painting> paintings = artist.getPaintings();
         assertNotNull("branch artist.paintings was not found", paintings);
@@ -427,7 +427,7 @@ public class TestStandard extends TestBootstrap {
       List<Artist> artists = query.list(new MapTransformer<>(query, true, Artist.class, new ArtistDAOMapper()));
       dumpCollection(artists);
 
-      assertEquals("Size of artist list is wrong!", 3, artists.size());
+      assertEquals("Size of artist list eq wrong!", 3, artists.size());
       Set<Painting> paintings = artists.get(0).getPaintings();
       assertTrue("branch artist.paintings has wrong size. Must be 1.", paintings != null && paintings.size() == 1);
     });
@@ -439,9 +439,9 @@ public class TestStandard extends TestBootstrap {
       Artist artist = db.queryAll(TArtist.T_ARTIST)
           .all()
           .outer(TArtist.A_PAINTINGS)
-          .on(TPainting.C_NAME.is("XPTO"))
+          .on(TPainting.C_NAME.eq("XPTO"))
           .fetch()
-          .where(TArtist.C_ID.is(1L))
+          .where(TArtist.C_ID.eq(1L))
           .unique(Artist.class);
 
       dump(artist);
@@ -525,7 +525,7 @@ public class TestStandard extends TestBootstrap {
     tm.transactionNoResult(db -> {
       Query query = db.queryAll(TPainting.T_PAINTING)
           .inner(TPainting.A_ARTIST)
-          .on(TArtist.C_ID.is(1L))
+          .on(TArtist.C_ID.eq(1L))
           .join();
       List<Painting> values = query.list(Painting.class);
       dumpCollection(values);
@@ -628,7 +628,7 @@ public class TestStandard extends TestBootstrap {
       // using custom functions
       Artist artist = db.query(TArtist.T_ARTIST)
           .column(FunctionExt.ifNull(TArtist.C_BIRTHDAY, new Date())).as("birthday")
-          .where(TArtist.C_ID.is(1L))
+          .where(TArtist.C_ID.eq(1L))
           .unique(Artist.class);
 
       assertNotNull("Birthday is null when using custom function ifNull.", artist.getBirthday());
@@ -651,7 +651,7 @@ public class TestStandard extends TestBootstrap {
       insert.values(1L, myTime, myDate, myDateTime, date).execute();
 
       Temporal temporal = db.query(TTemporal.T_TEMPORAL).all()
-          .where(TTemporal.C_ID.is(1L))
+          .where(TTemporal.C_ID.eq(1L))
           .unique(Temporal.class);
       dump(temporal);
 
@@ -691,7 +691,7 @@ public class TestStandard extends TestBootstrap {
           .set(TArtist.C_NAME, "Henri Matisse")
           .set(TArtist.C_VERSION, 2)
           // .set(TArtist.C_VERSION, 2L)
-          .where(TArtist.C_ID.is(4L), TArtist.C_VERSION.is(param("ver")));
+          .where(TArtist.C_ID.eq(4L), TArtist.C_VERSION.eq(param("ver")));
       update.setParameter("ver", 1L);
       update.execute();
       sw.stop().showTotal("UPDATE").reset();
@@ -699,7 +699,7 @@ public class TestStandard extends TestBootstrap {
       // DELETE
       sw.start();
       Delete delete = new Delete(db, TArtist.T_ARTIST)
-          .where(TArtist.C_ID.is(param("id")));
+          .where(TArtist.C_ID.eq(param("id")));
       delete.setParameter("id", 4L);
       delete.execute();
       sw.stop().showTotal("DELETE");
@@ -751,7 +751,7 @@ public class TestStandard extends TestBootstrap {
   public void testUpdateCache() {
     tm.transactionNoResult(db -> {
       Artist artist = db.query(TArtist.T_ARTIST).all()
-          .where(TArtist.C_ID.is(1L)).unique(Artist.class);
+          .where(TArtist.C_ID.eq(1L)).unique(Artist.class);
 
       artist.setName("Jane Mnomonic");
       db.update(TArtist.T_ARTIST).submit(artist);
@@ -904,7 +904,7 @@ public class TestStandard extends TestBootstrap {
 
       Long key = (Long) keys.get(TImage.C_ID);
       image = db.query(TImage.T_IMAGE).all()
-          .where(TImage.C_ID.is(key)).unique(ImageDTO.class);
+          .where(TImage.C_ID.eq(key)).unique(ImageDTO.class);
       byte[] content = image.getContent();
       assertTrue("Image data is null!", content != null && content.length > 0);
     });

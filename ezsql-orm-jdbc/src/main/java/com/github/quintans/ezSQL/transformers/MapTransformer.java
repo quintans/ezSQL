@@ -1,7 +1,6 @@
 package com.github.quintans.ezSQL.transformers;
 
 import com.github.quintans.ezSQL.dml.Query;
-import com.github.quintans.ezSQL.driver.Driver;
 import com.github.quintans.ezSQL.mapper.Mapper;
 import com.github.quintans.ezSQL.mapper.QueryMapper;
 import com.github.quintans.jdbc.transformers.IResultTransformer;

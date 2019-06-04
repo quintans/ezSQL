@@ -8,7 +8,6 @@ import static org.junit.Assert.*;
 import java.util.List;
 import java.util.Map;
 
-import com.github.quintans.ezSQL.dml.Delete;
 import org.junit.Test;
 
 import com.github.quintans.ezSQL.db.Column;
@@ -73,7 +72,7 @@ public class TestDiscriminator extends TestBootstrap {
 			List<Thing> things = db.query(T_THING).all()
 					.orderBy(TThing.C_ID.asc())
 					.outer(TThing.A_TAA_B).fetch()
-					.where(TThing.C_ID.is(1L))
+					.where(TThing.C_ID.eq(1L))
 					.list(Thing.class);
 
 			dumpCollection(things);
@@ -119,7 +118,7 @@ public class TestDiscriminator extends TestBootstrap {
 	@Test
 	public void testUpdateWithDiscriminatorColumn() {
 		tm.transactionNoResult(db -> {
-			Update update = db.update(TGender.T_GENDER).sets(TGender.C_VALUE).where(TGender.C_KEY.is("U"));
+			Update update = db.update(TGender.T_GENDER).sets(TGender.C_VALUE).where(TGender.C_KEY.eq("U"));
 			int result = update.values("Undefined").execute();
 
 			assertEquals("Unable to update with discriminator column", 1, result);

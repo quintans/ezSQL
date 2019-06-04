@@ -87,7 +87,7 @@ public abstract class AbstractDb {
         TypedField tf = FieldUtils.getBeanTypedField(bean.getClass(), fkAlias);
         if(tf != null) {
           value = tf.get(bean);
-          restrictions.add(relation.getTo().getColumn().is(Definition.raw(value)));
+          restrictions.add(relation.getTo().getColumn().eq(Definition.raw(value)));
         }
       }
 

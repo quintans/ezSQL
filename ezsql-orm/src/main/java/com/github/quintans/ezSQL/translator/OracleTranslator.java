@@ -218,7 +218,7 @@ public class OracleTranslator extends GenericTranslator {
       // joining inner query with the delete table
       List<Condition> conditions = new ArrayList<>();
       for (Column<?> column : delete.getTable().getKeyColumns()) {
-        conditions.add(column.is(column.of(alias)));
+        conditions.add(column.eq(column.of(alias)));
       }
       query.where(conditions);
 

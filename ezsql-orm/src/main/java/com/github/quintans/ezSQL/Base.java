@@ -38,11 +38,11 @@ public abstract class Base<T> {
         return Definition.lesserOrMatch(this, value);
     }
 
-    public Condition is(T value) {
+    public Condition eq(T value) {
         if(value == null)
             return isNull();
         else
-            return Definition.is(this, value);
+            return Definition.eq(this, value);
     }
 
     public Condition different(T value) {
@@ -106,11 +106,11 @@ public abstract class Base<T> {
         return Definition.lesserOrMatch(this, value);
     }
 
-    public Condition is(Function value) {
+    public Condition eq(Function value) {
         if(value == null)
             return isNull();
         else
-            return Definition.is(this, value);
+            return Definition.eq(this, value);
     }
 
     public Condition different(Function value) {

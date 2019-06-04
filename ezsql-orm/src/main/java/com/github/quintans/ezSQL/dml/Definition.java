@@ -73,7 +73,7 @@ public class Definition {
     return new Condition(EFunction.LTEQ, column, value);
   }
 
-  public static Condition is(Object left, Object right) {
+  public static Condition eq(Object left, Object right) {
     return new Condition(EFunction.EQ, left, right);
   }
 
